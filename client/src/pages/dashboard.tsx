@@ -1,0 +1,438 @@
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/auth-context";
+import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
+import { SyncStatusDetail } from "@/components/sync-status";
+import { DataBadge } from "@/components/data-badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  CreditCard, 
+  ShoppingCart, 
+  FileText, 
+  TrendingUp,
+  Download,
+  Phone,
+  ArrowRight
+} from "lucide-react";
+import { Link } from "wouter";
+
+interface DashboardData {
+  account: {
+    balance: string;
+    currency: string;
+    dataFreshness: 'live' | 'cached';
+    lastSyncAt: string;
+  } | null;
+  recentOrders: Array<{
+    id: string;
+    orderNumber: string;
+    status: string;
+    orderDate: string;
+    totalAmount: string;
+    currency: string;
+    dataFreshness: 'live' | 'cached';
+    lastSyncAt: string;
+  }>;
+  recentPayments: Array<{
+    id: string;
+    paymentNumber: string;
+    amount: string;
+    paymentDate: string;
+    paymentMethod: string;
+    status: string;
+    currency: string;
+    dataFreshness: 'live' | 'cached';
+    lastSyncAt: string;
+  }>;
+  outstandingInvoices: Array<{
+    id: string;
+    invoiceNumber: string;
+    balanceAmount: string;
+    dueDate: string;
+    currency: string;
+    dataFreshness: 'live' | 'cached';
+    lastSyncAt: string;
+  }>;
+  pendingOrdersCount: number;
+  monthlyTotal: string;
+}
+
+export default function Dashboard() {
+  const { user, token } = useAuth();
+
+  const { data: dashboardData, isLoading, error } = useQuery<DashboardData>({
+    queryKey: ['/api/dashboard'],
+    enabled: !!token,
+  });
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      processing: 'bg-blue-100 text-blue-800',
+      shipped: 'bg-blue-100 text-blue-800',
+      delivered: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800',
+      open: 'bg-yellow-100 text-yellow-800',
+      paid: 'bg-green-100 text-green-800',
+      overdue: 'bg-red-100 text-red-800',
+      processed: 'bg-green-100 text-green-800',
+      failed: 'bg-red-100 text-red-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatCurrency = (amount: string, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(parseFloat(amount));
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  if (!user) {
+    return <div>Please log in to access the dashboard</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="flex">
+        <Sidebar />
+        
+        <main className="flex-1 overflow-y-auto">
+          <div className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              {/* Welcome Section */}
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Welcome back, {user.firstName}
+                </h1>
+                <p className="mt-1 text-gray-600">
+                  Here's what's happening with your account today.
+                </p>
+              </div>
+
+              {/* Sync Information Banner */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="mr-3">
+                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-800">Data Synchronization Status</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        <strong>Live Data:</strong> Orders, Payments, Account Balance • 
+                        <strong> Cached Data:</strong> Historical records, customer details (Updated every 10 min)
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/sync-status">
+                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                      View Details
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Error State */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
+                </div>
+              )}
+
+              {/* Key Metrics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Account Balance */}
+                <Card>
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <CreditCard className="h-8 w-8 netsuite-blue" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            Account Balance
+                          </dt>
+                          <dd className="flex items-center space-x-2">
+                            {isLoading ? (
+                              <Skeleton className="h-6 w-24" />
+                            ) : (
+                              <>
+                                <span className="text-lg font-medium text-gray-900">
+                                  {dashboardData?.account ? 
+                                    formatCurrency(dashboardData.account.balance, dashboardData.account.currency) :
+                                    '$0.00'
+                                  }
+                                </span>
+                                {dashboardData?.account && (
+                                  <DataBadge 
+                                    freshness={dashboardData.account.dataFreshness}
+                                    lastSync={dashboardData.account.lastSyncAt}
+                                  />
+                                )}
+                              </>
+                            )}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Pending Orders */}
+                <Card>
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <ShoppingCart className="h-8 w-8 text-warning" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            Pending Orders
+                          </dt>
+                          <dd className="flex items-center space-x-2">
+                            {isLoading ? (
+                              <Skeleton className="h-6 w-16" />
+                            ) : (
+                              <>
+                                <span className="text-lg font-medium text-gray-900">
+                                  {dashboardData?.pendingOrdersCount || 0}
+                                </span>
+                                <DataBadge freshness="live" />
+                              </>
+                            )}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Outstanding Invoices */}
+                <Card>
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <FileText className="h-8 w-8 text-success" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            Outstanding Invoices
+                          </dt>
+                          <dd className="flex items-center space-x-2">
+                            {isLoading ? (
+                              <Skeleton className="h-6 w-24" />
+                            ) : (
+                              <>
+                                <span className="text-lg font-medium text-gray-900">
+                                  {dashboardData?.outstandingInvoices?.length || 0}
+                                </span>
+                                <DataBadge freshness="cached" />
+                              </>
+                            )}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Monthly Total */}
+                <Card>
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <TrendingUp className="h-8 w-8 netsuite-light" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            This Month
+                          </dt>
+                          <dd className="flex items-center space-x-2">
+                            {isLoading ? (
+                              <Skeleton className="h-6 w-24" />
+                            ) : (
+                              <>
+                                <span className="text-lg font-medium text-gray-900">
+                                  {formatCurrency(dashboardData?.monthlyTotal || '0')}
+                                </span>
+                                <DataBadge freshness="cached" />
+                              </>
+                            )}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Recent Orders */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Recent Orders</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <DataBadge freshness="live" />
+                        <Link href="/orders">
+                          <Button variant="ghost" size="sm">
+                            View all
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="space-y-4">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="flex justify-between items-center">
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                            <div className="text-right space-y-2">
+                              <Skeleton className="h-4 w-20" />
+                              <Skeleton className="h-5 w-16" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : dashboardData?.recentOrders?.length ? (
+                      <div className="space-y-4">
+                        {dashboardData.recentOrders.slice(0, 5).map((order) => (
+                          <div key={order.id} className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {order.orderNumber}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Order Date: {formatDate(order.orderDate)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-gray-900">
+                                {formatCurrency(order.totalAmount, order.currency)}
+                              </p>
+                              <Badge className={getStatusColor(order.status)}>
+                                {order.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No recent orders</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Recent Payments */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Payment Activity</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <DataBadge freshness="live" />
+                        <Link href="/payments">
+                          <Button variant="ghost" size="sm">
+                            View all
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="space-y-4">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="flex justify-between items-center">
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                            <div className="text-right">
+                              <Skeleton className="h-4 w-20" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : dashboardData?.recentPayments?.length ? (
+                      <div className="space-y-4">
+                        {dashboardData.recentPayments.slice(0, 5).map((payment) => (
+                          <div key={payment.id} className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                Payment {payment.paymentNumber}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {formatDate(payment.paymentDate)} • {payment.paymentMethod}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-success">
+                                +{formatCurrency(payment.amount, payment.currency)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No recent payments</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Actions */}
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button variant="outline" className="flex items-center justify-center">
+                      <Download className="mr-2 h-4 w-4 netsuite-blue" />
+                      Download Invoices
+                    </Button>
+                    <Button variant="outline" className="flex items-center justify-center">
+                      <CreditCard className="mr-2 h-4 w-4 text-success" />
+                      Make Payment
+                    </Button>
+                    <Button variant="outline" className="flex items-center justify-center">
+                      <Phone className="mr-2 h-4 w-4 text-warning" />
+                      Contact Support
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Sync Status Detail */}
+              <SyncStatusDetail />
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
