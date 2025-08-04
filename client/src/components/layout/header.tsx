@@ -8,8 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronDown, User, LogOut } from "lucide-react";
+import { ChevronDown, User, LogOut, Menu } from "lucide-react";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -23,6 +25,23 @@ export function Header() {
       <div className="max-w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
+            {/* Mobile menu button */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="lg:hidden mr-2 px-0"
+                  size="sm"
+                >
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <MobileNav />
+              </SheetContent>
+            </Sheet>
+            
             <div className="flex-shrink-0">
               <h1 className="text-xl font-bold netsuite-blue">Customer Portal</h1>
             </div>
