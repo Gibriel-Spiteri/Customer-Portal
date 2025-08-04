@@ -61,6 +61,11 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        "netsuite-blue": "hsl(var(--netsuite-blue))",
+        "netsuite-light": "hsl(var(--netsuite-light))",
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        error: "hsl(var(--error))",
       },
       keyframes: {
         "accordion-down": {

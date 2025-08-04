@@ -73,6 +73,28 @@
   }
 }
 
+@layer utilities {
+  .netsuite-blue {
+    color: hsl(var(--netsuite-blue));
+  }
+  
+  .bg-netsuite-blue {
+    background-color: hsl(var(--netsuite-blue));
+  }
+  
+  .hover\:bg-netsuite-light:hover {
+    background-color: hsl(var(--netsuite-light));
+  }
+  
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  
+  .hover\:bg-success\/90:hover {
+    background-color: hsl(var(--success) / 0.9);
+  }
+}
+
 @layer components {
   .netsuite-blue {
     color: hsl(var(--netsuite-blue));

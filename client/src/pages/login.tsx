@@ -101,7 +101,7 @@ export default function Login() {
               
               <Button
                 type="submit"
-                className="w-full bg-netsuite-blue hover:bg-netsuite-light"
+                className="w-full bg-blue-800 hover:bg-blue-700 text-white"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
