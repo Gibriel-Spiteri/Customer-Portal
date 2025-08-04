@@ -62,7 +62,7 @@ export function Sidebar() {
                       className={cn(
                         "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                         isActive
-                          ? "bg-netsuite-blue text-white"
+                          ? "bg-blue-100 text-blue-900 border-l-4 border-blue-600 font-semibold"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       )}
                     >
