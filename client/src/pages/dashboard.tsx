@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   CreditCard, 
   ShoppingCart, 
@@ -18,6 +19,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 
 interface DashboardData {
   account: {
@@ -62,6 +64,7 @@ interface DashboardData {
 
 export default function Dashboard() {
   const { user, token } = useAuth();
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
 
   const { data: dashboardData, isLoading, error } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard'],
@@ -301,6 +304,21 @@ export default function Dashboard() {
                         </Link>
                       </div>
                     </div>
+                    <div className="mt-4">
+                      <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Orders</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="shipped">Shipped</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {isLoading ? (
@@ -319,28 +337,40 @@ export default function Dashboard() {
                         ))}
                       </div>
                     ) : dashboardData?.recentOrders?.length ? (
-                      <div className="space-y-4">
-                        {dashboardData.recentOrders.slice(0, 5).map((order) => (
-                          <div key={order.id} className="flex justify-between items-center">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {order.orderNumber}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Order Date: {formatDate(order.orderDate)}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">
-                                {formatCurrency(order.totalAmount, order.currency)}
-                              </p>
-                              <Badge className={getStatusColor(order.status)}>
-                                {order.status}
-                              </Badge>
-                            </div>
+                      (() => {
+                        const filteredOrders = dashboardData.recentOrders
+                          .filter(order => orderStatusFilter === "all" || order.status === orderStatusFilter)
+                          .slice(0, 5);
+                        
+                        return filteredOrders.length > 0 ? (
+                          <div className="space-y-4">
+                            {filteredOrders.map((order) => (
+                              <div key={order.id} className="flex justify-between items-center">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {order.orderNumber}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    Order Date: {formatDate(order.orderDate)}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {formatCurrency(order.totalAmount, order.currency)}
+                                  </p>
+                                  <Badge className={getStatusColor(order.status)}>
+                                    {order.status}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        ) : (
+                          <p className="text-gray-500 text-center py-4">
+                            No orders found with status: {orderStatusFilter === "all" ? "all" : orderStatusFilter}
+                          </p>
+                        );
+                      })()
                     ) : (
                       <p className="text-gray-500 text-center py-4">No recent orders</p>
                     )}
