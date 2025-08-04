@@ -11,7 +11,7 @@ interface DataBadgeProps {
 export function DataBadge({ freshness, lastSync, size = 'sm' }: DataBadgeProps) {
   const isLive = freshness === 'live';
   
-  const formatLastSync = (date: Date | string | null) => {
+  const formatLastSync = (date: Date | string | null | undefined) => {
     if (!date) return null;
     const syncDate = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();

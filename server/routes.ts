@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
-  wss.on('connection', (ws: WebSocket) => {
+  wss.on('connection', (ws) => {
     console.log('WebSocket client connected');
     
     // Start live sync for this connection
@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (data.type === 'subscribe' && data.userId) {
           // Subscribe to user-specific updates
-          ws.userId = data.userId;
+          (ws as any).userId = data.userId;
           console.log(`Client subscribed to updates for user ${data.userId}`);
         }
       } catch (error) {

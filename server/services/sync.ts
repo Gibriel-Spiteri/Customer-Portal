@@ -13,14 +13,14 @@ export interface SyncResult {
 export class SyncService {
   private isLiveSyncActive = false;
   private batchSyncInterval: NodeJS.Timeout | null = null;
-  private liveSyncConnections = new Set<WebSocket>();
+  private liveSyncConnections = new Set<any>();
 
   constructor() {
     this.startBatchSync();
   }
 
   // Real-time sync for critical data (orders, payments)
-  async startLiveSync(ws?: WebSocket): Promise<void> {
+  async startLiveSync(ws?: any): Promise<void> {
     if (ws) {
       this.liveSyncConnections.add(ws);
       ws.on('close', () => {
@@ -145,7 +145,6 @@ export class SyncService {
             currency: nsOrder.currency || 'USD',
             shippingAddress: nsOrder.shipaddress || null,
             dataFreshness: 'live',
-            lastSyncAt: new Date(),
           };
 
           if (existingOrder) {
@@ -228,7 +227,6 @@ export class SyncService {
             status: this.mapPaymentStatus(nsPayment.status),
             currency: nsPayment.currency || 'USD',
             dataFreshness: 'live',
-            lastSyncAt: new Date(),
           };
 
           if (existingPayment) {

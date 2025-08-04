@@ -147,7 +147,7 @@ export class QueueService {
   clearCompletedJobs(): void {
     const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
     
-    for (const [id, job] of this.jobs.entries()) {
+    for (const [id, job] of Array.from(this.jobs.entries())) {
       if (job.completedAt && job.completedAt < cutoffTime) {
         this.jobs.delete(id);
       }
