@@ -101,8 +101,9 @@ export default function Login() {
               
               <Button
                 type="submit"
-                className="w-full bg-blue-800 hover:bg-blue-700 text-white"
+                className="w-full bg-blue-800 hover:bg-blue-700 text-white font-medium"
                 disabled={isSubmitting}
+                style={{ color: 'white' }}
               >
                 {isSubmitting ? (
                   <>
