@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const { login, isLoading } = useAuth();
@@ -15,6 +15,7 @@ export default function Login() {
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,15 +89,31 @@ export default function Login() {
               
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter your password"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter your password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost" 
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    )}
+                  </Button>
+                </div>
               </div>
               
               <Button
@@ -115,6 +132,17 @@ export default function Login() {
                 )}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Demo Credentials */}
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="pt-6">
+            <h3 className="font-medium text-green-800 mb-2">Demo Login Credentials</h3>
+            <div className="text-sm text-green-700 space-y-1">
+              <p><strong>Username:</strong> demo@customer.com</p>
+              <p><strong>Password:</strong> demo123</p>
+            </div>
           </CardContent>
         </Card>
 
