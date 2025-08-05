@@ -47,6 +47,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading, token, setLocation]);
 
+  // Add effect to check for token changes and verify them
+  useEffect(() => {
+    const checkTokenChanges = () => {
+      const currentToken = localStorage.getItem('auth_token');
+      if (currentToken && currentToken !== token) {
+        console.log('AuthProvider: New token detected, verifying...');
+        setToken(currentToken);
+        verifyToken(currentToken);
+      }
+    };
+
+    // Check immediately
+    checkTokenChanges();
+
+    // Set up storage event listener for changes from other tabs
+    window.addEventListener('storage', checkTokenChanges);
+    
+    return () => {
+      window.removeEventListener('storage', checkTokenChanges);
+    };
+  }, [token]);
+
   const verifyToken = async (token: string) => {
     try {
       console.log('AuthProvider: Verifying token...');

@@ -75,8 +75,8 @@ export default function Login() {
         localStorage.setItem('auth_token', data.token);
         console.log('NetSuite authentication successful, redirecting...');
         
-        // Force a complete page reload to refresh authentication state
-        window.location.reload();
+        // Redirect to dashboard instead of reloading
+        window.location.href = '/';
       } else {
         const errorMessage = data.message || 'NetSuite authentication failed';
         console.error('NetSuite authentication failed:', errorMessage);
