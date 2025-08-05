@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Orders from "@/pages/orders";
+import OrderDetails from "@/pages/order-details";
 import Invoices from "@/pages/invoices";
 import Payments from "@/pages/payments";
 import AccountSettings from "@/pages/account-settings";
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/" component={Dashboard} />
       <Route path="/orders" component={Orders} />
+      <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/invoices" component={Invoices} />
       <Route path="/payments" component={Payments} />
       <Route path="/account" component={AccountSettings} />

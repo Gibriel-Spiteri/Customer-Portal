@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
@@ -47,7 +47,6 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const { data: orders, isLoading, error, refetch } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
@@ -274,103 +273,12 @@ export default function Orders() {
                             <p className="text-gray-900">{order.trackingNumber || 'N/A'}</p>
                           </div>
                           <div className="flex justify-end">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle>Order Details - {order.orderNumber}</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-6">
-                                  {/* Order Summary */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-3">
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-500">Order Number</label>
-                                        <p className="text-lg font-semibold text-gray-900">{order.orderNumber}</p>
-                                      </div>
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-500">Status</label>
-                                        <div className="mt-1">
-                                          <Badge className={getStatusColor(order.status)}>
-                                            {getStatusIcon(order.status)}
-                                            <span className="ml-1 capitalize">{order.status}</span>
-                                          </Badge>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-500">Total Amount</label>
-                                        <p className="text-xl font-bold text-gray-900">
-                                          {formatCurrency(order.totalAmount, order.currency)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-500">Order Date</label>
-                                        <p className="text-gray-900">{formatDate(order.orderDate)}</p>
-                                      </div>
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-500">Ship Date</label>
-                                        <p className="text-gray-900">{formatDate(order.shipDate)}</p>
-                                      </div>
-                                      <div>
-                                        <label className="text-sm font-medium text-gray-500">Delivery Date</label>
-                                        <p className="text-gray-900">{formatDate(order.deliveryDate)}</p>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Tracking Information */}
-                                  {order.trackingNumber && (
-                                    <div className="border-t pt-4">
-                                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Tracking Information</h3>
-                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <div className="flex items-center">
-                                          <Truck className="h-5 w-5 text-blue-600 mr-2" />
-                                          <div>
-                                            <label className="text-sm font-medium text-blue-900">Tracking Number</label>
-                                            <p className="text-blue-800 font-mono">{order.trackingNumber}</p>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Shipping Address */}
-                                  {order.shippingAddress && (
-                                    <div className="border-t pt-4">
-                                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Shipping Address</h3>
-                                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                        <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                                          {typeof order.shippingAddress === 'string' 
-                                            ? order.shippingAddress 
-                                            : JSON.stringify(order.shippingAddress, null, 2)}
-                                        </pre>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Data Freshness */}
-                                  <div className="border-t pt-4">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Data Information</h3>
-                                    <div className="flex items-center space-x-4">
-                                      <DataBadge 
-                                        freshness={order.dataFreshness}
-                                        lastSync={order.lastSyncAt}
-                                      />
-                                      <p className="text-sm text-gray-600">
-                                        Last updated: {new Date(order.lastSyncAt).toLocaleString()}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                            <Link href={`/orders/${order.id}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </Button>
+                            </Link>
                           </div>
                         </div>
 
