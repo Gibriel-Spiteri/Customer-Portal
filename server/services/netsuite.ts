@@ -205,8 +205,8 @@ export class NetSuiteService {
     
     const signatureBase = `${method.toUpperCase()}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`;
     
-    // Generate signature
-    const signingKey = `${encodeURIComponent(this.config.consumerSecret)}&${encodeURIComponent(this.config.tokenSecret)}`;
+    // Generate signature - NetSuite expects unencoded keys in the signing key
+    const signingKey = `${this.config.consumerSecret}&${this.config.tokenSecret}`;
     const signature = crypto
       .createHmac('sha256', signingKey)
       .update(signatureBase)
