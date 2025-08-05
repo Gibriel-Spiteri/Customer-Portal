@@ -215,6 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NetSuite OAuth authentication routes
   app.get('/api/auth/netsuite', authenticateToken, async (req: any, res) => {
     try {
+      console.log('OAuth initiation - User:', req.user);
       const { url, state, codeVerifier } = netsuiteAuth.generateAuthorizationUrl();
       
       // Store state and code verifier in session/cookie for security
@@ -229,11 +230,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 10 * 60 * 1000 // 10 minutes
       });
       // Store the current user ID in the session
-      res.cookie('oauth_user_id', req.user.id, { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 10 * 60 * 1000 // 10 minutes
-      });
+      if (req.user?.id) {
+        res.cookie('oauth_user_id', req.user.id, { 
+          httpOnly: true, 
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 10 * 60 * 1000 // 10 minutes
+        });
+      }
       
       res.json({ authUrl: url });
     } catch (error) {

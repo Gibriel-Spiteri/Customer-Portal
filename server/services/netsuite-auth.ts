@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { storage } from '../storage';
 
 interface OAuth2Config {
@@ -203,9 +204,7 @@ export class NetSuiteOAuth2Service {
   }
 
   private generateCodeChallenge(codeVerifier: string): string {
-    // In production, use proper SHA256 hashing
-    // For now, we'll use a base64url encoded version
-    const crypto = require('crypto');
+    // Use proper SHA256 hashing with base64url encoding
     return crypto
       .createHash('sha256')
       .update(codeVerifier)
