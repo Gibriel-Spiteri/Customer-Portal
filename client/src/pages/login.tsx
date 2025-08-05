@@ -23,7 +23,7 @@ export default function Login() {
   const [netsuiteSubmitting, setNetsuiteSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNetsuitePassword, setShowNetsuitePassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'demo' | 'netsuite'>('demo');
+  const [activeTab, setActiveTab] = useState<'demo' | 'netsuite'>('netsuite');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,17 +127,6 @@ export default function Login() {
             <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
               <button
                 type="button"
-                onClick={() => setActiveTab('demo')}
-                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'demo'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Demo Login
-              </button>
-              <button
-                type="button"
                 onClick={() => setActiveTab('netsuite')}
                 className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'netsuite'
@@ -145,7 +134,18 @@ export default function Login() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                NetSuite
+                NetSuite Login
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('demo')}
+                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'demo'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Demo Mode
               </button>
             </div>
           </CardHeader>

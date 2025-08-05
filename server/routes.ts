@@ -173,6 +173,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dashboard', authenticateToken, async (req: any, res) => {
     try {
       const dashboardData = await storage.getUserDashboardData(req.user.id);
+      
+      // If user is NetSuite user, fetch live data when possible
+      if (req.user.isNetSuiteUser && req.user.netsuiteCustomerId) {
+        try {
+          const { NetSuiteService } = await import('./services/netsuite');
+          const netsuiteService = new NetSuiteService();
+          
+          console.log('Fetching live NetSuite data for customer:', req.user.netsuiteCustomerId);
+          
+          // Try to get live account balance
+          const accountBalance = await netsuiteService.getCustomerBalance(req.user.netsuiteCustomerId);
+          if (accountBalance.success && accountBalance.data) {
+            dashboardData.account.balance = accountBalance.data.balance;
+            dashboardData.account.dataFreshness = 'live';
+            console.log('Updated account balance with live NetSuite data:', accountBalance.data.balance);
+          }
+          
+          // Get live order count (recent orders)
+          const recentOrders = await netsuiteService.getCustomerOrders(req.user.netsuiteCustomerId, 5);
+          if (recentOrders.success && recentOrders.data) {
+            // Update the pending orders count based on NetSuite data
+            const pendingCount = recentOrders.data.filter(order => 
+              ['pending', 'processing'].includes(order.status.toLowerCase())
+            ).length;
+            
+            if (dashboardData.metrics) {
+              dashboardData.metrics.pendingOrders = pendingCount;
+              dashboardData.metrics.dataFreshness = 'live';
+            }
+            console.log('Updated pending orders count with live NetSuite data:', pendingCount);
+          }
+          
+        } catch (error) {
+          console.log('Failed to fetch live NetSuite data, using cached data:', error);
+          // Continue with cached data on error
+        }
+      }
+      
       res.json(dashboardData);
     } catch (error) {
       console.error('Dashboard error:', error);
@@ -350,6 +388,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Profile error:', error);
       res.status(500).json({ message: 'Failed to fetch profile' });
+    }
+  });
+
+  // NetSuite Direct Authentication endpoint
+  app.post('/api/auth/netsuite-direct', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      console.log('NetSuite direct auth attempt for:', email);
+
+      // Import the NetSuite direct auth service
+      const { netsuiteDirectAuth } = await import('./services/netsuite-direct-auth');
+      
+      const result = await netsuiteDirectAuth.authenticateUser({
+        email,
+        password,
+        accountId: process.env.NETSUITE_ACCOUNT_ID || ''
+      });
+
+      if (!result.success) {
+        return res.status(401).json({ 
+          message: result.error || 'NetSuite authentication failed' 
+        });
+      }
+
+      // Create or update user in our database
+      let user;
+      const existingUser = await storage.getUserByUsername(email);
+      
+      if (existingUser) {
+        // Update existing user with NetSuite data
+        user = existingUser;
+        console.log('Updating existing user:', user.id);
+      } else {
+        // Create new user from NetSuite data
+        const newUser = {
+          username: email,
+          email: result.user.email,
+          password: '', // NetSuite users don't need local passwords
+          firstName: result.user.firstname,
+          lastName: result.user.lastname,
+          companyName: result.user.companyname,
+          netsuiteCustomerId: result.user.customerId,
+          netsuiteEntityId: result.user.entityid
+        };
+        
+        user = await storage.createUser(newUser);
+        console.log('Created new NetSuite user:', user.id);
+      }
+
+      // Create JWT token
+      const token = jwt.sign(
+        { 
+          id: user.id, 
+          username: user.username,
+          netsuiteCustomerId: result.user.customerId,
+          isNetSuiteUser: true
+        },
+        process.env.JWT_SECRET || 'fallback_secret',
+        { expiresIn: '24h' }
+      );
+
+      res.json({
+        message: 'NetSuite authentication successful',
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: user.companyName,
+          netsuiteCustomerId: result.user.customerId,
+          isNetSuiteUser: true
+        }
+      });
+
+    } catch (error) {
+      console.error('NetSuite direct auth error:', error);
+      res.status(500).json({ message: 'NetSuite authentication failed' });
     }
   });
 

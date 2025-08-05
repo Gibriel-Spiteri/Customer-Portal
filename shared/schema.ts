@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   companyName: text("company_name"),
   netsuiteCustomerId: text("netsuite_customer_id").unique(),
+  netsuiteEntityId: text("netsuite_entity_id"),
   netsuiteAccessToken: text("netsuite_access_token"),
   netsuiteRefreshToken: text("netsuite_refresh_token"),
   netsuiteTokenExpiry: timestamp("netsuite_token_expiry"),
