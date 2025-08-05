@@ -1,9 +1,12 @@
+import * as crypto from 'crypto';
+
 interface NetSuiteConfig {
   accountId: string;
-  clientId: string;
-  clientSecret: string;
+  consumerKey: string;
+  consumerSecret: string;
+  tokenId: string;
+  tokenSecret: string;
   baseUrl: string;
-  accessToken?: string;
 }
 
 interface NetSuiteResponse<T = any> {
@@ -67,13 +70,14 @@ export class NetSuiteService {
   private concurrentRequests = 0;
   private maxConcurrentRequests = 15; // Base tier limit
 
-  constructor(accessToken?: string) {
+  constructor() {
     this.config = {
       accountId: process.env.NETSUITE_ACCOUNT_ID || "",
-      clientId: process.env.NETSUITE_CLIENT_ID || "",
-      clientSecret: process.env.NETSUITE_CLIENT_SECRET || "",
-      baseUrl: process.env.NETSUITE_BASE_URL || `https://${process.env.NETSUITE_ACCOUNT_ID}.suitetalk.api.netsuite.com`,
-      accessToken: accessToken
+      consumerKey: process.env.NETSUITE_CONSUMER_KEY || "",
+      consumerSecret: process.env.NETSUITE_CONSUMER_SECRET || "",
+      tokenId: process.env.NETSUITE_TOKEN_ID || "",
+      tokenSecret: process.env.NETSUITE_TOKEN_SECRET || "",
+      baseUrl: process.env.NETSUITE_BASE_URL || `https://${process.env.NETSUITE_ACCOUNT_ID}.suitetalk.api.netsuite.com`
     };
 
     // Adjust max concurrent requests based on tier
@@ -98,14 +102,20 @@ export class NetSuiteService {
     try {
       const url = `${this.config.baseUrl}/services/rest/record/v1/${endpoint}`;
       
-      // For OAuth 2.0, we need to get an access token first
-      const accessToken = await this.getAccessToken();
+      // Generate OAuth 1.0a header for Token-Based Authentication
+      const authHeader = this.generateOAuthHeader(method, url);
       
       const headers = {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': authHeader,
         'Content-Type': 'application/json',
         'Prefer': 'transient', // Avoid record locking
       };
+
+      console.log('Making NetSuite API request:', {
+        url,
+        method,
+        authHeader: authHeader.substring(0, 50) + '...' // Log partial auth header for debugging
+      });
 
       const response = await fetch(url, {
         method,
@@ -144,6 +154,7 @@ export class NetSuiteService {
         rateLimitRemaining,
       };
     } catch (error) {
+      console.error('NetSuite API request failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -166,14 +177,41 @@ export class NetSuiteService {
     });
   }
 
-  private async getAccessToken(): Promise<string> {
-    // If we already have a valid access token, return it
-    if (this.config.accessToken) {
-      return this.config.accessToken;
-    }
+  private generateOAuthHeader(method: string, url: string): string {
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const nonce = crypto.randomBytes(16).toString('hex');
+    
+    const oauthParams = {
+      oauth_consumer_key: this.config.consumerKey,
+      oauth_token: this.config.tokenId,
+      oauth_signature_method: 'HMAC-SHA256',
+      oauth_timestamp: timestamp,
+      oauth_nonce: nonce,
+      oauth_version: '1.0'
+    };
 
-    // Throw error if no access token is provided
-    throw new Error('Access token required. User must complete OAuth 2.0 authentication flow.');
+    // Create signature base string
+    const paramString = Object.keys(oauthParams)
+      .sort()
+      .map(key => `${key}=${encodeURIComponent(oauthParams[key as keyof typeof oauthParams])}`)
+      .join('&');
+    
+    const signatureBase = `${method.toUpperCase()}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`;
+    
+    // Generate signature
+    const signingKey = `${this.config.consumerSecret}&${this.config.tokenSecret}`;
+    const signature = crypto
+      .createHmac('sha256', signingKey)
+      .update(signatureBase)
+      .digest('base64');
+    
+    // Build OAuth header
+    const authHeader = 'OAuth ' + Object.keys(oauthParams)
+      .map(key => `${key}="${encodeURIComponent(oauthParams[key as keyof typeof oauthParams])}"`)
+      .concat(`oauth_signature="${encodeURIComponent(signature)}"`)
+      .join(', ');
+    
+    return authHeader;
   }
 
   async getCustomer(customerId: string): Promise<NetSuiteResponse<NetSuiteCustomer>> {
@@ -205,28 +243,12 @@ export class NetSuiteService {
   async getCustomerEstimates(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteEstimate[]>> {
     console.log('Fetching estimates for customer:', customerId);
     
-    // Check if we have OAuth credentials configured
-    if (!this.config.clientId || !this.config.clientSecret) {
-      console.log('OAuth credentials not configured, returning demo estimate data');
-      // Return demo estimate for testing until OAuth is properly configured
+    // Check if we have all required credentials
+    if (!this.config.consumerKey || !this.config.consumerSecret || !this.config.tokenId || !this.config.tokenSecret) {
+      console.log('NetSuite credentials not fully configured');
       return {
-        success: true,
-        data: [{
-          id: 'EST-001',
-          tranid: 'EST-2025-001',
-          status: 'Open',
-          trandate: new Date().toISOString(),
-          duedate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          total: 25000,
-          currency: 'USD',
-          entity: customerId,
-          item: [
-            { name: 'Consulting Services', quantity: 40, rate: 500, amount: 20000 },
-            { name: 'Implementation', quantity: 10, rate: 500, amount: 5000 }
-          ],
-          memo: 'Project estimate for Q1 2025 (Demo data - OAuth not configured)'
-        }],
-        rateLimitRemaining: 100
+        success: false,
+        error: 'NetSuite API credentials not configured. Please provide Consumer Key, Consumer Secret, Token ID, and Token Secret.'
       };
     }
     
