@@ -1,5 +1,6 @@
 import { 
   users, accounts, orders, invoices, payments, syncJobs, supportTickets,
+  loyaltyAccounts, loyaltyTransactions, loyaltyRewards,
   type User, type InsertUser, type Account, type InsertAccount,
   type Order, type InsertOrder, type Invoice, type InsertInvoice,
   type Payment, type InsertPayment, type SyncJob, type InsertSyncJob,
@@ -51,6 +52,11 @@ export interface IStorage {
   getUserSupportTickets(userId: string): Promise<SupportTicket[]>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
   updateSupportTicket(id: string, ticket: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
+
+  // Loyalty operations
+  getLoyaltyAccount(userId: string): Promise<any>;
+  getLoyaltyTransactions(userId: string): Promise<any[]>;
+  getLoyaltyRewards(): Promise<any[]>;
 
   // Dashboard analytics
   getUserDashboardData(userId: string): Promise<{
@@ -305,6 +311,27 @@ export class DatabaseStorage implements IStorage {
       pendingOrdersCount: pendingOrdersResult.count,
       monthlyTotal: monthlyTotalResult.total || "0",
     };
+  }
+
+  async getLoyaltyAccount(userId: string): Promise<any> {
+    const [loyaltyAccount] = await db.select().from(loyaltyAccounts)
+      .where(eq(loyaltyAccounts.userId, userId));
+    return loyaltyAccount || undefined;
+  }
+
+  async getLoyaltyTransactions(userId: string): Promise<any[]> {
+    const transactions = await db.select().from(loyaltyTransactions)
+      .where(eq(loyaltyTransactions.userId, userId))
+      .orderBy(desc(loyaltyTransactions.transactionDate))
+      .limit(50);
+    return transactions;
+  }
+
+  async getLoyaltyRewards(): Promise<any[]> {
+    const rewards = await db.select().from(loyaltyRewards)
+      .where(eq(loyaltyRewards.available, true))
+      .orderBy(loyaltyRewards.pointsRequired);
+    return rewards;
   }
 }
 

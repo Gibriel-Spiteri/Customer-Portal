@@ -12,6 +12,7 @@ import Orders from "@/pages/orders";
 import OrderDetails from "@/pages/order-details";
 import Invoices from "@/pages/invoices";
 import Payments from "@/pages/payments";
+import Loyalty from "@/pages/loyalty";
 import AccountSettings from "@/pages/account-settings";
 import Support from "@/pages/support";
 
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/invoices" component={Invoices} />
       <Route path="/payments" component={Payments} />
+      <Route path="/loyalty" component={Loyalty} />
       <Route path="/account" component={AccountSettings} />
       <Route path="/support" component={Support} />
       <Route component={NotFound} />

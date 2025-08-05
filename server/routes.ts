@@ -317,5 +317,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Loyalty endpoints
+  app.get('/api/loyalty/account', authenticateToken, async (req: any, res) => {
+    try {
+      const loyaltyAccount = await storage.getLoyaltyAccount(req.user.id);
+      if (!loyaltyAccount) {
+        return res.status(404).json({ message: 'Loyalty account not found' });
+      }
+      res.json(loyaltyAccount);
+    } catch (error) {
+      console.error('Loyalty account error:', error);
+      res.status(500).json({ message: 'Failed to fetch loyalty account' });
+    }
+  });
+
+  app.get('/api/loyalty/transactions', authenticateToken, async (req: any, res) => {
+    try {
+      const transactions = await storage.getLoyaltyTransactions(req.user.id);
+      res.json(transactions);
+    } catch (error) {
+      console.error('Loyalty transactions error:', error);
+      res.status(500).json({ message: 'Failed to fetch loyalty transactions' });
+    }
+  });
+
+  app.get('/api/loyalty/rewards', authenticateToken, async (req: any, res) => {
+    try {
+      const rewards = await storage.getLoyaltyRewards();
+      res.json(rewards);
+    } catch (error) {
+      console.error('Loyalty rewards error:', error);
+      res.status(500).json({ message: 'Failed to fetch loyalty rewards' });
+    }
+  });
+
   return httpServer;
 }

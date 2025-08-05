@@ -5,6 +5,7 @@ import {
   ShoppingCart, 
   FileText, 
   CreditCard, 
+  Star, 
   Settings, 
   HelpCircle 
 } from "lucide-react";
@@ -30,6 +31,11 @@ const navigation = [
     name: 'Payments',
     href: '/payments',
     icon: CreditCard,
+  },
+  {
+    name: 'Consumers Cash',
+    href: '/loyalty',
+    icon: Star,
   },
   {
     name: 'Account Settings',

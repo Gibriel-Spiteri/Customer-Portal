@@ -125,6 +125,59 @@ export const supportTickets = pgTable("support_tickets", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const loyaltyAccounts = pgTable("loyalty_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  netsuiteId: text("netsuite_id").notNull().unique(),
+  programName: text("program_name").notNull().default("Consumers Cash"),
+  memberNumber: text("member_number").notNull(),
+  memberSince: timestamp("member_since").notNull(),
+  tier: text("tier").notNull().default("bronze"), // 'bronze', 'silver', 'gold', 'platinum', 'diamond'
+  totalPoints: integer("total_points").default(0),
+  availablePoints: integer("available_points").default(0),
+  cashValue: decimal("cash_value", { precision: 12, scale: 2 }).default("0.00"),
+  lifetimeEarnings: decimal("lifetime_earnings", { precision: 12, scale: 2 }).default("0.00"),
+  nextTierPoints: integer("next_tier_points"),
+  nextTierName: text("next_tier_name"),
+  expiringPoints: jsonb("expiring_points"), // {amount: number, expirationDate: string}
+  lastSyncAt: timestamp("last_sync_at"),
+  dataFreshness: text("data_freshness").default("cached"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const loyaltyTransactions = pgTable("loyalty_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  loyaltyAccountId: varchar("loyalty_account_id").notNull().references(() => loyaltyAccounts.id),
+  netsuiteId: text("netsuite_id").notNull().unique(),
+  type: text("type").notNull(), // 'earned', 'redeemed', 'expired'
+  points: integer("points").notNull(),
+  description: text("description").notNull(),
+  transactionDate: timestamp("transaction_date").notNull(),
+  orderId: varchar("order_id").references(() => orders.id),
+  redemptionDetails: jsonb("redemption_details"),
+  lastSyncAt: timestamp("last_sync_at"),
+  dataFreshness: text("data_freshness").default("cached"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const loyaltyRewards = pgTable("loyalty_rewards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  netsuiteId: text("netsuite_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  pointsRequired: integer("points_required").notNull(),
+  category: text("category").notNull(),
+  available: boolean("available").default(true),
+  imageUrl: text("image_url"),
+  terms: text("terms"),
+  lastSyncAt: timestamp("last_sync_at"),
+  dataFreshness: text("data_freshness").default("cached"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   account: one(accounts),
@@ -132,6 +185,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   invoices: many(invoices),
   payments: many(payments),
   supportTickets: many(supportTickets),
+  loyaltyAccount: one(loyaltyAccounts),
+  loyaltyTransactions: many(loyaltyTransactions),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -176,6 +231,29 @@ export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
   user: one(users, {
     fields: [supportTickets.userId],
     references: [users.id],
+  }),
+}));
+
+export const loyaltyAccountsRelations = relations(loyaltyAccounts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [loyaltyAccounts.userId],
+    references: [users.id],
+  }),
+  transactions: many(loyaltyTransactions),
+}));
+
+export const loyaltyTransactionsRelations = relations(loyaltyTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [loyaltyTransactions.userId],
+    references: [users.id],
+  }),
+  loyaltyAccount: one(loyaltyAccounts, {
+    fields: [loyaltyTransactions.loyaltyAccountId],
+    references: [loyaltyAccounts.id],
+  }),
+  order: one(orders, {
+    fields: [loyaltyTransactions.orderId],
+    references: [orders.id],
   }),
 }));
 
