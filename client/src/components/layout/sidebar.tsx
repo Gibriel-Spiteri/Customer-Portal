@@ -11,17 +11,23 @@ import {
   Calculator 
 } from "lucide-react";
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: any;
+  badge?: number;
+}
+
+const navigation: NavigationItem[] = [
   {
     name: 'Dashboard',
     href: '/',
     icon: LayoutDashboard,
   },
   {
-    name: 'Orders',
+    name: 'Sales Orders',
     href: '/orders',
     icon: ShoppingCart,
-    badge: 3, // This could be dynamic
   },
   {
     name: 'Estimates',
