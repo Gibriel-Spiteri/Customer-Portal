@@ -72,12 +72,15 @@ export default function Login() {
 
       if (response.ok) {
         // Store token and redirect to dashboard
-        localStorage.setItem('token', data.token);
+        localStorage.setItem('auth_token', data.token); // Use the same key as AuthProvider
         console.log('NetSuite authentication successful, redirecting...');
         
-        // Use a slight delay to ensure token is stored
+        // Use a slight delay to ensure token is stored, then force a page refresh
+        // to trigger the AuthProvider to check the new token
         setTimeout(() => {
-          window.location.href = '/';
+          console.log('Token stored, attempting redirect...');
+          console.log('Stored token:', localStorage.getItem('auth_token') ? 'Present' : 'Missing');
+          window.location.reload(); // Force reload to trigger AuthProvider re-check
         }, 100);
       } else {
         const errorMessage = data.message || 'NetSuite authentication failed';
