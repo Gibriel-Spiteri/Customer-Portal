@@ -115,29 +115,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Sync Information Banner */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="mr-3">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-blue-800">Data Synchronization Status</h3>
-              <p className="text-sm text-blue-700 mt-1">
-                <strong>Live Data:</strong> Orders, Payments, Account Balance • 
-                <strong> Cached Data:</strong> Historical records, customer details (Updated every 10 min)
-              </p>
-            </div>
-          </div>
-          <Link href="/sync-status">
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-              View Details
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </div>
+
 
       {/* Error State */}
       {error && (
