@@ -23,8 +23,18 @@ export class NetSuiteAuthService {
 
   constructor(config: NetSuiteOAuthConfig) {
     this.config = config;
-    this.baseUrl = `https://${config.accountId}.suitetalk.api.netsuite.com/services/rest`;
-    this.authUrl = `https://${config.accountId}.app.netsuite.com/app/login/oauth2/authorize.nl`;
+    
+    // Extract account ID from URL if full URL was provided
+    let accountId = config.accountId;
+    if (accountId.includes('://')) {
+      const match = accountId.match(/https?:\/\/(\d+)\.app\.netsuite\.com/);
+      if (match) {
+        accountId = match[1];
+      }
+    }
+    
+    this.baseUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest`;
+    this.authUrl = `https://${accountId}.app.netsuite.com/app/login/oauth2/authorize.nl`;
   }
 
   /**
