@@ -58,9 +58,9 @@ export function Sidebar() {
                 
                 return (
                   <Link key={item.name} href={item.href}>
-                    <a
+                    <div
                       className={cn(
-                        "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                        "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                         isActive
                           ? "bg-blue-100 text-blue-900 border-l-4 border-blue-600 font-semibold"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -72,11 +72,11 @@ export function Sidebar() {
                       />
                       {item.name}
                       {item.badge && (
-                        <span className="ml-auto bg-error text-white text-xs px-2 py-1 rounded-full">
+                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                           {item.badge}
                         </span>
                       )}
-                    </a>
+                    </div>
                   </Link>
                 );
               })}
