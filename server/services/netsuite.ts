@@ -50,6 +50,19 @@ interface NetSuiteCustomer {
   currency: string;
 }
 
+interface NetSuiteEstimate {
+  id: string;
+  tranid: string;
+  status: string;
+  trandate: string;
+  duedate?: string;
+  total: number;
+  currency: string;
+  entity: string;
+  item?: any[];
+  memo?: string;
+}
+
 export class NetSuiteService {
   private config: NetSuiteConfig;
   private concurrentRequests = 0;
@@ -213,6 +226,15 @@ export class NetSuiteService {
 
   async searchRecords(recordType: string, query: string): Promise<NetSuiteResponse<any[]>> {
     return this.makeRequest<any[]>('GET', `${recordType}?q=${encodeURIComponent(query)}`);
+  }
+
+  async getCustomerEstimates(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteEstimate[]>> {
+    const query = `q=entity IS ${customerId}&limit=${limit}&orderby=trandate DESC`;
+    return this.makeRequest<NetSuiteEstimate[]>('GET', `estimate?${query}`);
+  }
+
+  async getEstimate(estimateId: string): Promise<NetSuiteResponse<NetSuiteEstimate>> {
+    return this.makeRequest<NetSuiteEstimate>('GET', `estimate/${estimateId}`);
   }
 
   getConcurrencyStatus() {

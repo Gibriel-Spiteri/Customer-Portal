@@ -59,6 +59,7 @@ export interface IStorage {
   getEstimate(id: string): Promise<Estimate | undefined>;
   createEstimate(estimate: InsertEstimate): Promise<Estimate>;
   updateEstimate(id: string, estimate: Partial<Estimate>): Promise<Estimate | undefined>;
+  getEstimateByNetsuiteId(netsuiteId: string): Promise<Estimate | undefined>;
 
   // Loyalty operations
   getLoyaltyAccount(userId: string): Promise<any>;
@@ -296,6 +297,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(estimates.id, id))
       .returning();
     return updatedEstimate || undefined;
+  }
+
+  async getEstimateByNetsuiteId(netsuiteId: string): Promise<Estimate | undefined> {
+    const [estimate] = await db.select().from(estimates).where(eq(estimates.netsuiteId, netsuiteId));
+    return estimate || undefined;
   }
 
   async getUserDashboardData(userId: string) {

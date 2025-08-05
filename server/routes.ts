@@ -418,6 +418,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/estimates', authenticateToken, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
+      
+      // Trigger live sync for estimates
+      const syncResult = await syncService.syncUserEstimatesLive(req.user.id);
+      
+      // Fetch estimates after sync
       const estimates = await storage.getUserEstimates(req.user.id, limit);
       res.json(estimates);
     } catch (error) {

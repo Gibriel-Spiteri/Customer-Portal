@@ -1,7 +1,8 @@
 import { storage } from "../storage";
 import { netsuiteService } from "./netsuite";
 import { queueService } from "./queue";
-import type { User, InsertOrder, InsertPayment, InsertInvoice, InsertAccount } from "@shared/schema";
+import type { User, InsertOrder, InsertPayment, InsertInvoice, InsertAccount, InsertEstimate } from "@shared/schema";
+import { WebSocket } from "ws";
 
 export interface SyncResult {
   success: boolean;
@@ -364,12 +365,106 @@ export class SyncService {
     };
   }
 
-  async queueLiveSync(userId: string, entityType: 'orders' | 'payments'): Promise<void> {
+  async queueLiveSync(userId: string, entityType: 'orders' | 'payments' | 'estimates'): Promise<void> {
     await queueService.addJob(`live-sync-${entityType}`, {
       userId,
       entityType,
       priority: 'high',
     });
+  }
+
+  async syncUserEstimatesLive(userId: string): Promise<SyncResult> {
+    const startTime = Date.now();
+    let recordsProcessed = 0;
+    const errors: string[] = [];
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user?.netsuiteCustomerId) {
+        return {
+          success: false,
+          recordsProcessed: 0,
+          errors: ['User has no NetSuite customer ID'],
+          duration: Date.now() - startTime,
+        };
+      }
+
+      const response = await netsuiteService.getCustomerEstimates(user.netsuiteCustomerId, 20);
+      
+      if (!response.success || !response.data) {
+        errors.push(response.error || 'Failed to fetch estimates from NetSuite');
+        return {
+          success: false,
+          recordsProcessed,
+          errors,
+          duration: Date.now() - startTime,
+        };
+      }
+
+      for (const nsEstimate of response.data) {
+        try {
+          const existingEstimate = await storage.getEstimateByNetsuiteId(nsEstimate.id);
+          
+          const estimateData: InsertEstimate = {
+            userId,
+            netsuiteId: nsEstimate.id,
+            estimateNumber: nsEstimate.tranid,
+            status: this.mapEstimateStatus(nsEstimate.status),
+            estimateDate: new Date(nsEstimate.trandate),
+            expiryDate: nsEstimate.duedate ? new Date(nsEstimate.duedate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default to 30 days from now if no expiry date
+            totalAmount: nsEstimate.total.toString(),
+            currency: nsEstimate.currency || 'USD',
+            customerName: user.companyName || `${user.firstName} ${user.lastName}`,
+            items: nsEstimate.item ? JSON.stringify(nsEstimate.item) : null,
+            isFresh: true,
+            dataFreshness: 'live',
+          };
+
+          if (existingEstimate) {
+            await storage.updateEstimate(existingEstimate.id, estimateData);
+          } else {
+            await storage.createEstimate(estimateData);
+          }
+
+          recordsProcessed++;
+        } catch (error) {
+          errors.push(`Failed to sync estimate ${nsEstimate.id}: ${error}`);
+        }
+      }
+
+      // Broadcast live update to connected clients
+      this.broadcastSyncUpdate('estimates_updated', {
+        userId,
+        recordsProcessed,
+        dataFreshness: 'live',
+      });
+
+      return {
+        success: true,
+        recordsProcessed,
+        errors,
+        duration: Date.now() - startTime,
+      };
+    } catch (error) {
+      errors.push(`Sync error: ${error}`);
+      return {
+        success: false,
+        recordsProcessed,
+        errors,
+        duration: Date.now() - startTime,
+      };
+    }
+  }
+
+  private mapEstimateStatus(nsStatus: string): string {
+    const statusMap: Record<string, string> = {
+      'Open': 'sent',
+      'Closed': 'accepted',
+      'Voided': 'rejected',
+      'Expired': 'expired',
+      'In Discussion': 'draft',
+    };
+    return statusMap[nsStatus] || 'draft';
   }
 }
 
