@@ -414,6 +414,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Support tickets
+  // Estimates
+  app.get('/api/estimates', authenticateToken, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const estimates = await storage.getUserEstimates(req.user.id, limit);
+      res.json(estimates);
+    } catch (error) {
+      console.error('Estimates error:', error);
+      res.status(500).json({ message: 'Failed to fetch estimates' });
+    }
+  });
+
   app.get('/api/support/tickets', authenticateToken, async (req: any, res) => {
     try {
       const tickets = await storage.getUserSupportTickets(req.user.id);

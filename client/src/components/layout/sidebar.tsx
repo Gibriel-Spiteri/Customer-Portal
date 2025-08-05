@@ -7,7 +7,8 @@ import {
   CreditCard, 
   Star, 
   Settings, 
-  HelpCircle 
+  HelpCircle,
+  Calculator 
 } from "lucide-react";
 
 const navigation = [
@@ -21,6 +22,11 @@ const navigation = [
     href: '/orders',
     icon: ShoppingCart,
     badge: 3, // This could be dynamic
+  },
+  {
+    name: 'Estimates',
+    href: '/estimates',
+    icon: Calculator,
   },
   {
     name: 'Invoices',

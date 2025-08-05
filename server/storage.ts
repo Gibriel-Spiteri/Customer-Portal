@@ -1,10 +1,11 @@
 import { 
-  users, accounts, orders, invoices, payments, syncJobs, supportTickets,
+  users, accounts, orders, invoices, payments, syncJobs, supportTickets, estimates,
   loyaltyAccounts, loyaltyTransactions, loyaltyRewards,
   type User, type InsertUser, type Account, type InsertAccount,
   type Order, type InsertOrder, type Invoice, type InsertInvoice,
   type Payment, type InsertPayment, type SyncJob, type InsertSyncJob,
-  type SupportTicket, type InsertSupportTicket
+  type SupportTicket, type InsertSupportTicket,
+  type Estimate, type InsertEstimate
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
@@ -52,6 +53,12 @@ export interface IStorage {
   getUserSupportTickets(userId: string): Promise<SupportTicket[]>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
   updateSupportTicket(id: string, ticket: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
+  
+  // Estimate operations
+  getUserEstimates(userId: string, limit?: number): Promise<Estimate[]>;
+  getEstimate(id: string): Promise<Estimate | undefined>;
+  createEstimate(estimate: InsertEstimate): Promise<Estimate>;
+  updateEstimate(id: string, estimate: Partial<Estimate>): Promise<Estimate | undefined>;
 
   // Loyalty operations
   getLoyaltyAccount(userId: string): Promise<any>;
@@ -261,6 +268,34 @@ export class DatabaseStorage implements IStorage {
       .where(eq(supportTickets.id, id))
       .returning();
     return updatedTicket || undefined;
+  }
+
+  async getUserEstimates(userId: string, limit = 20): Promise<Estimate[]> {
+    return await db.select().from(estimates)
+      .where(eq(estimates.userId, userId))
+      .orderBy(desc(estimates.estimateDate))
+      .limit(limit);
+  }
+
+  async getEstimate(id: string): Promise<Estimate | undefined> {
+    const [estimate] = await db.select().from(estimates).where(eq(estimates.id, id));
+    return estimate || undefined;
+  }
+
+  async createEstimate(insertEstimate: InsertEstimate): Promise<Estimate> {
+    const [estimate] = await db.insert(estimates).values({
+      ...insertEstimate,
+      updatedAt: new Date(),
+    }).returning();
+    return estimate;
+  }
+
+  async updateEstimate(id: string, estimate: Partial<Estimate>): Promise<Estimate | undefined> {
+    const [updatedEstimate] = await db.update(estimates)
+      .set({ ...estimate, updatedAt: new Date() })
+      .where(eq(estimates.id, id))
+      .returning();
+    return updatedEstimate || undefined;
   }
 
   async getUserDashboardData(userId: string) {

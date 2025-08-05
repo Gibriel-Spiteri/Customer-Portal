@@ -125,6 +125,23 @@ export const supportTickets = pgTable("support_tickets", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const estimates = pgTable("estimates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  netsuiteId: text("netsuite_id"),
+  estimateNumber: text("estimate_number").notNull(),
+  status: text("status").default("draft"), // 'draft', 'sent', 'viewed', 'accepted', 'expired', 'rejected'
+  customerName: text("customer_name").notNull(),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").default("USD"),
+  estimateDate: timestamp("estimate_date").notNull(),
+  expiryDate: timestamp("expiry_date").notNull(),
+  dataFreshness: text("data_freshness").default("cached"), // 'live', 'cached'
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const loyaltyAccounts = pgTable("loyalty_accounts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -185,6 +202,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   invoices: many(invoices),
   payments: many(payments),
   supportTickets: many(supportTickets),
+  estimates: many(estimates),
   loyaltyAccount: one(loyaltyAccounts),
   loyaltyTransactions: many(loyaltyTransactions),
 }));
@@ -230,6 +248,13 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
   user: one(users, {
     fields: [supportTickets.userId],
+    references: [users.id],
+  }),
+}));
+
+export const estimatesRelations = relations(estimates, ({ one }) => ({
+  user: one(users, {
+    fields: [estimates.userId],
     references: [users.id],
   }),
 }));
@@ -304,6 +329,13 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit
   updatedAt: true,
 });
 
+export const insertEstimateSchema = createInsertSchema(estimates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastSyncAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -319,3 +351,5 @@ export type SyncJob = typeof syncJobs.$inferSelect;
 export type InsertSyncJob = z.infer<typeof insertSyncJobSchema>;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type Estimate = typeof estimates.$inferSelect;
+export type InsertEstimate = z.infer<typeof insertEstimateSchema>;
