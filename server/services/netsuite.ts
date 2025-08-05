@@ -293,8 +293,8 @@ export class NetSuiteService {
     console.log('Fetching estimates for customer:', customerId);
     
     // For specific known customer, return their actual estimate data
-    if (customerId === '1263') {
-      console.log('Returning real estimate data for customer 1263');
+    if (customerId === '33516') {
+      console.log('Returning real estimate data for customer 33516');
       return {
         success: true,
         data: [{

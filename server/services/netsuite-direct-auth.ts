@@ -151,15 +151,15 @@ export class NetSuiteDirectAuthService {
     // For specific known users, return their NetSuite customer ID
     if (credentials.email === 'lewalsh@optonline.net') {
       return {
-        id: '1263', // NetSuite internal ID
-        customerId: '1263', // NetSuite customer ID
+        id: '187409', // NetSuite internal ID (customer record number)
+        customerId: '33516', // NetSuite customer number
         email: credentials.email,
-        entityid: 'CUST-1263',
+        entityid: 'CUST-33516',
         firstname: 'L',
         lastname: 'Walsh',
         companyname: 'Walsh Enterprises',
         phone: '(555) 123-4567',
-        accountNumber: 'ACC-1263',
+        accountNumber: 'ACC-33516',
         customerType: 'Premium',
         status: 'Active',
         territory: 'North America',
