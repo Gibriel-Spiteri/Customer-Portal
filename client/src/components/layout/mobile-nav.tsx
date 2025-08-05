@@ -16,10 +16,9 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Orders',
+    name: 'Sales Orders',
     href: '/orders',
     icon: ShoppingCart,
-    badge: 3, // This could be dynamic
   },
   {
     name: 'Invoices',
@@ -30,6 +29,11 @@ const navigation = [
     name: 'Payments',
     href: '/payments',
     icon: CreditCard,
+  },
+  {
+    name: 'Loyalty Program',
+    href: '/loyalty',
+    icon: Settings,
   },
   {
     name: 'Account Settings',

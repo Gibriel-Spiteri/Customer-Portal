@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
-import { Header } from "@/components/layout/header";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileLayout } from "@/components/layout/mobile-layout";
 import { SyncStatusDetail } from "@/components/sync-status";
 import { DataBadge } from "@/components/data-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,58 +104,50 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="flex">
-        <Sidebar />
-        
-        <main className="flex-1 overflow-y-auto">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* Welcome Section */}
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Welcome back, {user.firstName}
-                </h1>
-                <p className="mt-1 text-gray-600">
-                  Here's what's happening with your account today.
-                </p>
-              </div>
+    <MobileLayout>
+      {/* Welcome Section */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Welcome back, {user.firstName}
+        </h1>
+        <p className="mt-1 text-gray-600">
+          Here's what's happening with your account today.
+        </p>
+      </div>
 
-              {/* Sync Information Banner */}
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="mr-3">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-blue-800">Data Synchronization Status</h3>
-                      <p className="text-sm text-blue-700 mt-1">
-                        <strong>Live Data:</strong> Orders, Payments, Account Balance • 
-                        <strong> Cached Data:</strong> Historical records, customer details (Updated every 10 min)
-                      </p>
-                    </div>
-                  </div>
-                  <Link href="/sync-status">
-                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                      View Details
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+      {/* Sync Information Banner */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="mr-3">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-blue-800">Data Synchronization Status</h3>
+              <p className="text-sm text-blue-700 mt-1">
+                <strong>Live Data:</strong> Orders, Payments, Account Balance • 
+                <strong> Cached Data:</strong> Historical records, customer details (Updated every 10 min)
+              </p>
+            </div>
+          </div>
+          <Link href="/sync-status">
+            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+              View Details
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </div>
 
-              {/* Error State */}
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
-                </div>
-              )}
+      {/* Error State */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
+        </div>
+      )}
 
-              {/* Key Metrics Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Key Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Account Balance */}
                 <Card>
                   <CardContent className="p-5">
@@ -286,8 +277,8 @@ export default function Dashboard() {
                 </Card>
               </div>
 
-              {/* Recent Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Recent Orders */}
                 <Card>
                   <CardHeader>
@@ -405,35 +396,43 @@ export default function Dashboard() {
                 </Card>
               </div>
 
-              {/* Quick Actions */}
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button variant="outline" className="flex items-center justify-center">
-                      <Download className="mr-2 h-4 w-4 netsuite-blue" />
-                      Download Invoices
-                    </Button>
-                    <Button variant="outline" className="flex items-center justify-center">
-                      <CreditCard className="mr-2 h-4 w-4 text-success" />
-                      Make Payment
-                    </Button>
-                    <Button variant="outline" className="flex items-center justify-center">
-                      <Phone className="mr-2 h-4 w-4 text-warning" />
-                      Contact Support
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Sync Status Detail */}
-              <SyncStatusDetail />
-            </div>
+      {/* Quick Actions */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center py-3 touch-manipulation"
+              size="lg"
+            >
+              <Download className="mr-2 h-4 w-4 netsuite-blue" />
+              Download Invoices
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center py-3 touch-manipulation"
+              size="lg"
+            >
+              <CreditCard className="mr-2 h-4 w-4 text-success" />
+              Make Payment
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center py-3 touch-manipulation"
+              size="lg"
+            >
+              <Phone className="mr-2 h-4 w-4 text-warning" />
+              Contact Support
+            </Button>
           </div>
-        </main>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+
+        {/* Sync Status Detail */}
+        <SyncStatusDetail />
+    </MobileLayout>
   );
 }
