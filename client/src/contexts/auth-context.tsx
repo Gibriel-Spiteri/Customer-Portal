@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check for existing token on app load
     const savedToken = localStorage.getItem('auth_token');
+    console.log('AuthProvider: Checking for saved token:', savedToken ? 'Found' : 'Not found');
     if (savedToken) {
       setToken(savedToken);
       // Verify token with server
@@ -40,24 +41,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Redirect to login if not authenticated
-    if (!isLoading && !user && !window.location.pathname.includes('/login')) {
+    if (!isLoading && !user && !token && !window.location.pathname.includes('/login')) {
+      console.log('AuthProvider: Redirecting to login - isLoading:', isLoading, 'user:', user, 'token:', token);
       setLocation('/login');
     }
-  }, [user, isLoading, setLocation]);
+  }, [user, isLoading, token, setLocation]);
 
   const verifyToken = async (token: string) => {
     try {
+      console.log('AuthProvider: Verifying token...');
       const response = await fetch('/api/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
+      console.log('AuthProvider: Token verification response:', response.status);
+
       if (response.ok) {
         const userData = await response.json();
+        console.log('AuthProvider: User data received:', userData);
         setUser(userData);
       } else {
         // Token invalid, clear it
+        console.log('AuthProvider: Token invalid, clearing...');
         localStorage.removeItem('auth_token');
         setToken(null);
       }

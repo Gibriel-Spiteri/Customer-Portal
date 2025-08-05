@@ -100,7 +100,8 @@ export default function Dashboard() {
   };
 
   if (!user) {
-    return <div>Please log in to access the dashboard</div>;
+    // Don't render anything while auth is still loading
+    return null;
   }
 
   return (
