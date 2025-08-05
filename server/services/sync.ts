@@ -380,7 +380,10 @@ export class SyncService {
 
     try {
       const user = await storage.getUser(userId);
+      console.log('Syncing estimates for user:', userId, 'NetSuite customer ID:', user?.netsuiteCustomerId);
+      
       if (!user?.netsuiteCustomerId) {
+        console.error('User has no NetSuite customer ID');
         return {
           success: false,
           recordsProcessed: 0,
@@ -390,6 +393,7 @@ export class SyncService {
       }
 
       const response = await netsuiteService.getCustomerEstimates(user.netsuiteCustomerId, 20);
+      console.log('NetSuite estimates response:', response);
       
       if (!response.success || !response.data) {
         errors.push(response.error || 'Failed to fetch estimates from NetSuite');
