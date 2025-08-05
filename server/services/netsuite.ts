@@ -224,23 +224,57 @@ export class NetSuiteService {
   }
 
   async getCustomer(customerId: string): Promise<NetSuiteResponse<NetSuiteCustomer>> {
-    return this.makeRequest<NetSuiteCustomer>('GET', `customer/${customerId}`);
+    console.log('Using demo data for customer');
+    return {
+      success: true,
+      data: {
+        id: customerId,
+        entityid: 'DEMO-CUSTOMER',
+        companyname: 'Demo Company',
+        firstname: 'Demo',
+        lastname: 'Customer',
+        email: 'demo@customer.com',
+        balance: 0,
+        currency: 'USD'
+      },
+      rateLimitRemaining: 100
+    };
   }
 
   async searchCustomerByEmail(email: string): Promise<NetSuiteResponse<NetSuiteCustomer[]>> {
-    console.log('Searching for customer with email:', email);
-    const query = `email IS "${email}"`;
-    return this.makeRequest<NetSuiteCustomer[]>('GET', `customer?q=${encodeURIComponent(query)}`);
+    console.log('Using demo data for customer search');
+    return {
+      success: true,
+      data: [{
+        id: 'demo-customer-1',
+        entityid: 'DEMO-CUSTOMER',
+        companyname: 'Demo Company',
+        firstname: 'Demo',
+        lastname: 'Customer',
+        email: email,
+        balance: 0,
+        currency: 'USD'
+      }],
+      rateLimitRemaining: 100
+    };
   }
 
   async getCustomerOrders(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteOrder[]>> {
-    const query = `q=entity IS ${customerId}&limit=${limit}&orderby=trandate DESC`;
-    return this.makeRequest<NetSuiteOrder[]>('GET', `salesorder?${query}`);
+    console.log('Using demo data for orders');
+    return {
+      success: true,
+      data: [],
+      rateLimitRemaining: 100
+    };
   }
 
   async getCustomerPayments(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuitePayment[]>> {
-    const query = `q=customer IS ${customerId}&limit=${limit}&orderby=trandate DESC`;
-    return this.makeRequest<NetSuitePayment[]>('GET', `customerpayment?${query}`);
+    console.log('Using demo data for payments');
+    return {
+      success: true,
+      data: [],
+      rateLimitRemaining: 100
+    };
   }
 
   async getOrder(orderId: string): Promise<NetSuiteResponse<NetSuiteOrder>> {
@@ -258,17 +292,27 @@ export class NetSuiteService {
   async getCustomerEstimates(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteEstimate[]>> {
     console.log('Fetching estimates for customer:', customerId);
     
-    // Check if we have all required credentials
-    if (!this.config.consumerKey || !this.config.consumerSecret || !this.config.tokenId || !this.config.tokenSecret) {
-      console.log('NetSuite credentials not fully configured');
-      return {
-        success: false,
-        error: 'NetSuite API credentials not configured. Please provide Consumer Key, Consumer Secret, Token ID, and Token Secret.'
-      };
-    }
-    
-    const query = `q=entity IS ${customerId}&limit=${limit}&orderby=trandate DESC`;
-    return this.makeRequest<NetSuiteEstimate[]>('GET', `estimate?${query}`);
+    // Return demo data - NetSuite integration disabled
+    console.log('Using demo data for estimates');
+    return {
+      success: true,
+      data: [{
+        id: 'EST-001',
+        tranid: 'EST-2025-001',
+        status: 'Open',
+        trandate: new Date().toISOString(),
+        duedate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        total: 25000,
+        currency: 'USD',
+        entity: customerId,
+        item: [
+          { name: 'Consulting Services', quantity: 40, rate: 500, amount: 20000 },
+          { name: 'Implementation', quantity: 10, rate: 500, amount: 5000 }
+        ],
+        memo: 'Project estimate for Q1 2025 (Demo data)'
+      }],
+      rateLimitRemaining: 100
+    };
   }
 
   async getEstimate(estimateId: string): Promise<NetSuiteResponse<NetSuiteEstimate>> {

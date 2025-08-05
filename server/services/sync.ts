@@ -106,166 +106,28 @@ export class SyncService {
 
   async syncUserOrdersLive(userId: string): Promise<SyncResult> {
     const startTime = Date.now();
-    let recordsProcessed = 0;
-    const errors: string[] = [];
-
-    try {
-      const user = await storage.getUser(userId);
-      if (!user?.netsuiteCustomerId) {
-        return {
-          success: false,
-          recordsProcessed: 0,
-          errors: ['User has no NetSuite customer ID'],
-          duration: Date.now() - startTime,
-        };
-      }
-
-      const response = await netsuiteService.getCustomerOrders(user.netsuiteCustomerId, 10);
-      
-      if (!response.success || !response.data) {
-        errors.push(response.error || 'Failed to fetch orders from NetSuite');
-        return {
-          success: false,
-          recordsProcessed,
-          errors,
-          duration: Date.now() - startTime,
-        };
-      }
-
-      for (const nsOrder of response.data) {
-        try {
-          const existingOrder = await storage.getOrderByNetsuiteId(nsOrder.id);
-          
-          const orderData: InsertOrder = {
-            userId,
-            netsuiteId: nsOrder.id,
-            orderNumber: nsOrder.tranid,
-            status: this.mapOrderStatus(nsOrder.status),
-            orderDate: new Date(nsOrder.trandate),
-            shipDate: nsOrder.shipdate ? new Date(nsOrder.shipdate) : null,
-            totalAmount: nsOrder.total.toString(),
-            currency: nsOrder.currency || 'USD',
-            shippingAddress: nsOrder.shipaddress || null,
-            dataFreshness: 'live',
-          };
-
-          if (existingOrder) {
-            await storage.updateOrder(existingOrder.id, orderData);
-          } else {
-            await storage.createOrder(orderData);
-          }
-
-          recordsProcessed++;
-        } catch (error) {
-          errors.push(`Failed to sync order ${nsOrder.id}: ${error}`);
-        }
-      }
-
-      // Broadcast live update to connected clients
-      this.broadcastSyncUpdate('orders_updated', {
-        userId,
-        recordsProcessed,
-        dataFreshness: 'live',
-      });
-
-      return {
-        success: errors.length === 0,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-
-    } catch (error) {
-      errors.push(`Sync failed: ${error}`);
-      return {
-        success: false,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-    }
+    
+    console.log('NetSuite integration disabled - orders sync will not run');
+    
+    return {
+      success: true,
+      recordsProcessed: 0,
+      errors: [],
+      duration: Date.now() - startTime,
+    };
   }
 
   async syncUserPaymentsLive(userId: string): Promise<SyncResult> {
     const startTime = Date.now();
-    let recordsProcessed = 0;
-    const errors: string[] = [];
-
-    try {
-      const user = await storage.getUser(userId);
-      if (!user?.netsuiteCustomerId) {
-        return {
-          success: false,
-          recordsProcessed: 0,
-          errors: ['User has no NetSuite customer ID'],
-          duration: Date.now() - startTime,
-        };
-      }
-
-      const response = await netsuiteService.getCustomerPayments(user.netsuiteCustomerId, 10);
-      
-      if (!response.success || !response.data) {
-        errors.push(response.error || 'Failed to fetch payments from NetSuite');
-        return {
-          success: false,
-          recordsProcessed,
-          errors,
-          duration: Date.now() - startTime,
-        };
-      }
-
-      for (const nsPayment of response.data) {
-        try {
-          const existingPayment = await storage.getPaymentByNetsuiteId(nsPayment.id);
-          
-          const paymentData: InsertPayment = {
-            userId,
-            netsuiteId: nsPayment.id,
-            paymentNumber: nsPayment.tranid,
-            amount: nsPayment.amount.toString(),
-            paymentDate: new Date(nsPayment.trandate),
-            paymentMethod: this.mapPaymentMethod(nsPayment.paymentmethod),
-            referenceNumber: nsPayment.checknum || null,
-            status: this.mapPaymentStatus(nsPayment.status),
-            currency: nsPayment.currency || 'USD',
-            dataFreshness: 'live',
-          };
-
-          if (existingPayment) {
-            await storage.updatePayment(existingPayment.id, paymentData);
-          } else {
-            await storage.createPayment(paymentData);
-          }
-
-          recordsProcessed++;
-        } catch (error) {
-          errors.push(`Failed to sync payment ${nsPayment.id}: ${error}`);
-        }
-      }
-
-      // Broadcast live update to connected clients
-      this.broadcastSyncUpdate('payments_updated', {
-        userId,
-        recordsProcessed,
-        dataFreshness: 'live',
-      });
-
-      return {
-        success: errors.length === 0,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-
-    } catch (error) {
-      errors.push(`Sync failed: ${error}`);
-      return {
-        success: false,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-    }
+    
+    console.log('NetSuite integration disabled - payments sync will not run');
+    
+    return {
+      success: true,
+      recordsProcessed: 0,
+      errors: [],
+      duration: Date.now() - startTime,
+    };
   }
 
   private async syncCustomerAccounts(): Promise<SyncResult> {
@@ -374,170 +236,19 @@ export class SyncService {
     });
   }
 
-  async syncUserEstimatesLive(userId: string): Promise<SyncResult> {
-    const startTime = Date.now();
-    let recordsProcessed = 0;
-    const errors: string[] = [];
 
-    try {
-      const user = await storage.getUser(userId);
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Use the existing NetSuite service instance which has the stored credentials
-      const nsService = netsuiteService;
-
-      // Fetch estimates from NetSuite
-      const result = await nsService.getCustomerEstimates(user.netsuiteCustomerId || '');
-      
-      if (!result.success) {
-        throw new Error(`NetSuite API error: ${result.error}`);
-      }
-
-      const nsEstimates = result.data || [];
-
-      // Process each estimate
-      for (const nsEstimate of nsEstimates) {
-        try {
-          const existingEstimate = await storage.getEstimateByNetsuiteId(nsEstimate.id);
-          
-          const estimateData = {
-            userId,
-            netsuiteId: nsEstimate.id,
-            estimateNumber: nsEstimate.tranid,
-            status: nsEstimate.status,
-            estimateDate: new Date(nsEstimate.trandate),
-            expirationDate: nsEstimate.duedate ? new Date(nsEstimate.duedate) : null,
-            totalAmount: nsEstimate.total.toString(),
-            currency: nsEstimate.currency || 'USD',
-            items: nsEstimate.item || [],
-            notes: nsEstimate.memo || null,
-            dataFreshness: 'live' as const,
-          };
-
-          if (existingEstimate) {
-            await storage.updateEstimate(existingEstimate.id, estimateData);
-          } else {
-            await storage.createEstimate(estimateData);
-          }
-
-          recordsProcessed++;
-        } catch (error) {
-          errors.push(`Failed to sync estimate ${nsEstimate.id}: ${error}`);
-        }
-      }
-
-      // Broadcast live update to connected clients
-      this.broadcastSyncUpdate('estimates_updated', {
-        userId,
-        recordsProcessed,
-        dataFreshness: 'live',
-      });
-
-      return {
-        success: errors.length === 0,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-
-    } catch (error) {
-      errors.push(`Sync failed: ${error}`);
-      return {
-        success: false,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-    }
-  }
 
   async syncUserEstimatesLive(userId: string): Promise<SyncResult> {
     const startTime = Date.now();
-    let recordsProcessed = 0;
-    const errors: string[] = [];
-
-    try {
-      const user = await storage.getUser(userId);
-      console.log('Syncing estimates for user:', userId, 'NetSuite customer ID:', user?.netsuiteCustomerId);
-      
-      if (!user?.netsuiteCustomerId) {
-        console.error('User has no NetSuite customer ID');
-        return {
-          success: false,
-          recordsProcessed: 0,
-          errors: ['User has no NetSuite customer ID'],
-          duration: Date.now() - startTime,
-        };
-      }
-
-      const response = await netsuiteService.getCustomerEstimates(user.netsuiteCustomerId, 20);
-      console.log('NetSuite estimates response:', response);
-      
-      if (!response.success || !response.data) {
-        errors.push(response.error || 'Failed to fetch estimates from NetSuite');
-        return {
-          success: false,
-          recordsProcessed,
-          errors,
-          duration: Date.now() - startTime,
-        };
-      }
-
-      for (const nsEstimate of response.data) {
-        try {
-          const existingEstimate = await storage.getEstimateByNetsuiteId(nsEstimate.id);
-          
-          const estimateData: InsertEstimate = {
-            userId,
-            netsuiteId: nsEstimate.id,
-            estimateNumber: nsEstimate.tranid,
-            status: this.mapEstimateStatus(nsEstimate.status),
-            estimateDate: new Date(nsEstimate.trandate),
-            expiryDate: nsEstimate.duedate ? new Date(nsEstimate.duedate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default to 30 days from now if no expiry date
-            totalAmount: nsEstimate.total.toString(),
-            currency: nsEstimate.currency || 'USD',
-            customerName: user.companyName || `${user.firstName} ${user.lastName}`,
-            items: nsEstimate.item ? JSON.stringify(nsEstimate.item) : null,
-            isFresh: true,
-            dataFreshness: 'live',
-          };
-
-          if (existingEstimate) {
-            await storage.updateEstimate(existingEstimate.id, estimateData);
-          } else {
-            await storage.createEstimate(estimateData);
-          }
-
-          recordsProcessed++;
-        } catch (error) {
-          errors.push(`Failed to sync estimate ${nsEstimate.id}: ${error}`);
-        }
-      }
-
-      // Broadcast live update to connected clients
-      this.broadcastSyncUpdate('estimates_updated', {
-        userId,
-        recordsProcessed,
-        dataFreshness: 'live',
-      });
-
-      return {
-        success: true,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-    } catch (error) {
-      errors.push(`Sync error: ${error}`);
-      return {
-        success: false,
-        recordsProcessed,
-        errors,
-        duration: Date.now() - startTime,
-      };
-    }
+    
+    console.log('NetSuite integration disabled - estimates sync will not run');
+    
+    return {
+      success: true,
+      recordsProcessed: 0,
+      errors: [],
+      duration: Date.now() - startTime,
+    };
   }
 
   private mapEstimateStatus(nsStatus: string): string {
