@@ -290,68 +290,33 @@ export class NetSuiteService {
   }
 
   async getCustomerEstimates(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteEstimate[]>> {
-    console.log('Fetching estimates for customer:', customerId);
+    console.log('Fetching live estimates from NetSuite for customer:', customerId);
     
-    // For specific known customer, return their actual estimate data
-    if (customerId === '33516') {
-      console.log('Returning real estimate data for customer 33516');
+    try {
+      // Make actual NetSuite REST API call to fetch estimates
+      // Use customer record ID for filtering estimates
+      const endpoint = `estimate?q=entity IS ${customerId}&limit=${limit}&expandSubResources=true`;
+      console.log('NetSuite API endpoint:', endpoint);
+      
+      const response = await this.makeRequest<NetSuiteEstimate[]>('GET', endpoint);
+      
+      if (response.success && response.data) {
+        console.log(`Successfully fetched ${response.data.length} estimates from NetSuite`);
+        return response;
+      } else {
+        console.error('Failed to fetch estimates from NetSuite:', response.error);
+        return {
+          success: false,
+          error: response.error || 'Failed to fetch estimates from NetSuite'
+        };
+      }
+    } catch (error) {
+      console.error('NetSuite estimates API error:', error);
       return {
-        success: true,
-        data: [{
-          id: 'EST-2025-001',
-          tranid: 'EST-2025-001',
-          status: 'Open',
-          trandate: '2025-01-15T10:00:00.000Z',
-          duedate: '2025-02-14T23:59:59.000Z',
-          total: 47500.00,
-          currency: 'USD',
-          entity: customerId,
-          item: [
-            { name: 'Enterprise Software License', quantity: 1, rate: 25000, amount: 25000 },
-            { name: 'Implementation Services', quantity: 40, rate: 350, amount: 14000 },
-            { name: 'Training & Support (6 months)', quantity: 1, rate: 8500, amount: 8500 }
-          ],
-          memo: 'Enterprise software implementation project - Q1 2025 deployment'
-        }, {
-          id: 'EST-2024-089',
-          tranid: 'EST-2024-089',
-          status: 'Approved',
-          trandate: '2024-12-10T14:30:00.000Z',
-          duedate: '2025-01-09T23:59:59.000Z',
-          total: 12750.00,
-          currency: 'USD',
-          entity: customerId,
-          item: [
-            { name: 'Hardware Upgrade', quantity: 3, rate: 3500, amount: 10500 },
-            { name: 'Installation & Setup', quantity: 1, rate: 2250, amount: 2250 }
-          ],
-          memo: 'Hardware refresh project - Phase 1'
-        }],
-        rateLimitRemaining: 100
+        success: false,
+        error: 'NetSuite API connection failed'
       };
     }
-    
-    // Return demo data for other customers
-    console.log('Using demo data for estimates');
-    return {
-      success: true,
-      data: [{
-        id: 'EST-001',
-        tranid: 'EST-2025-001',
-        status: 'Open',
-        trandate: new Date().toISOString(),
-        duedate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        total: 25000,
-        currency: 'USD',
-        entity: customerId,
-        item: [
-          { name: 'Consulting Services', quantity: 40, rate: 500, amount: 20000 },
-          { name: 'Implementation', quantity: 10, rate: 500, amount: 5000 }
-        ],
-        memo: 'Project estimate for Q1 2025 (Demo data)'
-      }],
-      rateLimitRemaining: 100
-    };
   }
 
   async getEstimate(estimateId: string): Promise<NetSuiteResponse<NetSuiteEstimate>> {
