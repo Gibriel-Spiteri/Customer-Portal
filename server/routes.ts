@@ -160,6 +160,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Ensure user has an account record
+      let account = await storage.getUserAccount(user.id);
+      if (!account) {
+        // Create account for NetSuite user
+        account = await storage.createAccount({
+          userId: user.id,
+          netsuiteId: customerData.id,
+          balance: '0.00',
+          creditLimit: customerData.creditLimit || '50000.00',
+          currency: 'USD',
+          isActive: true,
+          dataFreshness: 'live'
+        });
+      }
+
       // Create JWT token for our application
       const token = jwt.sign(
         { 
