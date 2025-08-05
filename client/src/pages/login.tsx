@@ -71,12 +71,12 @@ export default function Login() {
       console.log('NetSuite auth response data:', data);
 
       if (response.ok) {
-        // Store token
+        // Store token and user data
         localStorage.setItem('auth_token', data.token);
-        console.log('NetSuite authentication successful, fetching user profile...');
+        console.log('NetSuite authentication successful, redirecting...');
         
-        // Manually trigger a page navigation to force AuthProvider to reload
-        window.location.href = '/';
+        // Force a complete page reload to refresh authentication state
+        window.location.reload();
       } else {
         const errorMessage = data.message || 'NetSuite authentication failed';
         console.error('NetSuite authentication failed:', errorMessage);

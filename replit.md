@@ -33,11 +33,13 @@ Preferred communication style: Simple, everyday language.
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
 ### Authentication and Authorization
-- **Direct NetSuite authentication**: Users log in with their NetSuite credentials directly in the app
-- **JWT-based authentication** with secure token storage containing NetSuite credentials for API calls
+- **Active NetSuite authentication**: Users can now log in with their real NetSuite credentials
+- **JWT-based authentication** with secure token storage and 24-hour expiration
+- **Live data integration**: Dashboard automatically fetches real-time account balance from NetSuite
+- **Dual authentication support**: Both NetSuite credentials and demo mode available
 - **Session management** with PostgreSQL session store and secure cookie handling
-- **Password hashing** using bcrypt for local accounts
-- **Route protection** middleware for API endpoints
+- **Password hashing** using bcrypt for local demo accounts
+- **Route protection** middleware for API endpoints with NetSuite user context
 - **User context** management throughout the React application
 - **Automatic data fetching**: NetSuite data is fetched automatically using stored credentials without user interaction
 

@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import { netsuiteAuth } from "./services/netsuite-auth";
 import { netsuiteDirectAuth } from "./services/netsuite-direct-auth";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; username: string };
@@ -27,16 +27,25 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string };
-    const user = await storage.getUser(decoded.userId);
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    
+    // Handle both old format (userId) and new format (id)
+    const userId = decoded.id || decoded.userId;
+    const user = await storage.getUser(userId);
     
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    req.user = { id: user.id, username: user.username };
+    req.user = { 
+      id: user.id, 
+      username: user.username,
+      netsuiteCustomerId: decoded.netsuiteCustomerId,
+      isNetSuiteUser: decoded.isNetSuiteUser
+    };
     next();
   } catch (error) {
+    console.error('Token verification error:', error);
     return res.status(403).json({ message: 'Invalid token' });
   }
 };
@@ -185,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Try to get live account balance
           const accountBalance = await netsuiteService.getCustomerBalance(req.user.netsuiteCustomerId);
           if (accountBalance.success && accountBalance.data) {
-            dashboardData.account.balance = accountBalance.data.balance;
+            dashboardData.account.balance = accountBalance.data.balance.toString();
             dashboardData.account.dataFreshness = 'live';
             console.log('Updated account balance with live NetSuite data:', accountBalance.data.balance);
           }
@@ -198,10 +207,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ['pending', 'processing'].includes(order.status.toLowerCase())
             ).length;
             
-            if (dashboardData.metrics) {
-              dashboardData.metrics.pendingOrders = pendingCount;
-              dashboardData.metrics.dataFreshness = 'live';
+            // Add metrics if they don't exist
+            if (!(dashboardData as any).metrics) {
+              (dashboardData as any).metrics = { pendingOrders: 0 };
             }
+            (dashboardData as any).metrics.pendingOrders = pendingCount;
+            (dashboardData as any).metrics.dataFreshness = 'live';
             console.log('Updated pending orders count with live NetSuite data:', pendingCount);
           }
           
@@ -445,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           netsuiteCustomerId: result.user.customerId,
           isNetSuiteUser: true
         },
-        process.env.JWT_SECRET || 'fallback_secret',
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
