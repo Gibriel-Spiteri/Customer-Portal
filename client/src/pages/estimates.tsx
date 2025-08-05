@@ -217,24 +217,14 @@ export default function Estimates() {
                     <div className="text-center py-8 text-red-600">
                       Failed to load estimates. Please try again.
                     </div>
-                  ) : showOAuthAuthorize || estimates.length === 0 ? (
+                  ) : estimates.length === 0 ? (
                     <div className="max-w-md mx-auto py-12">
-                      {showOAuthAuthorize ? (
-                        <OAuthAuthorize 
-                          onSuccess={() => {
-                            setShowOAuthAuthorize(false);
-                            refetch();
-                          }}
-                        />
-                      ) : (
-                        <div className="text-center">
-                          <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                          <p className="text-gray-500">No estimates found</p>
-                          <p className="text-sm text-gray-400 mt-1">
-                            Your estimates will appear here once created
-                          </p>
-                        </div>
-                      )}
+                      <OAuthAuthorize 
+                        onSuccess={() => {
+                          setShowOAuthAuthorize(false);
+                          refetch();
+                        }}
+                      />
                     </div>
                   ) : (
                     <Table>
