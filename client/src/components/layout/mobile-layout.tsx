@@ -25,7 +25,7 @@ export function MobileLayout({ children, className }: MobileLayoutProps) {
       {/* Header for all devices */}
       <Header />
       
-      <div className="flex h-screen pt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         {/* Desktop Sidebar */}
         <Sidebar />
         
@@ -34,7 +34,7 @@ export function MobileLayout({ children, className }: MobileLayoutProps) {
           "flex-1 overflow-y-auto pb-20 md:pb-4", // Add bottom padding for mobile nav
           className
         )}>
-          <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="px-4 pt-0 pb-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
             {children}
             
             {/* Quick Actions - Available on all pages */}
