@@ -396,40 +396,7 @@ export default function Dashboard() {
                 </Card>
               </div>
 
-      {/* Quick Actions */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
-              variant="outline" 
-              className="flex items-center justify-center py-3 touch-manipulation"
-              size="lg"
-            >
-              <Download className="mr-2 h-4 w-4 netsuite-blue" />
-              Download Invoices
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center justify-center py-3 touch-manipulation"
-              size="lg"
-            >
-              <CreditCard className="mr-2 h-4 w-4 text-success" />
-              Make Payment
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center justify-center py-3 touch-manipulation"
-              size="lg"
-            >
-              <Phone className="mr-2 h-4 w-4 text-warning" />
-              Contact Support
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
 
         {/* Sync Status Detail */}
         <SyncStatusDetail />

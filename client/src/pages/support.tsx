@@ -1,7 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
-import { Header } from "@/components/layout/header";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,15 +150,7 @@ export default function Support() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="flex">
-        <Sidebar />
-        
-        <main className="flex-1 overflow-y-auto">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+    <MobileLayout>
               {/* Header Section */}
               <div className="mb-8">
                 <div className="flex items-center justify-between">
@@ -447,10 +438,6 @@ export default function Support() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+    </MobileLayout>
   );
 }

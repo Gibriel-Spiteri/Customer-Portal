@@ -3,6 +3,9 @@ import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download, CreditCard, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileLayoutProps {
@@ -33,6 +36,41 @@ export function MobileLayout({ children, className }: MobileLayoutProps) {
         )}>
           <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
             {children}
+            
+            {/* Quick Actions - Available on all pages */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center py-3 touch-manipulation"
+                    size="lg"
+                  >
+                    <Download className="mr-2 h-4 w-4 netsuite-blue" />
+                    Download Invoices
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center py-3 touch-manipulation"
+                    size="lg"
+                  >
+                    <CreditCard className="mr-2 h-4 w-4 text-success" />
+                    Make Payment
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center py-3 touch-manipulation"
+                    size="lg"
+                  >
+                    <Phone className="mr-2 h-4 w-4 text-warning" />
+                    Contact Support
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>
