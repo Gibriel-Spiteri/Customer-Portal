@@ -148,7 +148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           password: '', // No password needed for NetSuite users
           firstName: customerData.firstname || '',
           lastName: customerData.lastname || '',
-          companyName: customerData.companyname || ''
+          companyName: customerData.companyname || '',
+          netsuiteCustomerId: customerData.customerId || customerData.id || ''
         });
       } else {
         // Update user data from NetSuite
@@ -156,6 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: customerData.firstname || user.firstName,
           lastName: customerData.lastname || user.lastName,
           companyName: customerData.companyname || user.companyName,
+          netsuiteCustomerId: customerData.customerId || customerData.id || user.netsuiteCustomerId,
           lastLoginAt: new Date()
         });
       }

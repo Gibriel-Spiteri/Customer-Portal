@@ -148,8 +148,31 @@ export class NetSuiteDirectAuthService {
     // Simulate customer data from NetSuite
     // In production, this would fetch actual customer data via REST API
     
+    // For specific known users, return their NetSuite customer ID
+    if (credentials.email === 'lewalsh@optonline.net') {
+      return {
+        id: '1263', // NetSuite internal ID
+        customerId: '1263', // NetSuite customer ID
+        email: credentials.email,
+        entityid: 'CUST-1263',
+        firstname: 'L',
+        lastname: 'Walsh',
+        companyname: 'Walsh Enterprises',
+        phone: '(555) 123-4567',
+        accountNumber: 'ACC-1263',
+        customerType: 'Premium',
+        status: 'Active',
+        territory: 'North America',
+        salesRep: 'John Smith',
+        creditLimit: 50000,
+        terms: 'Net 30',
+        taxExempt: false
+      };
+    }
+    
     return {
       id: `ns-${Date.now()}`,
+      customerId: `${Math.floor(Math.random() * 9000) + 1000}`, // Generate a NetSuite-like customer ID
       email: credentials.email,
       entityid: credentials.email,
       firstname: this.extractFirstName(credentials.email),
