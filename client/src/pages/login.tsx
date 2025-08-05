@@ -52,6 +52,11 @@ export default function Login() {
     setError("");
     
     try {
+      console.log('Attempting NetSuite authentication with:', { 
+        email: netsuiteFormData.email,
+        hasPassword: !!netsuiteFormData.password 
+      });
+
       const response = await fetch('/api/auth/netsuite-direct', {
         method: 'POST',
         headers: {
@@ -60,16 +65,27 @@ export default function Login() {
         body: JSON.stringify(netsuiteFormData),
       });
 
+      console.log('NetSuite auth response status:', response.status);
+      
       const data = await response.json();
+      console.log('NetSuite auth response data:', data);
 
       if (response.ok) {
         // Store token and redirect to dashboard
         localStorage.setItem('token', data.token);
-        window.location.href = '/';
+        console.log('NetSuite authentication successful, redirecting...');
+        
+        // Use a slight delay to ensure token is stored
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
       } else {
-        setError(data.message || 'NetSuite authentication failed');
+        const errorMessage = data.message || 'NetSuite authentication failed';
+        console.error('NetSuite authentication failed:', errorMessage);
+        setError(errorMessage);
       }
     } catch (err) {
+      console.error('NetSuite authentication error:', err);
       setError('Failed to authenticate with NetSuite. Please try again.');
     } finally {
       setNetsuiteSubmitting(false);
@@ -77,6 +93,7 @@ export default function Login() {
   };
 
   const handleNetsuiteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(""); // Clear any existing errors when user types
     setNetsuiteFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value,
