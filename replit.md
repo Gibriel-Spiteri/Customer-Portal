@@ -33,13 +33,13 @@ Preferred communication style: Simple, everyday language.
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
 ### Authentication and Authorization
-- **Dual authentication system**: Traditional JWT-based authentication and NetSuite OAuth 2.0 integration
-- **NetSuite OAuth 2.0** with Authorization Code Flow using PKCE for customer credential authentication
-- **JWT-based authentication** with secure token storage for local accounts
+- **Direct NetSuite authentication**: Users log in with their NetSuite credentials directly in the app
+- **JWT-based authentication** with secure token storage containing NetSuite credentials for API calls
 - **Session management** with PostgreSQL session store and secure cookie handling
 - **Password hashing** using bcrypt for local accounts
 - **Route protection** middleware for API endpoints
 - **User context** management throughout the React application
+- **Automatic data fetching**: NetSuite data is fetched automatically using stored credentials without user interaction
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data

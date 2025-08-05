@@ -385,15 +385,8 @@ export class SyncService {
         throw new Error('User not found');
       }
 
-      // Get user's OAuth access token
-      const accessToken = await netsuiteAuth.getUserAccessToken(userId);
-      if (!accessToken) {
-        console.log('No OAuth access token found for user:', userId);
-        throw new Error('User must complete OAuth authentication to sync estimates');
-      }
-
-      // Create NetSuite service instance with user's access token
-      const nsService = new NetSuiteService(accessToken);
+      // Use the existing NetSuite service instance which has the stored credentials
+      const nsService = netsuiteService;
 
       // Fetch estimates from NetSuite
       const result = await nsService.getCustomerEstimates(user.netsuiteCustomerId || '');

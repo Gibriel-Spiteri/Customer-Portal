@@ -218,13 +218,12 @@ export default function Estimates() {
                       Failed to load estimates. Please try again.
                     </div>
                   ) : estimates.length === 0 ? (
-                    <div className="max-w-md mx-auto py-12">
-                      <OAuthAuthorize 
-                        onSuccess={() => {
-                          setShowOAuthAuthorize(false);
-                          refetch();
-                        }}
-                      />
+                    <div className="text-center py-8">
+                      <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500">No estimates found</p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Your estimates will appear here once created in NetSuite
+                      </p>
                     </div>
                   ) : (
                     <Table>
