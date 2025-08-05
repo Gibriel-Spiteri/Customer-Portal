@@ -9,6 +9,7 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { netsuiteAuth } from "./services/netsuite-auth";
+import { netsuiteDirectAuth } from "./services/netsuite-direct-auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
 
@@ -111,6 +112,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // NetSuite direct authentication (credentials in form)
+  app.post('/api/auth/netsuite-direct', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+
+      // Authenticate with NetSuite using provided credentials
+      const authResult = await netsuiteDirectAuth.authenticateUser({
+        email,
+        password,
+        accountId: process.env.NETSUITE_ACCOUNT_ID || ''
+      });
+
+      if (!authResult.success) {
+        return res.status(401).json({ message: authResult.error || 'Authentication failed' });
+      }
+
+      const customerData = authResult.user;
+
+      // Create or update user in our database
+      let user = await storage.getUserByUsername(customerData.email);
+      
+      if (!user) {
+        // Create new user from NetSuite customer data
+        user = await storage.createUser({
+          username: customerData.email,
+          email: customerData.email,
+          password: '', // No password needed for NetSuite users
+          firstName: customerData.firstname || '',
+          lastName: customerData.lastname || '',
+          companyName: customerData.companyname || ''
+        });
+      } else {
+        // Update user data from NetSuite
+        await storage.updateUser(user.id, {
+          firstName: customerData.firstname || user.firstName,
+          lastName: customerData.lastname || user.lastName,
+          companyName: customerData.companyname || user.companyName,
+          lastLoginAt: new Date()
+        });
+      }
+
+      // Create JWT token for our application
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          username: user.username, 
+          authProvider: 'netsuite-direct',
+          netsuiteCustomerId: customerData.id
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: user.companyName,
+        },
+        netsuiteData: {
+          accountNumber: customerData.accountNumber,
+          customerType: customerData.customerType,
+          status: customerData.status
+        }
+      });
+
+    } catch (error) {
+      console.error('NetSuite direct authentication error:', error);
+      res.status(500).json({ message: 'Authentication failed. Please try again.' });
     }
   });
 
