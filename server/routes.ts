@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // NetSuite OAuth authentication routes
-  app.get('/api/auth/netsuite', (req, res) => {
+  app.get('/api/auth/netsuite', authenticateToken, async (req: any, res) => {
     try {
       const { url, state, codeVerifier } = netsuiteAuth.generateAuthorizationUrl();
       
@@ -224,6 +224,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 10 * 60 * 1000 // 10 minutes
       });
       res.cookie('oauth_code_verifier', codeVerifier, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 10 * 60 * 1000 // 10 minutes
+      });
+      // Store the current user ID in the session
+      res.cookie('oauth_user_id', req.user.id, { 
         httpOnly: true, 
         secure: process.env.NODE_ENV === 'production',
         maxAge: 10 * 60 * 1000 // 10 minutes
@@ -251,6 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify state parameter
       const storedState = req.cookies?.oauth_state;
       const codeVerifier = req.cookies?.oauth_code_verifier;
+      const oauthUserId = req.cookies?.oauth_user_id;
       
       if (!storedState || storedState !== state || !codeVerifier) {
         return res.redirect('/login?error=invalid_state');
@@ -259,23 +266,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Exchange authorization code for tokens
       const tokenResponse = await netsuiteAuth.exchangeCodeForToken(code as string, codeVerifier);
       
-      // Get customer information from NetSuite
-      const customerInfo = await netsuiteAuth.getCustomerInfo(tokenResponse.access_token);
-      
-      // Create or update user in our database
-      let user = await storage.getUserByUsername(customerInfo.email || customerInfo.entityid);
-      
-      if (!user) {
-        // Create new user from NetSuite customer data
-        user = await storage.createUser({
-          username: customerInfo.email || customerInfo.entityid,
-          email: customerInfo.email,
-          password: '', // No password needed for OAuth users
-          firstName: customerInfo.firstname || '',
-          lastName: customerInfo.lastname || '',
-          companyName: customerInfo.companyname || ''
+      // Check if this is an existing user adding OAuth
+      let user;
+      if (oauthUserId) {
+        // Existing user adding OAuth authentication
+        user = await storage.getUser(oauthUserId);
+        if (!user) {
+          return res.redirect('/login?error=user_not_found');
+        }
+        
+        // Get customer information to update user profile
+        const customerInfo = await netsuiteAuth.getCustomerInfo(tokenResponse.access_token);
+        
+        // Update user with NetSuite customer ID
+        await storage.updateUser(user.id, {
+          netsuiteCustomerId: customerInfo.id
         });
+      } else {
+        // New user registration via OAuth
+        const customerInfo = await netsuiteAuth.getCustomerInfo(tokenResponse.access_token);
+        
+        // Check if user already exists
+        user = await storage.getUserByUsername(customerInfo.email || customerInfo.entityid);
+        
+        if (!user) {
+          // Create new user from NetSuite customer data
+          user = await storage.createUser({
+            username: customerInfo.email || customerInfo.entityid,
+            email: customerInfo.email,
+            password: '', // No password needed for OAuth users
+            firstName: customerInfo.firstname || '',
+            lastName: customerInfo.lastname || '',
+            companyName: customerInfo.companyname || '',
+            netsuiteCustomerId: customerInfo.id
+          });
+        }
       }
+      
+      // Store OAuth tokens for the user
+      await netsuiteAuth.storeUserTokens(user.id, tokenResponse);
       
       // Create JWT token for our application
       const appToken = jwt.sign(
@@ -427,8 +456,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch estimates after sync
       const estimates = await storage.getUserEstimates(req.user.id, limit);
       res.json(estimates);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Estimates error:', error);
+      
+      // Check if it's an OAuth authentication error
+      if (error.message?.includes('OAuth') || error.message?.includes('authentication')) {
+        return res.status(401).json({ 
+          message: 'OAuth authentication required', 
+          requiresAuth: true 
+        });
+      }
+      
       res.status(500).json({ message: 'Failed to fetch estimates' });
     }
   });

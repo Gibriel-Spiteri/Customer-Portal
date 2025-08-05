@@ -16,11 +16,13 @@ import Payments from "@/pages/payments";
 import Loyalty from "@/pages/loyalty";
 import AccountSettings from "@/pages/account-settings";
 import Support from "@/pages/support";
+import OAuthCallback from "@/pages/oauth-callback";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/auth/netsuite/callback" component={OAuthCallback} />
       <Route path="/" component={Dashboard} />
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:id" component={OrderDetails} />

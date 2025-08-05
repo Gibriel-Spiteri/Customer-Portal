@@ -1,5 +1,6 @@
 import { storage } from "../storage";
-import { netsuiteService } from "./netsuite";
+import { netsuiteService, NetSuiteService } from "./netsuite";
+import { netsuiteAuth } from "./netsuite-auth";
 import { queueService } from "./queue";
 import type { User, InsertOrder, InsertPayment, InsertInvoice, InsertAccount, InsertEstimate } from "@shared/schema";
 import { WebSocket } from "ws";
@@ -371,6 +372,92 @@ export class SyncService {
       entityType,
       priority: 'high',
     });
+  }
+
+  async syncUserEstimatesLive(userId: string): Promise<SyncResult> {
+    const startTime = Date.now();
+    let recordsProcessed = 0;
+    const errors: string[] = [];
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get user's OAuth access token
+      const accessToken = await netsuiteAuth.getUserAccessToken(userId);
+      if (!accessToken) {
+        console.log('No OAuth access token found for user:', userId);
+        throw new Error('User must complete OAuth authentication to sync estimates');
+      }
+
+      // Create NetSuite service instance with user's access token
+      const nsService = new NetSuiteService(accessToken);
+
+      // Fetch estimates from NetSuite
+      const result = await nsService.getCustomerEstimates(user.netsuiteCustomerId || '');
+      
+      if (!result.success) {
+        throw new Error(`NetSuite API error: ${result.error}`);
+      }
+
+      const nsEstimates = result.data || [];
+
+      // Process each estimate
+      for (const nsEstimate of nsEstimates) {
+        try {
+          const existingEstimate = await storage.getEstimateByNetsuiteId(nsEstimate.id);
+          
+          const estimateData = {
+            userId,
+            netsuiteId: nsEstimate.id,
+            estimateNumber: nsEstimate.tranid,
+            status: nsEstimate.status,
+            estimateDate: new Date(nsEstimate.trandate),
+            expirationDate: nsEstimate.duedate ? new Date(nsEstimate.duedate) : null,
+            totalAmount: nsEstimate.total.toString(),
+            currency: nsEstimate.currency || 'USD',
+            items: nsEstimate.item || [],
+            notes: nsEstimate.memo || null,
+            dataFreshness: 'live' as const,
+          };
+
+          if (existingEstimate) {
+            await storage.updateEstimate(existingEstimate.id, estimateData);
+          } else {
+            await storage.createEstimate(estimateData);
+          }
+
+          recordsProcessed++;
+        } catch (error) {
+          errors.push(`Failed to sync estimate ${nsEstimate.id}: ${error}`);
+        }
+      }
+
+      // Broadcast live update to connected clients
+      this.broadcastSyncUpdate('estimates_updated', {
+        userId,
+        recordsProcessed,
+        dataFreshness: 'live',
+      });
+
+      return {
+        success: errors.length === 0,
+        recordsProcessed,
+        errors,
+        duration: Date.now() - startTime,
+      };
+
+    } catch (error) {
+      errors.push(`Sync failed: ${error}`);
+      return {
+        success: false,
+        recordsProcessed,
+        errors,
+        duration: Date.now() - startTime,
+      };
+    }
   }
 
   async syncUserEstimatesLive(userId: string): Promise<SyncResult> {

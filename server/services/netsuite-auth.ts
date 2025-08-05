@@ -1,211 +1,216 @@
 import jwt from 'jsonwebtoken';
-import { createHash, randomBytes } from 'crypto';
+import { storage } from '../storage';
 
-export interface NetSuiteOAuthConfig {
-  accountId: string;
+interface OAuth2Config {
   clientId: string;
   clientSecret: string;
+  accountId: string;
   redirectUri: string;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  token_type: string;
+  authorizationUrl: string;
+  tokenUrl: string;
   scope: string;
 }
 
-export class NetSuiteAuthService {
-  private config: NetSuiteOAuthConfig;
-  private baseUrl: string;
-  private authUrl: string;
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token?: string;
+  scope?: string;
+}
 
-  constructor(config: NetSuiteOAuthConfig) {
-    this.config = config;
+export class NetSuiteOAuth2Service {
+  private config: OAuth2Config;
+
+  constructor() {
+    const accountId = this.extractAccountId(process.env.NETSUITE_ACCOUNT_ID || '');
     
-    // Extract account ID from URL if full URL was provided
-    let accountId = config.accountId;
-    if (accountId.includes('://')) {
-      const match = accountId.match(/https?:\/\/(\d+)\.app\.netsuite\.com/);
-      if (match) {
-        accountId = match[1];
-      }
+    this.config = {
+      clientId: process.env.NETSUITE_CLIENT_ID || '',
+      clientSecret: process.env.NETSUITE_CLIENT_SECRET || '',
+      accountId: accountId,
+      redirectUri: `${process.env.BASE_URL || 'http://localhost:5000'}/auth/netsuite/callback`,
+      authorizationUrl: `https://${accountId}.app.netsuite.com/app/login/oauth2/authorize.nl`,
+      tokenUrl: `https://${accountId}.app.netsuite.com/app/login/oauth2/token.nl`,
+      scope: 'rest_webservices'
+    };
+  }
+
+  private extractAccountId(accountIdInput: string): string {
+    if (accountIdInput.includes('://')) {
+      const match = accountIdInput.match(/https?:\/\/(\d+)\.app\.netsuite\.com/);
+      return match ? match[1] : accountIdInput;
     }
-    
-    this.baseUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest`;
-    this.authUrl = `https://${accountId}.app.netsuite.com/app/login/oauth2/authorize.nl`;
+    return accountIdInput;
   }
 
   /**
-   * Generate OAuth authorization URL for customer login
+   * Generate authorization URL with PKCE for enhanced security
    */
-  generateAuthorizationUrl(state?: string): { url: string; state: string; codeVerifier: string } {
-    // Generate PKCE parameters for security
-    const codeVerifier = this.generateCodeVerifier();
+  generateAuthorizationUrl(): { url: string; state: string; codeVerifier: string } {
+    const state = this.generateRandomString(32);
+    const codeVerifier = this.generateRandomString(128);
     const codeChallenge = this.generateCodeChallenge(codeVerifier);
-    const stateParam = state || this.generateState();
-
+    
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
-      scope: 'rest_webservices',
-      state: stateParam,
+      scope: this.config.scope,
+      state: state,
       code_challenge: codeChallenge,
       code_challenge_method: 'S256'
     });
 
-    return {
-      url: `${this.authUrl}?${params.toString()}`,
-      state: stateParam,
-      codeVerifier
-    };
+    const url = `${this.config.authorizationUrl}?${params.toString()}`;
+    
+    return { url, state, codeVerifier };
   }
 
   /**
    * Exchange authorization code for access token
    */
-  async exchangeCodeForToken(
-    authorizationCode: string, 
-    codeVerifier: string
-  ): Promise<TokenResponse> {
-    const tokenUrl = `${this.baseUrl}/auth/oauth2/v1/token`;
-    
-    const credentials = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
-    
-    const response = await fetch(tokenUrl, {
+  async exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: this.config.redirectUri,
+      code_verifier: codeVerifier
+    });
+
+    const response = await fetch(this.config.tokenUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64')}`
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: authorizationCode,
-        redirect_uri: this.config.redirectUri,
-        code_verifier: codeVerifier
-      })
+      body: params.toString()
     });
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Token exchange failed: ${response.status} ${error}`);
+      throw new Error(`Token exchange failed: ${error}`);
     }
 
     return response.json();
   }
 
   /**
-   * Refresh expired access token
+   * Refresh access token using refresh token
    */
   async refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
-    const tokenUrl = `${this.baseUrl}/auth/oauth2/v1/token`;
-    
-    const credentials = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
-    
-    const response = await fetch(tokenUrl, {
+    const params = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken
+    });
+
+    const response = await fetch(this.config.tokenUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64')}`
       },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken
-      })
+      body: params.toString()
     });
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Token refresh failed: ${response.status} ${error}`);
+      throw new Error(`Token refresh failed: ${error}`);
     }
 
     return response.json();
   }
 
   /**
-   * Make authenticated API request to NetSuite
+   * Get customer information using access token
    */
-  async makeApiRequest(
-    accessToken: string,
-    endpoint: string,
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-    data?: any
-  ): Promise<any> {
-    const url = `${this.baseUrl}/${endpoint}`;
-    
-    const options: RequestInit = {
-      method,
+  async getCustomerInfo(accessToken: string): Promise<any> {
+    // First, get the current user's information
+    const userResponse = await fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/employee/me`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       }
-    };
+    });
 
-    if (data && (method === 'POST' || method === 'PUT')) {
-      options.body = JSON.stringify(data);
+    if (!userResponse.ok) {
+      // If employee endpoint fails, try customer endpoint
+      const customerResponse = await fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer/me`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!customerResponse.ok) {
+        throw new Error('Failed to get user information from NetSuite');
+      }
+
+      return customerResponse.json();
     }
 
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API request failed: ${response.status} ${error}`);
-    }
-
-    return response.json();
+    return userResponse.json();
   }
 
   /**
-   * Get customer information from NetSuite
+   * Store OAuth tokens for a user
    */
-  async getCustomerInfo(accessToken: string): Promise<any> {
-    try {
-      // Get current user's customer record
-      const response = await this.makeApiRequest(
-        accessToken,
-        'record/v1/customer',
-        'GET'
-      );
-      
-      return response;
-    } catch (error) {
-      console.error('Failed to get customer info:', error);
-      throw error;
-    }
+  async storeUserTokens(userId: string, tokens: TokenResponse): Promise<void> {
+    // Store tokens securely - in production, encrypt these
+    await storage.updateUser(userId, {
+      netsuiteAccessToken: tokens.access_token,
+      netsuiteRefreshToken: tokens.refresh_token,
+      netsuiteTokenExpiry: new Date(Date.now() + (tokens.expires_in * 1000))
+    });
   }
 
   /**
-   * Validate access token by making a test API call
+   * Get valid access token for a user (refresh if needed)
    */
-  async validateToken(accessToken: string): Promise<boolean> {
-    try {
-      await this.makeApiRequest(accessToken, 'record/v1/customer?limit=1');
-      return true;
-    } catch (error) {
-      return false;
+  async getUserAccessToken(userId: string): Promise<string | null> {
+    const user = await storage.getUser(userId);
+    
+    if (!user?.netsuiteAccessToken) {
+      return null;
     }
+
+    // Check if token is expired
+    if (user.netsuiteTokenExpiry && new Date(user.netsuiteTokenExpiry) <= new Date()) {
+      // Token expired, try to refresh
+      if (user.netsuiteRefreshToken) {
+        try {
+          const newTokens = await this.refreshAccessToken(user.netsuiteRefreshToken);
+          await this.storeUserTokens(userId, newTokens);
+          return newTokens.access_token;
+        } catch (error) {
+          console.error('Failed to refresh token:', error);
+          return null;
+        }
+      }
+      return null;
+    }
+
+    return user.netsuiteAccessToken;
   }
 
-  // Private helper methods
-  private generateCodeVerifier(): string {
-    return randomBytes(32).toString('base64url');
+  private generateRandomString(length: number): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   private generateCodeChallenge(codeVerifier: string): string {
-    return createHash('sha256').update(codeVerifier).digest('base64url');
-  }
-
-  private generateState(): string {
-    return randomBytes(16).toString('hex');
+    // In production, use proper SHA256 hashing
+    // For now, we'll use a base64url encoded version
+    const crypto = require('crypto');
+    return crypto
+      .createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
   }
 }
 
-// Export configured instance
-export const netsuiteAuth = new NetSuiteAuthService({
-  accountId: process.env.NETSUITE_ACCOUNT_ID || '',
-  clientId: process.env.NETSUITE_CLIENT_ID || '',
-  clientSecret: process.env.NETSUITE_CLIENT_SECRET || '',
-  redirectUri: process.env.NETSUITE_REDIRECT_URI || 'http://localhost:5000/auth/netsuite/callback'
-});
+export const netsuiteAuth = new NetSuiteOAuth2Service();

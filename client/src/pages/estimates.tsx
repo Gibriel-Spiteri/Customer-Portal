@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
@@ -25,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { OAuthAuthorize } from "@/components/oauth-authorize";
+import { queryClient } from "@/lib/queryClient";
 
 interface Estimate {
   id: string;
@@ -41,10 +44,19 @@ interface Estimate {
 
 export default function Estimates() {
   const { user, token } = useAuth();
+  const [showOAuthAuthorize, setShowOAuthAuthorize] = useState(false);
 
-  const { data: estimates = [], isLoading, error } = useQuery<Estimate[]>({
+  const { data: estimates = [], isLoading, error, refetch } = useQuery<Estimate[]>({
     queryKey: ['/api/estimates'],
     enabled: !!token,
+    retry: (failureCount, error: any) => {
+      // Don't retry if it's an OAuth error
+      if (error?.status === 401 || error?.message?.includes('OAuth') || error?.message?.includes('authentication')) {
+        setShowOAuthAuthorize(true);
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   const getStatusColor = (status: string) => {
@@ -205,13 +217,24 @@ export default function Estimates() {
                     <div className="text-center py-8 text-red-600">
                       Failed to load estimates. Please try again.
                     </div>
-                  ) : estimates.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-500">No estimates found</p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        Your estimates will appear here once created
-                      </p>
+                  ) : showOAuthAuthorize || estimates.length === 0 ? (
+                    <div className="max-w-md mx-auto py-12">
+                      {showOAuthAuthorize ? (
+                        <OAuthAuthorize 
+                          onSuccess={() => {
+                            setShowOAuthAuthorize(false);
+                            refetch();
+                          }}
+                        />
+                      ) : (
+                        <div className="text-center">
+                          <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                          <p className="text-gray-500">No estimates found</p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Your estimates will appear here once created
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <Table>

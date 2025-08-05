@@ -67,12 +67,13 @@ export class NetSuiteService {
   private concurrentRequests = 0;
   private maxConcurrentRequests = 15; // Base tier limit
 
-  constructor() {
+  constructor(accessToken?: string) {
     this.config = {
       accountId: process.env.NETSUITE_ACCOUNT_ID || "",
       clientId: process.env.NETSUITE_CLIENT_ID || "",
       clientSecret: process.env.NETSUITE_CLIENT_SECRET || "",
       baseUrl: process.env.NETSUITE_BASE_URL || `https://${process.env.NETSUITE_ACCOUNT_ID}.suitetalk.api.netsuite.com`,
+      accessToken: accessToken
     };
 
     // Adjust max concurrent requests based on tier
@@ -171,31 +172,8 @@ export class NetSuiteService {
       return this.config.accessToken;
     }
 
-    // For now, we'll simulate the OAuth 2.0 flow
-    // In production, this would use the actual NetSuite OAuth 2.0 endpoint
-    // with client credentials or authorization code flow
-    
-    try {
-      // NetSuite OAuth 2.0 token endpoint
-      const tokenUrl = `https://${this.config.accountId}.app.netsuite.com/app/login/oauth2/token`;
-      
-      // For direct authentication, we'd need to implement the full OAuth 2.0 flow
-      // This is a placeholder - actual implementation would require:
-      // 1. Authorization code flow with PKCE
-      // 2. Or client credentials flow if available
-      
-      console.log('OAuth 2.0 authentication not fully implemented yet');
-      console.log('Client ID:', this.config.clientId ? 'Present' : 'Missing');
-      console.log('Client Secret:', this.config.clientSecret ? 'Present' : 'Missing');
-      
-      // Return empty token for now - this will cause API calls to fail
-      // but with a clear error message
-      return '';
-      
-    } catch (error) {
-      console.error('Failed to get access token:', error);
-      throw new Error('OAuth 2.0 authentication failed');
-    }
+    // Throw error if no access token is provided
+    throw new Error('Access token required. User must complete OAuth 2.0 authentication flow.');
   }
 
   async getCustomer(customerId: string): Promise<NetSuiteResponse<NetSuiteCustomer>> {
