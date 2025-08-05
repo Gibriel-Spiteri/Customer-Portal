@@ -10,6 +10,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { netsuiteAuth } from "./services/netsuite-auth";
 import { netsuiteDirectAuth } from "./services/netsuite-direct-auth";
+import { netsuiteService } from "./services/netsuite";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
@@ -298,21 +299,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       
-      // Trigger live sync for estimates
-      const syncResult = await syncService.syncUserEstimatesLive(req.user.id);
+      // For NetSuite users, fetch live data
+      if (req.user.isNetSuiteUser && req.user.netsuiteCustomerId) {
+        console.log('Fetching live estimates for NetSuite customer:', req.user.netsuiteCustomerId);
+        const netsuiteEstimates = await netsuiteService.getCustomerEstimates(req.user.netsuiteCustomerId, limit);
+        
+        if (netsuiteEstimates.success) {
+          // Transform NetSuite data to our format
+          const transformedEstimates = netsuiteEstimates.data.map(estimate => ({
+            id: estimate.id,
+            userId: req.user.id,
+            netsuiteId: estimate.id,
+            estimateNumber: estimate.tranid,
+            status: estimate.status,
+            amount: estimate.total.toString(),
+            currency: estimate.currency,
+            estimateDate: estimate.trandate,
+            expiryDate: estimate.duedate,
+            description: estimate.memo || '',
+            items: estimate.item,
+            dataFreshness: 'live' as const,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }));
+          
+          console.log(`Returning ${transformedEstimates.length} live estimates`);
+          return res.json(transformedEstimates);
+        }
+      }
       
-      // Fetch estimates after sync
+      // Fall back to database data for demo users
       const estimates = await storage.getUserEstimates(req.user.id, limit);
       res.json(estimates);
     } catch (error: any) {
       console.error('Estimates error:', error);
-      
-      // If authentication error, return empty array instead of error
-      if (error.message?.includes('OAuth') || error.message?.includes('authentication')) {
-        console.log('NetSuite authentication required, returning empty estimates');
-        return res.json([]); // Return empty array instead of error
-      }
-      
       res.status(500).json({ message: 'Failed to fetch estimates' });
     }
   });
