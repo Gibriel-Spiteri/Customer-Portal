@@ -230,31 +230,6 @@ export class NetSuiteService {
 
   async getCustomerEstimates(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteEstimate[]>> {
     console.log('Fetching estimates for customer:', customerId);
-    
-    // For demo purposes, return mock estimate data
-    if (customerId === 'CUST-12345' || !this.config.consumerKey || !this.config.consumerSecret) {
-      console.log('Returning demo estimate data');
-      return {
-        success: true,
-        data: [{
-          id: 'EST-001',
-          tranid: 'EST-2025-001',
-          status: 'Open',
-          trandate: new Date().toISOString(),
-          duedate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          total: 25000,
-          currency: 'USD',
-          entity: customerId,
-          item: [
-            { name: 'Consulting Services', quantity: 40, rate: 500, amount: 20000 },
-            { name: 'Implementation', quantity: 10, rate: 500, amount: 5000 }
-          ],
-          memo: 'Project estimate for Q1 2025'
-        }],
-        rateLimitRemaining: 100
-      };
-    }
-    
     const query = `q=entity IS ${customerId}&limit=${limit}&orderby=trandate DESC`;
     return this.makeRequest<NetSuiteEstimate[]>('GET', `estimate?${query}`);
   }
