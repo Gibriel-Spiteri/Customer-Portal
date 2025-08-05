@@ -8,6 +8,7 @@ import { insertUserSchema, insertSupportTicketSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { netsuiteAuth } from "./services/netsuite-auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key";
 
@@ -110,6 +111,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // NetSuite OAuth authentication routes
+  app.get('/api/auth/netsuite', (req, res) => {
+    try {
+      const { url, state, codeVerifier } = netsuiteAuth.generateAuthorizationUrl();
+      
+      // Store state and code verifier in session/cookie for security
+      res.cookie('oauth_state', state, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 10 * 60 * 1000 // 10 minutes
+      });
+      res.cookie('oauth_code_verifier', codeVerifier, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 10 * 60 * 1000 // 10 minutes
+      });
+      
+      res.json({ authUrl: url });
+    } catch (error) {
+      console.error('NetSuite auth initiation error:', error);
+      res.status(500).json({ message: 'Failed to initiate NetSuite authentication' });
+    }
+  });
+
+  app.get('/auth/netsuite/callback', async (req, res) => {
+    try {
+      const { code, state, error } = req.query;
+      
+      if (error) {
+        return res.redirect(`/login?error=${encodeURIComponent(error as string)}`);
+      }
+      
+      if (!code || !state) {
+        return res.redirect('/login?error=missing_parameters');
+      }
+      
+      // Verify state parameter
+      const storedState = req.cookies?.oauth_state;
+      const codeVerifier = req.cookies?.oauth_code_verifier;
+      
+      if (!storedState || storedState !== state || !codeVerifier) {
+        return res.redirect('/login?error=invalid_state');
+      }
+      
+      // Exchange authorization code for tokens
+      const tokenResponse = await netsuiteAuth.exchangeCodeForToken(code as string, codeVerifier);
+      
+      // Get customer information from NetSuite
+      const customerInfo = await netsuiteAuth.getCustomerInfo(tokenResponse.access_token);
+      
+      // Create or update user in our database
+      let user = await storage.getUserByUsername(customerInfo.email || customerInfo.entityid);
+      
+      if (!user) {
+        // Create new user from NetSuite customer data
+        user = await storage.createUser({
+          username: customerInfo.email || customerInfo.entityid,
+          email: customerInfo.email,
+          password: '', // No password needed for OAuth users
+          firstName: customerInfo.firstname || '',
+          lastName: customerInfo.lastname || '',
+          companyName: customerInfo.companyname || ''
+        });
+      }
+      
+      // Create JWT token for our application
+      const appToken = jwt.sign(
+        { userId: user.id, username: user.username, authProvider: 'netsuite' },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      // Clear OAuth cookies
+      res.clearCookie('oauth_state');
+      res.clearCookie('oauth_code_verifier');
+      
+      // Redirect to dashboard with token
+      res.redirect(`/?token=${appToken}`);
+      
+    } catch (error) {
+      console.error('NetSuite callback error:', error);
+      res.redirect('/login?error=authentication_failed');
     }
   });
 

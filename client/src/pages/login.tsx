@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, AlertCircle, Eye, EyeOff, ExternalLink } from "lucide-react";
 
 export default function Login() {
   const { login, isLoading } = useAuth();
@@ -16,6 +17,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [netsuiteLoading, setNetsuiteLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +38,26 @@ export default function Login() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const handleNetSuiteLogin = async () => {
+    setNetsuiteLoading(true);
+    setError("");
+    
+    try {
+      const response = await fetch('/api/auth/netsuite');
+      const data = await response.json();
+      
+      if (data.authUrl) {
+        // Redirect to NetSuite OAuth authorization
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('Failed to get NetSuite authorization URL');
+      }
+    } catch (err) {
+      setError('Failed to initiate NetSuite login. Please try again.');
+      setNetsuiteLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -132,6 +154,42 @@ export default function Login() {
                 )}
               </Button>
             </form>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or</span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleNetSuiteLogin}
+                  disabled={netsuiteLoading}
+                >
+                  {netsuiteLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting to NetSuite...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Sign in with NetSuite
+                    </>
+                  )}
+                </Button>
+                <p className="mt-2 text-xs text-center text-gray-500">
+                  Use your existing NetSuite customer credentials
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

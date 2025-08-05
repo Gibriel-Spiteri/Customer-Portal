@@ -33,9 +33,11 @@ Preferred communication style: Simple, everyday language.
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
 ### Authentication and Authorization
-- **JWT-based authentication** with secure token storage
-- **Session management** with PostgreSQL session store
-- **Password hashing** using bcrypt
+- **Dual authentication system**: Traditional JWT-based authentication and NetSuite OAuth 2.0 integration
+- **NetSuite OAuth 2.0** with Authorization Code Flow using PKCE for customer credential authentication
+- **JWT-based authentication** with secure token storage for local accounts
+- **Session management** with PostgreSQL session store and secure cookie handling
+- **Password hashing** using bcrypt for local accounts
 - **Route protection** middleware for API endpoints
 - **User context** management throughout the React application
 
@@ -57,7 +59,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Third-Party Services
 - **Neon Database** - Serverless PostgreSQL hosting
-- **NetSuite REST API** - ERP system integration for customer data
+- **NetSuite REST API** - ERP system integration for customer data with OAuth 2.0 authentication
 - **Replit hosting platform** - Development and deployment environment
 
 ### Key Libraries and Frameworks
