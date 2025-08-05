@@ -71,13 +71,20 @@ export class NetSuiteService {
   private maxConcurrentRequests = 15; // Base tier limit
 
   constructor() {
+    // Extract account number from NETSUITE_ACCOUNT_ID if it contains a full URL
+    let accountId = process.env.NETSUITE_ACCOUNT_ID || "";
+    const accountMatch = accountId.match(/(\d+)\.app\.netsuite\.com/);
+    if (accountMatch) {
+      accountId = accountMatch[1];
+    }
+    
     this.config = {
-      accountId: process.env.NETSUITE_ACCOUNT_ID || "",
+      accountId: accountId,
       consumerKey: process.env.NETSUITE_CONSUMER_KEY || "",
       consumerSecret: process.env.NETSUITE_CONSUMER_SECRET || "",
       tokenId: process.env.NETSUITE_TOKEN_ID || "",
       tokenSecret: process.env.NETSUITE_TOKEN_SECRET || "",
-      baseUrl: process.env.NETSUITE_BASE_URL || `https://${process.env.NETSUITE_ACCOUNT_ID}.suitetalk.api.netsuite.com`
+      baseUrl: process.env.NETSUITE_BASE_URL || `https://${accountId}.suitetalk.api.netsuite.com`
     };
 
     // Adjust max concurrent requests based on tier
@@ -199,23 +206,31 @@ export class NetSuiteService {
     const signatureBase = `${method.toUpperCase()}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`;
     
     // Generate signature
-    const signingKey = `${this.config.consumerSecret}&${this.config.tokenSecret}`;
+    const signingKey = `${encodeURIComponent(this.config.consumerSecret)}&${encodeURIComponent(this.config.tokenSecret)}`;
     const signature = crypto
       .createHmac('sha256', signingKey)
       .update(signatureBase)
       .digest('base64');
     
-    // Build OAuth header
-    const authHeader = 'OAuth ' + Object.keys(oauthParams)
-      .map(key => `${key}="${encodeURIComponent(oauthParams[key as keyof typeof oauthParams])}"`)
-      .concat(`oauth_signature="${encodeURIComponent(signature)}"`)
-      .join(', ');
+    // Build OAuth header with realm
+    const authHeader = 'OAuth ' + 
+      `realm="${this.config.accountId}", ` +
+      Object.keys(oauthParams)
+        .map(key => `${key}="${encodeURIComponent(oauthParams[key as keyof typeof oauthParams])}"`)
+        .concat(`oauth_signature="${encodeURIComponent(signature)}"`)
+        .join(', ');
     
     return authHeader;
   }
 
   async getCustomer(customerId: string): Promise<NetSuiteResponse<NetSuiteCustomer>> {
     return this.makeRequest<NetSuiteCustomer>('GET', `customer/${customerId}`);
+  }
+
+  async searchCustomerByEmail(email: string): Promise<NetSuiteResponse<NetSuiteCustomer[]>> {
+    console.log('Searching for customer with email:', email);
+    const query = `email IS "${email}"`;
+    return this.makeRequest<NetSuiteCustomer[]>('GET', `customer?q=${encodeURIComponent(query)}`);
   }
 
   async getCustomerOrders(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteOrder[]>> {
