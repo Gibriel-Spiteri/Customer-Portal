@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 interface NetSuiteConfig {
   accountId: string;
   consumerKey: string;
@@ -196,7 +198,6 @@ export class NetSuiteService {
   private generateSignature(method: string, url: string, params: any): string {
     // Simplified signature generation
     // In production, implement proper HMAC-SHA1 signature
-    const crypto = require('crypto');
     const baseString = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(Object.entries(params).map(([k, v]) => `${k}=${v}`).sort().join('&'))}`;
     const signingKey = `${encodeURIComponent(this.config.consumerSecret)}&${encodeURIComponent(this.config.tokenSecret)}`;
     return crypto.createHmac('sha1', signingKey).update(baseString).digest('base64');
