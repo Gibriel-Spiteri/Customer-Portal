@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Redirect to login if not authenticated
     if (!isLoading && !user && !token && !window.location.pathname.includes('/login')) {
-      console.log('AuthProvider: Redirecting to login - isLoading:', isLoading, 'user:', user, 'token:', token);
+      console.log('AuthProvider: Redirecting to login - isLoading:', isLoading, 'user:', user, 'token:', token, 'pathname:', window.location.pathname);
       setLocation('/login');
     }
   }, [user, isLoading, token, setLocation]);
