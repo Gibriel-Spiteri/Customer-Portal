@@ -113,6 +113,12 @@ export default function Dashboard() {
         <p className="mt-1 text-gray-600">
           Here's what's happening with your account today.
         </p>
+        {/* Debugging info - to be removed later */}
+        {user.isNetSuiteUser && (
+          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs font-mono">
+            <span className="text-blue-600 font-semibold">DEBUG:</span> Customer # {user.netsuiteCustomerId} | Record # 187409
+          </div>
+        )}
       </div>
 
 
