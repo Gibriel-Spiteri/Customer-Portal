@@ -289,6 +289,48 @@ export class NetSuiteService {
     return this.makeRequest<any[]>('GET', `${recordType}?q=${encodeURIComponent(query)}`);
   }
 
+  async searchCustomers(searchParams: { email?: string; id?: string }): Promise<NetSuiteResponse<NetSuiteCustomer[]>> {
+    console.log('Searching NetSuite customers with params:', searchParams);
+    
+    try {
+      let query = '';
+      if (searchParams.email) {
+        query = `email IS "${searchParams.email}"`;
+      } else if (searchParams.id) {
+        query = `id IS ${searchParams.id}`;
+      } else {
+        return {
+          success: false,
+          error: 'Either email or id must be provided for customer search'
+        };
+      }
+
+      const endpoint = `customer?q=${encodeURIComponent(query)}&limit=10`;
+      console.log('NetSuite customer search endpoint:', endpoint);
+      
+      const response = await this.makeRequest<NetSuiteCustomer[]>('GET', endpoint);
+      
+      if (response.success && response.data) {
+        console.log(`Found ${response.data.length} customers in NetSuite`);
+        return response;
+      } else {
+        console.log('Customer search failed:', response.error);
+        return {
+          success: false,
+          error: response.error || 'Customer search failed',
+          data: []
+        };
+      }
+    } catch (error) {
+      console.error('NetSuite customer search error:', error);
+      return {
+        success: false,
+        error: 'NetSuite customer search failed',
+        data: []
+      };
+    }
+  }
+
   async getCustomerEstimates(customerId: string, limit = 50): Promise<NetSuiteResponse<NetSuiteEstimate[]>> {
     console.log('Fetching live estimates from NetSuite for customer:', customerId);
     
