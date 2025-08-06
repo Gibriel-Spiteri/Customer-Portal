@@ -75,16 +75,8 @@ export default function Login() {
         localStorage.setItem('auth_token', data.token);
         console.log('NetSuite authentication successful, redirecting...');
         
-        // Trigger storage event to notify auth context
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'auth_token',
-          newValue: data.token
-        }));
-        
-        // Small delay to ensure auth context processes the token
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
+        // Force a complete page reload to ensure auth context picks up the new token
+        window.location.reload();
       } else {
         const errorMessage = data.message || 'NetSuite authentication failed';
         console.error('NetSuite authentication failed:', errorMessage);
