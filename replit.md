@@ -45,12 +45,12 @@ Preferred communication style: Simple, everyday language.
 - **User context** management throughout the React application
 
 ### Current NetSuite API Status
-- **API calls working**: System successfully connects to NetSuite REST API endpoints
-- **OAuth signature generation**: Proper OAuth 1.0a signature implementation with correct URL formatting
-- **Authentication debugging**: Created standalone test script confirming OAuth signature process works correctly
-- **Specific error identified**: NetSuite returns `error="token_rejected"` indicating invalid/expired tokens
-- **Root cause**: OAuth access tokens are invalid, expired, or lack proper permissions
-- **Next steps needed**: Regenerate NetSuite access tokens or verify token-based authentication setup in NetSuite
+- **OAuth implementation**: Fully working - signature generation, URL formatting, and credential loading all correct
+- **Updated credentials**: Fresh Consumer Key, Consumer Secret, Token ID, and Token Secret installed
+- **Consistent failure**: All REST endpoints return `error="token_rejected"` despite correct OAuth implementation
+- **Root cause identified**: NetSuite integration setup issue - likely Token-Based Authentication not properly enabled
+- **Created troubleshooting guide**: NETSUITE_TOKEN_TROUBLESHOOTING.md with complete configuration checklist
+- **Next steps**: Verify NetSuite integration record has Token-Based Authentication enabled and User Credentials disabled
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data
