@@ -46,10 +46,11 @@ Preferred communication style: Simple, everyday language.
 
 ### Current NetSuite API Status
 - **API calls working**: System successfully connects to NetSuite REST API endpoints
-- **OAuth signature generation**: Proper OAuth 1.0a signature implementation  
-- **Credentials issue**: Getting 401 "Invalid login attempt" errors
-- **Root cause**: Either role permissions, token scope, or NetSuite account configuration needs adjustment
-- **Next step**: Verify NetSuite role permissions and token-based authentication settings
+- **OAuth signature generation**: Proper OAuth 1.0a signature implementation with correct URL formatting
+- **Authentication debugging**: Created standalone test script confirming OAuth signature process works correctly
+- **Specific error identified**: NetSuite returns `error="token_rejected"` indicating invalid/expired tokens
+- **Root cause**: OAuth access tokens are invalid, expired, or lack proper permissions
+- **Next steps needed**: Regenerate NetSuite access tokens or verify token-based authentication setup in NetSuite
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data
