@@ -5,7 +5,8 @@ import {
   ShoppingCart, 
   HelpCircle,
   Star,
-  User
+  User,
+  Bug
 } from "lucide-react";
 
 const bottomNavItems = [
@@ -38,6 +39,12 @@ const bottomNavItems = [
     href: '/account',
     icon: User,
     label: 'Profile'
+  },
+  {
+    name: 'Debug Info',
+    href: '/debug',
+    icon: Bug,
+    label: 'Debug'
   },
 ];
 

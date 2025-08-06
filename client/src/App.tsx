@@ -17,6 +17,7 @@ import Loyalty from "@/pages/loyalty";
 import AccountSettings from "@/pages/account-settings";
 import Support from "@/pages/support";
 import OAuthCallback from "@/pages/oauth-callback";
+import Debug from "@/pages/debug";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/loyalty" component={Loyalty} />
       <Route path="/account" component={AccountSettings} />
       <Route path="/support" component={Support} />
+      <Route path="/debug" component={Debug} />
       <Route component={NotFound} />
     </Switch>
   );

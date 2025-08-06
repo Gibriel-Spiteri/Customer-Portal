@@ -8,7 +8,8 @@ import {
   Star, 
   Settings, 
   HelpCircle,
-  Calculator 
+  Calculator,
+  Bug
 } from "lucide-react";
 
 interface NavigationItem {
@@ -58,6 +59,11 @@ const navigation: NavigationItem[] = [
     name: 'Support',
     href: '/support',
     icon: HelpCircle,
+  },
+  {
+    name: 'Debug Info',
+    href: '/debug',
+    icon: Bug,
   },
 ];
 
