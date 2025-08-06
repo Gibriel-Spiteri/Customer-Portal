@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, AlertCircle, Eye, EyeOff, ExternalLink } from "lucide-react";
 
 export default function Login() {
-  const { login, isLoading } = useAuth();
+  const { login, loginNetSuite, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -52,39 +52,9 @@ export default function Login() {
     setError("");
     
     try {
-      console.log('Attempting NetSuite authentication with:', { 
-        email: netsuiteFormData.email,
-        hasPassword: !!netsuiteFormData.password 
-      });
-
-      const response = await fetch('/api/auth/netsuite-direct', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(netsuiteFormData),
-      });
-
-      console.log('NetSuite auth response status:', response.status);
-      
-      const data = await response.json();
-      console.log('NetSuite auth response data:', data);
-
-      if (response.ok) {
-        // Store token and user data
-        localStorage.setItem('auth_token', data.token);
-        console.log('NetSuite authentication successful, redirecting...');
-        
-        // Force a complete page reload to ensure auth context picks up the new token
-        window.location.reload();
-      } else {
-        const errorMessage = data.message || 'NetSuite authentication failed';
-        console.error('NetSuite authentication failed:', errorMessage);
-        setError(errorMessage);
-      }
+      await loginNetSuite(netsuiteFormData.email, netsuiteFormData.password);
     } catch (err) {
-      console.error('NetSuite authentication error:', err);
-      setError('Failed to authenticate with NetSuite. Please try again.');
+      setError(err instanceof Error ? err.message : "NetSuite login failed");
     } finally {
       setNetsuiteSubmitting(false);
     }

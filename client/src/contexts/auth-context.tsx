@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (username: string, password: string) => Promise<void>;
+  loginNetSuite: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -123,6 +124,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLocation('/');
   };
 
+  const loginNetSuite = async (email: string, password: string) => {
+    const response = await fetch('/api/auth/netsuite-direct', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'NetSuite authentication failed');
+    }
+
+    const { token, user } = await response.json();
+    
+    localStorage.setItem('auth_token', token);
+    setToken(token);
+    setUser(user);
+    setLocation('/');
+  };
+
   const logout = () => {
     localStorage.removeItem('auth_token');
     setToken(null);
@@ -131,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, loginNetSuite, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
