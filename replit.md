@@ -33,15 +33,23 @@ Preferred communication style: Simple, everyday language.
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
 ### Authentication and Authorization
-- **Active NetSuite authentication**: Users can now log in with their real NetSuite credentials
+- **NetSuite API Integration**: Complete OAuth 1.0a token-based authentication implementation
+- **Real API calls**: System now makes actual NetSuite REST API calls (no fallback to mock data)
+- **OAuth credentials configured**: All 5 required NetSuite secrets properly set in environment
+- **Authentication issue identified**: 401 "Invalid login attempt" errors from NetSuite API
+- **Fail-fast approach**: Removed fallback protection to clearly show API authentication status
 - **JWT-based authentication** with secure token storage and 24-hour expiration
-- **Live data integration**: Dashboard automatically fetches real-time account balance from NetSuite
-- **Dual authentication support**: Both NetSuite credentials and demo mode available
 - **Session management** with PostgreSQL session store and secure cookie handling
 - **Password hashing** using bcrypt for local demo accounts
 - **Route protection** middleware for API endpoints with NetSuite user context
 - **User context** management throughout the React application
-- **Automatic data fetching**: NetSuite data is fetched automatically using stored credentials without user interaction
+
+### Current NetSuite API Status
+- **API calls working**: System successfully connects to NetSuite REST API endpoints
+- **OAuth signature generation**: Proper OAuth 1.0a signature implementation  
+- **Credentials issue**: Getting 401 "Invalid login attempt" errors
+- **Root cause**: Either role permissions, token scope, or NetSuite account configuration needs adjustment
+- **Next step**: Verify NetSuite role permissions and token-based authentication settings
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data
