@@ -75,77 +75,23 @@ export class NetSuiteDirectAuthService {
     try {
       console.log('Validating NetSuite credentials for:', credentials.email);
 
-      // Demo credentials for testing
-      const demoCredentials = [
-        { email: 'customer@example.com', password: 'netsuite123' },
-        { email: 'demo.customer@company.com', password: 'demo2024' },
-        { email: 'test@netsuite.com', password: 'test123' },
-        // Temporary development credentials while NetSuite API is being fixed
-        { email: 'ruser@consumersmail.com', password: 'test123' },
-        { email: 'lewalsh@optonline.net', password: 'test123' },
-        { email: 'jimbalogajr@gmail.com', password: 'test123' }
-      ];
+      // Only use real NetSuite API authentication - no fallbacks
+      console.log('Attempting NetSuite API authentication...');
+      
+      // Use the existing NetSuite service for API calls
+      const { netsuiteService } = await import('./netsuite');
+      
+      // Search for customer by email to validate credentials and get customer data
+      const searchResult = await netsuiteService.searchCustomers({
+        email: credentials.email
+      });
 
-      // Check against demo credentials first
-      const isDemo = demoCredentials.some(cred => 
-        cred.email === credentials.email && cred.password === credentials.password
-      );
-
-      if (isDemo) {
-        console.log('Demo credentials validated successfully');
+      if (searchResult.success && searchResult.data && searchResult.data.length > 0) {
+        console.log('NetSuite customer found via API:', searchResult.data[0].id);
+        this.lastValidatedCustomer = searchResult.data[0]; // Store for fetchCustomerData
         return true;
-      }
-
-      // For real NetSuite credentials, make actual API call
-      try {
-        console.log('Attempting real NetSuite API authentication...');
-        
-        // Use the existing NetSuite service for API calls
-        const { netsuiteService } = await import('./netsuite');
-        
-        // Search for customer by email to validate credentials and get customer data
-        const searchResult = await netsuiteService.searchCustomers({
-          email: credentials.email
-        });
-
-        if (searchResult.success && searchResult.data && searchResult.data.length > 0) {
-          console.log('NetSuite customer found via API:', searchResult.data[0].id);
-          this.lastValidatedCustomer = searchResult.data[0]; // Store for fetchCustomerData
-          return true;
-        } else {
-          console.log('Customer not found in NetSuite or API failed:', searchResult.error);
-          
-          // TEMPORARY: Allow development testing with known email addresses while API is being fixed
-          const testEmails = [
-            'ruser@consumersmail.com',
-            'lewalsh@optonline.net', 
-            'jimbalogajr@gmail.com',
-            'consumer@example.com'
-          ];
-          
-          if (testEmails.includes(credentials.email)) {
-            console.log('⚠️  Using temporary development mode for known test email (NetSuite API credentials need fixing)');
-            return true;
-          }
-          
-          return false;
-        }
-      } catch (apiError) {
-        console.error('NetSuite API call failed:', apiError);
-        
-        // TEMPORARY: Allow development testing with known email addresses while API is being fixed
-        const testEmails = [
-          'ruser@consumersmail.com',
-          'lewalsh@optonline.net', 
-          'jimbalogajr@gmail.com',
-          'consumer@example.com'
-        ];
-        
-        if (testEmails.includes(credentials.email)) {
-          console.log('⚠️  Using temporary development mode for known test email (NetSuite API credentials need fixing)');
-          return true;
-        }
-        
+      } else {
+        console.log('Customer not found in NetSuite or API failed:', searchResult.error);
         return false;
       }
 
@@ -215,70 +161,13 @@ export class NetSuiteDirectAuthService {
         };
       } else {
         console.log('NetSuite API search failed:', searchResult.error);
+        throw new Error(`NetSuite customer search failed: ${searchResult.error}`);
       }
     } catch (error) {
       console.error('Failed to fetch from NetSuite API:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`NetSuite API error: ${errorMessage}`);
     }
-
-    // TEMPORARY: Fallback data for known test emails while NetSuite API credentials are being fixed
-    const customerMappings = {
-      'ruser@consumersmail.com': {
-        id: '123456',
-        customerId: '9999',
-        email: credentials.email,
-        entityid: 'CUST-9999',
-        firstname: 'R',
-        lastname: 'User',
-        companyname: 'Consumers Mail',
-        phone: '(555) 999-0000',
-        accountNumber: 'ACC-9999',
-        customerType: 'Standard',
-        status: 'Active'
-      },
-      'lewalsh@optonline.net': {
-        id: '187409',
-        customerId: '33516',
-        email: credentials.email,
-        entityid: 'CUST-33516',
-        firstname: 'L',
-        lastname: 'Walsh',
-        companyname: 'Walsh Enterprises',
-        phone: '(555) 123-4567',
-        accountNumber: 'ACC-33516',
-        customerType: 'Premium',
-        status: 'Active'
-      },
-      'jimbalogajr@gmail.com': {
-        id: '234567',
-        customerId: '4227',
-        email: credentials.email,
-        entityid: 'CUST-4227',
-        firstname: 'Jim',
-        lastname: 'Balog Jr',
-        companyname: 'Balog Industries',
-        phone: '(555) 456-7890',
-        accountNumber: 'ACC-4227',
-        customerType: 'Premium',
-        status: 'Active'
-      }
-    };
-
-    const mapping = customerMappings[credentials.email as keyof typeof customerMappings];
-    if (mapping) {
-      console.log('⚠️  Using temporary customer data while NetSuite API credentials are being fixed');
-      return {
-        ...mapping,
-        creditLimit: 50000,
-        terms: 'Net 30',
-        taxExempt: false,
-        territory: 'North America',
-        salesRep: 'Sales Rep',
-        balance: 0,
-        currency: 'USD'
-      };
-    }
-
-    throw new Error('Customer not found and NetSuite API authentication failed. Please check NetSuite credentials.');
   }
 
   private extractFirstName(email: string): string {

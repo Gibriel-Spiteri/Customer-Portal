@@ -124,6 +124,12 @@ export class NetSuiteService {
         authHeader: authHeader.substring(0, 50) + '...' // Log partial auth header for debugging
       });
 
+      // Debug: Log full OAuth parameters for troubleshooting
+      const oauthMatch = authHeader.match(/oauth_consumer_key="([^"]+)"/);
+      const tokenMatch = authHeader.match(/oauth_token="([^"]+)"/);
+      console.log('OAuth Debug - Consumer Key:', oauthMatch ? oauthMatch[1].substring(0, 8) + '...' : 'not found');
+      console.log('OAuth Debug - Token ID:', tokenMatch ? tokenMatch[1].substring(0, 8) + '...' : 'not found');
+
       const response = await fetch(url, {
         method,
         headers,
@@ -188,6 +194,13 @@ export class NetSuiteService {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = crypto.randomBytes(16).toString('hex');
     
+    console.log('OAuth Debug - Generating signature with:');
+    console.log('  Account ID:', this.config.accountId);
+    console.log('  Consumer Key:', this.config.consumerKey ? 'SET' : 'MISSING');
+    console.log('  Consumer Secret:', this.config.consumerSecret ? 'SET' : 'MISSING');
+    console.log('  Token ID:', this.config.tokenId ? 'SET' : 'MISSING');
+    console.log('  Token Secret:', this.config.tokenSecret ? 'SET' : 'MISSING');
+    
     const oauthParams = {
       oauth_consumer_key: this.config.consumerKey,
       oauth_token: this.config.tokenId,
@@ -204,6 +217,7 @@ export class NetSuiteService {
       .join('&');
     
     const signatureBase = `${method.toUpperCase()}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`;
+    console.log('OAuth Debug - Signature base string:', signatureBase);
     
     // Generate signature - NetSuite expects unencoded keys in the signing key
     const signingKey = `${this.config.consumerSecret}&${this.config.tokenSecret}`;
@@ -211,6 +225,12 @@ export class NetSuiteService {
       .createHmac('sha256', signingKey)
       .update(signatureBase)
       .digest('base64');
+    
+    console.log('OAuth Debug - Signing key length:', signingKey.length);
+    console.log('OAuth Debug - Generated signature:', signature.substring(0, 20) + '...');
+    
+    // Additional debug: verify timestamp is reasonable
+    console.log('OAuth Debug - Timestamp:', timestamp, '(current time:', Math.floor(Date.now() / 1000), ')');
     
     // Build OAuth header with realm
     const authHeader = 'OAuth ' + 
