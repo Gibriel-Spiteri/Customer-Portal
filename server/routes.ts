@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Fetching live estimates for NetSuite customer:', req.user.netsuiteCustomerId);
         const netsuiteEstimates = await netsuiteService.getCustomerEstimates(req.user.netsuiteCustomerId, limit);
         
-        if (netsuiteEstimates.success) {
+        if (netsuiteEstimates.success && netsuiteEstimates.data) {
           // Transform NetSuite data to our format
           const transformedEstimates = netsuiteEstimates.data.map(estimate => ({
             id: estimate.id,
