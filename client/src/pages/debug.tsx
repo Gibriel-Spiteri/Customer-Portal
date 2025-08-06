@@ -114,9 +114,9 @@ export default function Debug() {
                   </p>
                 </div>
                 <div>
-                  <strong>Record Number (Hardcoded):</strong>
+                  <strong>NetSuite Record Number:</strong>
                   <p className="font-mono text-sm bg-blue-50 border border-blue-200 p-2 rounded mt-1">
-                    187409
+                    {user?.netsuiteCustomerId || 'Not available'}
                   </p>
                 </div>
               </div>
