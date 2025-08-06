@@ -415,6 +415,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName,
         companyName: user.companyName,
         createdAt: user.createdAt,
+        // Include NetSuite information from JWT token
+        isNetSuiteUser: req.user.isNetSuiteUser || false,
+        netsuiteCustomerId: req.user.netsuiteCustomerId || null,
       });
     } catch (error) {
       console.error('Profile error:', error);

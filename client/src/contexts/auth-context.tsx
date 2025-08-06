@@ -8,6 +8,8 @@ interface User {
   firstName: string;
   lastName: string;
   companyName?: string;
+  isNetSuiteUser?: boolean;
+  netsuiteCustomerId?: string;
 }
 
 interface AuthContextType {
