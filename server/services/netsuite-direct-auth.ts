@@ -110,32 +110,10 @@ export class NetSuiteDirectAuthService {
           return true;
         } else {
           console.log('Customer not found in NetSuite or API failed:', searchResult.error);
-          
-          // Fall back to simulated validation for known test users
-          const isValidFormat = credentials.email.includes('@') && 
-                               credentials.email.includes('.') &&
-                               credentials.password.length >= 6;
-
-          if (isValidFormat) {
-            console.log('Using simulated validation for test user');
-            return true;
-          }
-          
           return false;
         }
       } catch (apiError) {
-        console.log('NetSuite API call failed, falling back to simulated validation:', apiError);
-        
-        // Fall back to simulated validation
-        const isValidFormat = credentials.email.includes('@') && 
-                             credentials.email.includes('.') &&
-                             credentials.password.length >= 6;
-
-        if (isValidFormat) {
-          console.log('Using simulated validation due to API error');
-          return true;
-        }
-        
+        console.error('NetSuite API call failed:', apiError);
         return false;
       }
 
@@ -160,10 +138,10 @@ export class NetSuiteDirectAuthService {
         firstname: this.lastValidatedCustomer.firstname || this.extractFirstName(credentials.email),
         lastname: this.lastValidatedCustomer.lastname || 'Customer',
         companyname: this.lastValidatedCustomer.companyname || 'NetSuite Customer',
-        phone: this.lastValidatedCustomer.phone || '',
-        accountNumber: this.lastValidatedCustomer.accountnumber || '',
-        customerType: this.lastValidatedCustomer.custentity_customer_type || 'Standard',
-        status: this.lastValidatedCustomer.isinactive ? 'Inactive' : 'Active',
+        phone: (this.lastValidatedCustomer as any).phone || '',
+        accountNumber: (this.lastValidatedCustomer as any).accountnumber || '',
+        customerType: (this.lastValidatedCustomer as any).custentity_customer_type || 'Standard',
+        status: (this.lastValidatedCustomer as any).isinactive ? 'Inactive' : 'Active',
         creditLimit: this.lastValidatedCustomer.creditlimit || 0,
         balance: this.lastValidatedCustomer.balance || 0,
         currency: this.lastValidatedCustomer.currency || 'USD'
@@ -195,64 +173,22 @@ export class NetSuiteDirectAuthService {
           firstname: customer.firstname || this.extractFirstName(credentials.email),
           lastname: customer.lastname || 'Customer',
           companyname: customer.companyname || 'NetSuite Customer',
-          phone: customer.phone || '',
-          accountNumber: customer.accountnumber || '',
-          customerType: customer.custentity_customer_type || 'Standard',
-          status: customer.isinactive ? 'Inactive' : 'Active',
+          phone: (customer as any).phone || '',
+          accountNumber: (customer as any).accountnumber || '',
+          customerType: (customer as any).custentity_customer_type || 'Standard',
+          status: (customer as any).isinactive ? 'Inactive' : 'Active',
           creditLimit: customer.creditlimit || 0,
           balance: customer.balance || 0,
           currency: customer.currency || 'USD'
         };
       } else {
         console.log('NetSuite API search failed:', searchResult.error);
+        throw new Error(`NetSuite customer search failed: ${searchResult.error}`);
       }
     } catch (error) {
-      console.log('Failed to fetch from NetSuite API, using fallback data:', error);
+      console.error('Failed to fetch from NetSuite API:', error);
+      throw new Error(`NetSuite API error: ${error.message}`);
     }
-
-    // Fallback to hardcoded data for known test users
-    if (credentials.email === 'lewalsh@optonline.net') {
-      console.log('Using hardcoded data for known test user');
-      return {
-        id: '187409', // NetSuite internal ID (customer record number)
-        customerId: '33516', // NetSuite customer number
-        email: credentials.email,
-        entityid: 'CUST-33516',
-        firstname: 'L',
-        lastname: 'Walsh',
-        companyname: 'Walsh Enterprises',
-        phone: '(555) 123-4567',
-        accountNumber: 'ACC-33516',
-        customerType: 'Premium',
-        status: 'Active',
-        territory: 'North America',
-        salesRep: 'John Smith',
-        creditLimit: 50000,
-        terms: 'Net 30',
-        taxExempt: false
-      };
-    }
-    
-    // Generate fallback data for other users
-    console.log('Generating fallback customer data');
-    return {
-      id: `ns-${Date.now()}`,
-      customerId: `${Math.floor(Math.random() * 9000) + 1000}`, // Generate a NetSuite-like customer ID
-      email: credentials.email,
-      entityid: credentials.email,
-      firstname: this.extractFirstName(credentials.email),
-      lastname: 'Customer',
-      companyname: 'NetSuite Customer',
-      phone: '(555) 123-4567',
-      accountNumber: `ACC-${this.accountId}-${Math.random().toString(36).substr(2, 6)}`,
-      customerType: 'Standard',
-      status: 'Active',
-      territory: 'North America',
-      salesRep: 'Sales Rep',
-      creditLimit: 10000,
-      terms: 'Net 30',
-      taxExempt: false
-    };
   }
 
   private extractFirstName(email: string): string {
