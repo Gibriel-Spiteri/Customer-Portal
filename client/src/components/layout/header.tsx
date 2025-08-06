@@ -74,6 +74,14 @@ export function Header() {
                     {user.companyName && (
                       <p className="text-xs text-gray-500">{user.companyName}</p>
                     )}
+                    {/* Debugging info - to be removed later */}
+                    {(user as any).isNetSuiteUser && (
+                      <div className="mt-1 pt-1 border-t">
+                        <p className="text-xs text-blue-600 font-mono">DEBUG:</p>
+                        <p className="text-xs text-blue-600 font-mono">Customer #: {(user as any).netsuiteCustomerId}</p>
+                        <p className="text-xs text-blue-600 font-mono">Record #: 187409</p>
+                      </div>
+                    )}
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
