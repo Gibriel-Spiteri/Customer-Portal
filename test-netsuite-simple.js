@@ -2,169 +2,147 @@
 
 import crypto from 'crypto';
 
-class NetSuiteSimpleTest {
-  constructor() {
-    this.config = {
-      accountId: process.env.NETSUITE_ACCOUNT_ID,
-      consumerKey: process.env.NETSUITE_CONSUMER_KEY,
-      consumerSecret: process.env.NETSUITE_CONSUMER_SECRET,
-      tokenId: process.env.NETSUITE_TOKEN_ID,
-      tokenSecret: process.env.NETSUITE_TOKEN_SECRET,
-    };
-    
-    console.log('Updated NetSuite Configuration:');
-    console.log('Account ID:', this.config.accountId ? 'SET' : 'MISSING');
-    console.log('Consumer Key:', this.config.consumerKey ? 'SET (' + this.config.consumerKey.substring(0, 8) + '...)' : 'MISSING');
-    console.log('Consumer Secret:', this.config.consumerSecret ? 'SET' : 'MISSING');
-    console.log('Token ID:', this.config.tokenId ? 'SET (' + this.config.tokenId.substring(0, 8) + '...)' : 'MISSING');
-    console.log('Token Secret:', this.config.tokenSecret ? 'SET' : 'MISSING');
-    console.log('');
-  }
+// Direct test with minimal complexity
+const config = {
+  accountId: process.env.NETSUITE_ACCOUNT_ID?.replace(/[^\d]/g, '') || '1212804',
+  consumerKey: process.env.NETSUITE_CONSUMER_KEY,
+  consumerSecret: process.env.NETSUITE_CONSUMER_SECRET,
+  tokenId: process.env.NETSUITE_TOKEN_ID,
+  tokenSecret: process.env.NETSUITE_TOKEN_SECRET,
+};
 
-  extractAccountId(accountUrl) {
-    if (accountUrl.includes('://')) {
-      const match = accountUrl.match(/\/\/(\d+)/);
-      return match ? match[1] : accountUrl;
-    } else if (accountUrl.includes('.')) {
-      return accountUrl.split('.')[0];
-    }
-    return accountUrl;
-  }
+console.log('NetSuite Direct API Test');
+console.log('========================\n');
 
-  generateOAuthHeader(method, url) {
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const nonce = crypto.randomBytes(16).toString('hex');
-    
-    const oauthParams = {
-      oauth_consumer_key: this.config.consumerKey,
-      oauth_token: this.config.tokenId,
-      oauth_signature_method: 'HMAC-SHA256',
-      oauth_timestamp: timestamp,
-      oauth_nonce: nonce,
-      oauth_version: '1.0'
-    };
+// Show configuration (partial for security)
+console.log('Configuration:');
+console.log('- Account ID:', config.accountId);
+console.log('- Consumer Key:', config.consumerKey?.substring(0, 15) + '...');
+console.log('- Token ID:', config.tokenId?.substring(0, 15) + '...');
+console.log('- Consumer Secret:', config.consumerSecret ? 'SET' : 'MISSING');
+console.log('- Token Secret:', config.tokenSecret ? 'SET' : 'MISSING');
 
-    // Create signature base string
-    const paramString = Object.keys(oauthParams)
-      .sort()
-      .map(key => `${key}=${encodeURIComponent(oauthParams[key])}`)
-      .join('&');
-    
-    const signatureBase = `${method.toUpperCase()}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`;
-    
-    // Generate signature
-    const signingKey = `${this.config.consumerSecret}&${this.config.tokenSecret}`;
-    const signature = crypto
-      .createHmac('sha256', signingKey)
-      .update(signatureBase)
-      .digest('base64');
-    
-    // Build OAuth header
-    const accountId = this.extractAccountId(this.config.accountId);
-    const authHeader = 'OAuth ' + 
-      `realm="${accountId}", ` +
-      Object.keys(oauthParams)
-        .map(key => `${key}="${encodeURIComponent(oauthParams[key])}"`)
-        .concat(`oauth_signature="${encodeURIComponent(signature)}"`)
-        .join(', ');
-    
-    return authHeader;
-  }
+// Generate OAuth 1.0a signature
+function generateOAuth(method, url) {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const nonce = crypto.randomBytes(16).toString('hex');
+  
+  const oauthParams = {
+    oauth_consumer_key: config.consumerKey,
+    oauth_token: config.tokenId,
+    oauth_signature_method: 'HMAC-SHA256',
+    oauth_timestamp: timestamp,
+    oauth_nonce: nonce,
+    oauth_version: '1.0'
+  };
 
-  async testEndpoint(endpointPath, description) {
-    console.log(`=== Testing ${description} ===`);
-    
-    const accountId = this.extractAccountId(this.config.accountId);
-    const url = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/${endpointPath}`;
-    
-    try {
-      const authHeader = this.generateOAuthHeader('GET', url);
-      
-      console.log('Request URL:', url);
-      console.log('');
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json',
-          'Prefer': 'transient'
-        }
-      });
-      
-      console.log('Response Status:', response.status);
-      
-      // Log important headers
-      const wwwAuthHeader = response.headers.get('www-authenticate');
-      if (wwwAuthHeader) {
-        console.log('WWW-Authenticate:', wwwAuthHeader);
+  // Create parameter string
+  const paramString = Object.keys(oauthParams)
+    .sort()
+    .map(key => `${key}=${encodeURIComponent(oauthParams[key])}`)
+    .join('&');
+  
+  // Create signature base string
+  const signatureBase = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`;
+  
+  console.log('\nDebug Info:');
+  console.log('- Timestamp:', timestamp);
+  console.log('- Nonce:', nonce);
+  console.log('- Parameter String (first 100):', paramString.substring(0, 100) + '...');
+  console.log('- Signature Base (first 200):', signatureBase.substring(0, 200) + '...');
+  
+  // Create signature
+  const signingKey = `${config.consumerSecret}&${config.tokenSecret}`;
+  const signature = crypto
+    .createHmac('sha256', signingKey)
+    .update(signatureBase)
+    .digest('base64');
+  
+  console.log('- Signature:', signature);
+  
+  // Create authorization header
+  const authHeader = 'OAuth ' + 
+    `realm="${config.accountId}", ` +
+    Object.keys(oauthParams)
+      .map(key => `${key}="${encodeURIComponent(oauthParams[key])}"`)
+      .concat(`oauth_signature="${encodeURIComponent(signature)}"`)
+      .join(', ');
+  
+  return authHeader;
+}
+
+// Test the API
+async function testAPI() {
+  const url = `https://${config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/metadata-catalog`;
+  
+  console.log('\nAPI Request:');
+  console.log('- URL:', url);
+  
+  const authHeader = generateOAuth('GET', url);
+  console.log('- Auth Header (first 200):', authHeader.substring(0, 200) + '...');
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       }
-      
-      const responseText = await response.text();
-      console.log('Response Body:');
-      console.log(responseText);
-      
-      if (response.ok) {
-        console.log('✅ SUCCESS:', description, 'retrieved');
-        return { success: true, data: JSON.parse(responseText) };
-      } else {
-        console.log('❌ FAILED:', description, 'request failed');
-        return { success: false, status: response.status, body: responseText };
-      }
-      
-    } catch (error) {
-      console.error('❌ ERROR:', error.message);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async runTests() {
-    console.log('🔄 Testing Updated NetSuite Credentials\n');
-    
-    if (!this.config.accountId || !this.config.consumerKey || !this.config.consumerSecret || !this.config.tokenId || !this.config.tokenSecret) {
-      console.error('❌ Missing required NetSuite credentials');
-      process.exit(1);
-    }
-    
-    // Test multiple endpoints to see if any work
-    const endpoints = [
-      { path: 'companyinformation', desc: 'Company Information' },
-      { path: 'subsidiary', desc: 'Subsidiary' },
-      { path: 'currency', desc: 'Currency' },
-      { path: 'account', desc: 'Chart of Accounts' }
-    ];
-    
-    const results = [];
-    
-    for (const endpoint of endpoints) {
-      const result = await this.testEndpoint(endpoint.path, endpoint.desc);
-      results.push({ ...endpoint, result });
-      console.log('\n' + '='.repeat(60) + '\n');
-    }
-    
-    // Summary
-    console.log('📊 Test Results Summary:');
-    results.forEach(({ desc, result }) => {
-      const status = result.success ? '✅ SUCCESS' : '❌ FAILED';
-      console.log(`${status}: ${desc}`);
     });
     
-    console.log('\n🏁 Tests completed');
+    console.log('\nResponse:');
+    console.log('- Status:', response.status, response.statusText);
     
-    // If all failed with same error, provide guidance
-    const allFailed = results.every(r => !r.result.success);
-    const sameError = results.every(r => r.result.status === 401);
-    
-    if (allFailed && sameError) {
-      console.log('\n💡 All endpoints failed with 401 errors. This suggests:');
-      console.log('   1. Token permissions issue');
-      console.log('   2. Integration record configuration');
-      console.log('   3. User role permissions');
-      console.log('   4. REST Web Services not enabled');
+    const wwwAuth = response.headers.get('www-authenticate');
+    if (wwwAuth) {
+      console.log('- WWW-Authenticate:', wwwAuth);
     }
+    
+    const text = await response.text();
+    
+    if (response.ok) {
+      console.log('✅ SUCCESS! API is working.');
+      console.log('Response preview:', text.substring(0, 200));
+    } else {
+      console.log('❌ FAILED');
+      try {
+        const error = JSON.parse(text);
+        console.log('Error:', JSON.stringify(error, null, 2));
+      } catch {
+        console.log('Response:', text);
+      }
+    }
+  } catch (error) {
+    console.log('❌ Request Error:', error.message);
   }
 }
 
-// Run the tests
-const tester = new NetSuiteSimpleTest();
-tester.runTests().catch(console.error);
+// Additional diagnostics
+console.log('\n' + '='.repeat(60));
+console.log('DIAGNOSTIC INFORMATION');
+console.log('='.repeat(60));
+
+console.log('\n1. URL Format Check:');
+const testUrl = `https://${config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/metadata-catalog`;
+console.log('   Full URL:', testUrl);
+console.log('   Account ID extracted:', config.accountId);
+console.log('   Is numeric:', /^\d+$/.test(config.accountId));
+
+console.log('\n2. Credential Length Check:');
+console.log('   Consumer Key length:', config.consumerKey?.length || 0);
+console.log('   Consumer Secret length:', config.consumerSecret?.length || 0);
+console.log('   Token ID length:', config.tokenId?.length || 0);
+console.log('   Token Secret length:', config.tokenSecret?.length || 0);
+
+console.log('\n3. Common Issues to Check:');
+console.log('   ❓ Is the integration enabled in NetSuite?');
+console.log('   ❓ Is Token-Based Authentication the ONLY auth method checked?');
+console.log('   ❓ Are all OAuth 2.0 options unchecked?');
+console.log('   ❓ Is the access token status "Active" or "Enabled"?');
+console.log('   ❓ Does the token user have Administrator role?');
+
+console.log('\n' + '='.repeat(60));
+
+// Run the test
+testAPI().catch(console.error);
