@@ -44,6 +44,10 @@ export class SyncService {
 
   // Batch sync for reference data (5-15 minute intervals)
   private startBatchSync(): void {
+    // Temporarily disable batch sync until NetSuite is properly configured
+    console.log('Batch sync disabled - awaiting NetSuite configuration');
+    return;
+    
     const intervalMinutes = parseInt(process.env.BATCH_SYNC_INTERVAL || "10");
     
     this.batchSyncInterval = setInterval(async () => {
