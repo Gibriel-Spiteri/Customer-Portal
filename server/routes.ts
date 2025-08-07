@@ -8,9 +8,7 @@ import { insertUserSchema, insertSupportTicketSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { netsuiteAuth } from "./services/netsuite-auth";
-import { netsuiteDirectAuth } from "./services/netsuite-direct-auth";
-import { netsuiteService } from "./services/netsuite";
+import { netsuiteClient } from "./services/netsuite-simple";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
@@ -80,6 +78,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', () => {
       console.log('WebSocket client disconnected');
     });
+  });
+
+  // NetSuite Test Endpoint - Simple connection test
+  app.get('/api/netsuite/test', async (req, res) => {
+    try {
+      // Check if NetSuite is configured
+      const configStatus = netsuiteClient.getConfigStatus();
+      
+      if (!configStatus.configured) {
+        return res.json({
+          success: false,
+          message: 'NetSuite not configured',
+          missing: configStatus.missing
+        });
+      }
+
+      // Test the connection
+      const result = await netsuiteClient.testConnection();
+      
+      res.json(result);
+    } catch (error) {
+      console.error('NetSuite test error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Test failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
 
   // Authentication routes
@@ -299,36 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       
-      // For NetSuite users, fetch live data
-      if (req.user.isNetSuiteUser && req.user.netsuiteCustomerId) {
-        console.log('Fetching live estimates for NetSuite customer:', req.user.netsuiteCustomerId);
-        const netsuiteEstimates = await netsuiteService.getCustomerEstimates(req.user.netsuiteCustomerId, limit);
-        
-        if (netsuiteEstimates.success && netsuiteEstimates.data) {
-          // Transform NetSuite data to our format
-          const transformedEstimates = netsuiteEstimates.data.map(estimate => ({
-            id: estimate.id,
-            userId: req.user.id,
-            netsuiteId: estimate.id,
-            estimateNumber: estimate.tranid,
-            status: estimate.status,
-            amount: estimate.total.toString(),
-            currency: estimate.currency,
-            estimateDate: estimate.trandate,
-            expiryDate: estimate.duedate,
-            description: estimate.memo || '',
-            items: estimate.item,
-            dataFreshness: 'live' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }));
-          
-          console.log(`Returning ${transformedEstimates.length} live estimates`);
-          return res.json(transformedEstimates);
-        }
-      }
-      
-      // Fall back to database data for demo users
+      // NetSuite integration will be added later - for now use database data
       const estimates = await storage.getUserEstimates(req.user.id, limit);
       res.json(estimates);
     } catch (error: any) {

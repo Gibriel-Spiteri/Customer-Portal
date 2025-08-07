@@ -18,6 +18,7 @@ import AccountSettings from "@/pages/account-settings";
 import Support from "@/pages/support";
 import OAuthCallback from "@/pages/oauth-callback";
 import Debug from "@/pages/debug";
+import { NetSuiteTest } from "@/pages/netsuite-test";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/account" component={AccountSettings} />
       <Route path="/support" component={Support} />
       <Route path="/debug" component={Debug} />
+      <Route path="/netsuite-test" component={NetSuiteTest} />
       <Route component={NotFound} />
     </Switch>
   );
