@@ -108,6 +108,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NetSuite Debug Endpoint - Get configuration and debug info
+  app.get('/api/netsuite/debug', async (req, res) => {
+    try {
+      const configStatus = netsuiteClient.getConfigStatus();
+      const debugInfo = netsuiteClient.getDebugInfo();
+      
+      res.json({
+        configuration: configStatus,
+        debug: debugInfo,
+        environment: {
+          nodeEnv: process.env.NODE_ENV,
+          hasAccountId: !!process.env.NETSUITE_ACCOUNT_ID,
+          hasConsumerKey: !!process.env.NETSUITE_CONSUMER_KEY,
+          hasConsumerSecret: !!process.env.NETSUITE_CONSUMER_SECRET,
+          hasTokenId: !!process.env.NETSUITE_TOKEN_ID,
+          hasTokenSecret: !!process.env.NETSUITE_TOKEN_SECRET
+        }
+      });
+    } catch (error) {
+      console.error('NetSuite debug error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Debug failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Authentication routes
   app.post('/api/auth/login', async (req, res) => {
     try {

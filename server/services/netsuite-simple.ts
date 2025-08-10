@@ -76,12 +76,20 @@ export class NetSuiteClient {
   }
 
   /**
-   * Create OAuth authorization header
+   * Create OAuth authorization header with detailed logging
    */
   private createAuthHeader(method: string, url: string): string {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = crypto.randomBytes(16).toString('hex');
+    
+    console.log('🔐 OAuth Signature Generation:');
+    console.log('⏰ Timestamp:', timestamp);
+    console.log('🎲 Nonce:', nonce);
+    console.log('🔗 Method:', method);
+    console.log('🌐 URL:', url);
+    
     const signature = this.generateOAuthSignature(method, url, timestamp, nonce);
+    console.log('✍️  Generated Signature:', signature);
 
     // Build authorization header
     const authParams = {
@@ -95,19 +103,30 @@ export class NetSuiteClient {
       oauth_signature: signature
     };
 
-    return 'OAuth ' + Object.entries(authParams)
+    const authHeader = 'OAuth ' + Object.entries(authParams)
       .map(([key, value]) => `${key}="${encodeURIComponent(value)}"`)
       .join(', ');
+
+    console.log('📜 Auth Header Params:', Object.keys(authParams));
+    
+    return authHeader;
   }
 
   /**
-   * Test the API connection
+   * Test the API connection with detailed logging
    */
   async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
     const url = `${this.baseUrl}/record/v1/metadata-catalog`;
     
+    console.log('🔍 NetSuite Connection Test Starting...');
+    console.log('📍 Account ID:', this.accountId);
+    console.log('🌐 URL:', url);
+    console.log('🔑 Consumer Key:', this.consumerKey ? `${this.consumerKey.substring(0, 8)}...` : 'MISSING');
+    console.log('🎫 Token ID:', this.tokenId ? `${this.tokenId.substring(0, 8)}...` : 'MISSING');
+    
     try {
       const authHeader = this.createAuthHeader('GET', url);
+      console.log('🔐 Generated Auth Header:', authHeader.substring(0, 100) + '...');
       
       const response = await fetch(url, {
         method: 'GET',
@@ -118,8 +137,14 @@ export class NetSuiteClient {
         }
       });
 
+      console.log('📡 Response Status:', response.status);
+      console.log('📋 Response Headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ NetSuite API connection successful!');
+        console.log('📊 Response Data Keys:', Object.keys(data));
+        
         return {
           success: true,
           message: 'NetSuite API connection successful',
@@ -130,28 +155,36 @@ export class NetSuiteClient {
         };
       } else {
         const errorText = await response.text();
+        console.log('❌ NetSuite API Error Response:', errorText);
+        
         let errorMessage = `API request failed with status ${response.status}`;
         
         try {
           const errorJson = JSON.parse(errorText);
+          console.log('🔍 Parsed Error JSON:', errorJson);
           errorMessage = errorJson.o?.errorDetails?.[0]?.detail || 
                         errorJson.title || 
                         errorMessage;
         } catch {
-          // If not JSON, use the text directly
+          console.log('⚠️  Response is not valid JSON, using raw text');
           errorMessage = errorText.substring(0, 200);
         }
+
+        const authError = response.headers.get('www-authenticate');
+        console.log('🔒 WWW-Authenticate Header:', authError);
 
         return {
           success: false,
           message: errorMessage,
           details: {
             status: response.status,
-            authError: response.headers.get('www-authenticate')
+            authError: authError,
+            fullResponse: errorText
           }
         };
       }
     } catch (error) {
+      console.error('💥 NetSuite Connection Error:', error);
       return {
         success: false,
         message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -174,12 +207,9 @@ export class NetSuiteClient {
   }
 
   /**
-   * Get configuration status
+   * Get configuration status with details
    */
-  getConfigStatus(): {
-    configured: boolean;
-    missing: string[];
-  } {
+  getConfigStatus(): { configured: boolean; missing: string[] } {
     const missing: string[] = [];
     
     if (!this.accountId) missing.push('NETSUITE_ACCOUNT_ID');
@@ -193,6 +223,23 @@ export class NetSuiteClient {
       missing
     };
   }
+
+  /**
+   * Get debug information for troubleshooting
+   */
+  getDebugInfo(): any {
+    return {
+      accountId: this.accountId,
+      consumerKey: this.consumerKey ? `${this.consumerKey.substring(0, 8)}...` : 'MISSING',
+      consumerSecret: this.consumerSecret ? 'SET' : 'MISSING',
+      tokenId: this.tokenId ? `${this.tokenId.substring(0, 8)}...` : 'MISSING',
+      tokenSecret: this.tokenSecret ? 'SET' : 'MISSING',
+      baseUrl: this.baseUrl,
+      configured: this.isConfigured()
+    };
+  }
+
+
 }
 
 // Export singleton instance

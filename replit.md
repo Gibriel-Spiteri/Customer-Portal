@@ -47,11 +47,23 @@ Preferred communication style: Simple, everyday language.
 ### Current NetSuite API Status  
 - **Integration approach**: Simplified, step-by-step integration starting with basic connection test
 - **OAuth implementation**: Clean OAuth 1.0a signature generation in `netsuite-simple.ts`
-- **Test endpoint**: `/api/netsuite/test` for connection verification
-- **Debug interface**: `/netsuite-test` page for visual testing and troubleshooting
+- **Test endpoints**: 
+  - `/api/netsuite/test` for connection verification
+  - `/api/netsuite/debug` for configuration and environment status
+- **Debug interfaces**: 
+  - `/netsuite-test` page for visual testing
+  - `/netsuite-debug` page for comprehensive debugging and troubleshooting
+- **Enhanced logging**: Detailed console logging with emojis for easy identification of OAuth generation steps, API responses, and error details
 - **Current status**: Authentication failing with "token_rejected" errors
-- **Root cause**: Likely NetSuite account-level configuration or permissions issue
-- **Next steps**: Requires NetSuite support intervention to diagnose server-side rejection reason
+- **Detailed error**: NetSuite returns "Invalid login attempt" with error code "INVALID_LOGIN"
+- **Root cause analysis**: OAuth signature generation is working correctly, but NetSuite rejects the token credentials
+- **Likely causes**: 
+  - Token credentials may be incorrect or expired
+  - Integration setup incomplete in NetSuite
+  - Insufficient token permissions
+  - Account access restrictions
+- **NetSuite recommendation**: Check Login Audit Trail at Setup → Users/Roles → User Management → View Login Audit Trail
+- **Next steps**: User needs to verify token credentials and integration setup in NetSuite
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data
