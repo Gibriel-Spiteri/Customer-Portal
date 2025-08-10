@@ -270,18 +270,26 @@ export default function NetSuiteDebug() {
               <strong>Error Code:</strong> INVALID_LOGIN
             </p>
             <p>
-              <strong>Likely Causes:</strong>
+              <strong>Key Diagnostic:</strong> Login Audit Trail shows blank 'role' field - this indicates NetSuite cannot determine token permissions
+            </p>
+            <p>
+              <strong>Most Likely Causes:</strong>
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Token credentials may be incorrect or expired</li>
-              <li>Integration may not be properly set up in NetSuite</li>
-              <li>Token permissions may be insufficient</li>
-              <li>Account access may be restricted</li>
+              <li><strong>Token expired or revoked</strong> (Check Setup → Users/Roles → Access Tokens)</li>
+              <li><strong>Associated user is inactive</strong> (Check user status in Manage Users)</li>
+              <li><strong>Missing role assignments</strong> (Token user has no active roles)</li>
+              <li><strong>Insufficient role permissions</strong> (Role lacks Web Services access)</li>
             </ul>
             <p>
-              <strong>Recommended Action:</strong> Check the Login Audit Trail in NetSuite at 
-              Setup → Users/Roles → User Management → View Login Audit Trail
+              <strong>Immediate Actions:</strong>
             </p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Check token ID <code>355e63bf...</code> status in Access Tokens</li>
+              <li>Verify the associated user account is active</li>
+              <li>Confirm user has roles with Web Services permissions</li>
+              <li>If token is expired/revoked, regenerate new token credentials</li>
+            </ol>
           </div>
         </CardContent>
       </Card>
