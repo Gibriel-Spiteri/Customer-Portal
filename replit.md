@@ -44,25 +44,26 @@ Preferred communication style: Simple, everyday language.
 - **User context** management throughout the React application
 
 ### Current NetSuite SSO Status  
-- **Integration approach**: True OAuth 2.0 Single Sign-On with authorization code flow
-- **OAuth implementation**: Full OAuth 2.0 flow with PKCE in `netsuite-auth.ts`
+- **Integration approach**: Suitelet-based JWT SSO (same method as previous PHP project)
+- **SSO implementation**: NetSuite Suitelet generates JWT tokens for authentication in `netsuite-sso.ts`
 - **Authentication flow**: 
   - User clicks "Sign in with NetSuite SSO" button
-  - Redirected to NetSuite login page
-  - After authentication, redirected back with authorization code
-  - Code exchanged for access/refresh tokens
-  - User session created with JWT
+  - Redirected to NetSuite Suitelet (script=4354&deploy=1)
+  - User authenticates with NetSuite directly
+  - Suitelet generates JWT token with user information
+  - Suitelet redirects back to `/api/auth/netsuite/sso?sso_token=JWT`
+  - Application verifies JWT and creates user session
 - **Required configuration**: 
-  - Create OAuth 2.0 integration in NetSuite (Setup → Integration → Manage Integrations)
-  - Set `NETSUITE_CLIENT_ID` and `NETSUITE_CLIENT_SECRET` environment variables
-  - Configure redirect URI in NetSuite matching application callback URL
+  - Create Suitelet script in NetSuite for JWT token generation
+  - Set `NETSUITE_SSO_SECRET` environment variable (base64 encoded shared secret)
+  - Set `NETSUITE_ACCOUNT_ID`, `NETSUITE_SSO_SCRIPT_ID`, `NETSUITE_SSO_DEPLOY_ID`
 - **Security features**: 
-  - PKCE (Proof Key for Code Exchange) for enhanced security
+  - JWT tokens signed with HMAC-SHA256 using shared secret
+  - Token expiration (1 hour default)
   - No password storage in application
-  - Automatic token refresh
-  - User-controlled access revocation from NetSuite
-- **Migration completed**: Replaced broken OAuth 1.0a API-based authentication with true SSO
-- **Documentation**: See `NETSUITE_OAUTH_SETUP.md` for detailed setup instructions
+  - Direct NetSuite authentication
+- **Migration completed**: Replaced OAuth 2.0 with reliable Suitelet-based SSO
+- **Documentation**: See `NETSUITE_SUITELET_SSO_SETUP.md` for detailed setup instructions
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data

@@ -204,7 +204,7 @@ export default function Login() {
               <div className="space-y-4">
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-600 mb-4">
-                    Sign in using your NetSuite account credentials through secure OAuth 2.0
+                    Sign in using your NetSuite account credentials through secure Suitelet SSO
                   </p>
                 </div>
                 
