@@ -40,13 +40,38 @@ const authenticateToken = async (req: any, res: any, next: any) => {
       id: user.id, 
       username: user.username,
       netsuiteCustomerId: decoded.netsuiteCustomerId,
-      isNetSuiteUser: decoded.isNetSuiteUser
+      isNetSuiteUser: decoded.isNetSuiteUser,
+      ssoUser: decoded.ssoUser || false
     };
     next();
   } catch (error) {
     console.error('Token verification error:', error);
     return res.status(403).json({ message: 'Invalid token' });
   }
+};
+
+// Middleware to validate customer center access
+const validateCustomerAccess = async (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  // For NetSuite customer center users, validate they have customer access
+  if (user.isNetSuiteUser && user.ssoUser) {
+    if (!user.netsuiteCustomerId) {
+      return res.status(403).json({ 
+        message: 'Customer center access required',
+        error: 'Missing NetSuite customer identification'
+      });
+    }
+    
+    // Add customer filter for data isolation
+    req.customerFilter = {
+      customerId: user.netsuiteCustomerId
+    };
+    
+    console.log('Customer center access validated for NetSuite customer:', user.netsuiteCustomerId);
+  }
+  
+  next();
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -232,14 +257,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process SSO and create/update user
       const user = await sso.processSSO(verificationResult.payload);
       
-      // Create JWT for our application
+      // Create JWT for our application with customer center access
       const token = jwt.sign(
         { 
           id: user.id, 
           username: user.username,
           netsuiteCustomerId: user.netsuiteCustomerId,
           isNetSuiteUser: true,
-          ssoUser: true
+          ssoUser: true,
+          customerCenterAccess: true
         },
         JWT_SECRET,
         { expiresIn: '24h' }
@@ -299,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard data
-  app.get('/api/dashboard', authenticateToken, async (req: any, res) => {
+  app.get('/api/dashboard', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const dashboardData = await storage.getUserDashboardData(req.user.id);
       
@@ -350,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders
-  app.get('/api/orders', authenticateToken, async (req: any, res) => {
+  app.get('/api/orders', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const orders = await storage.getUserOrders(req.user.id, limit);
@@ -361,7 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/orders/:id', authenticateToken, async (req: any, res) => {
+  app.get('/api/orders/:id', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const order = await storage.getOrder(req.params.id);
       if (!order || order.userId !== req.user.id) {
@@ -375,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Payments
-  app.get('/api/payments', authenticateToken, async (req: any, res) => {
+  app.get('/api/payments', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const payments = await storage.getUserPayments(req.user.id, limit);
@@ -387,7 +413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Invoices
-  app.get('/api/invoices', authenticateToken, async (req: any, res) => {
+  app.get('/api/invoices', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const invoices = await storage.getUserInvoices(req.user.id, limit);
@@ -399,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Account
-  app.get('/api/account', authenticateToken, async (req: any, res) => {
+  app.get('/api/account', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const account = await storage.getUserAccount(req.user.id);
       if (!account) {
@@ -414,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Support tickets
   // Estimates
-  app.get('/api/estimates', authenticateToken, async (req: any, res) => {
+  app.get('/api/estimates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       
@@ -427,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/support/tickets', authenticateToken, async (req: any, res) => {
+  app.get('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const tickets = await storage.getUserSupportTickets(req.user.id);
       res.json(tickets);
@@ -437,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/support/tickets', authenticateToken, async (req: any, res) => {
+  app.post('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const ticketData = insertSupportTicketSchema.parse({
         ...req.body,

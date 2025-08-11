@@ -33,45 +33,52 @@ Preferred communication style: Simple, everyday language.
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
 ### Authentication and Authorization
-- **NetSuite OAuth 2.0 SSO**: True Single Sign-On implementation with OAuth 2.0 authorization code flow
-- **Direct NetSuite Authentication**: Users authenticate directly with NetSuite, no password storage
-- **OAuth 2.0 with PKCE**: Enhanced security using Proof Key for Code Exchange
-- **Automatic Token Management**: Access and refresh tokens handled automatically
-- **JWT-based authentication** with secure token storage and 24-hour expiration
+- **NetSuite Customer Center SAML SSO**: Compliant with official NetSuite Customer Center guidelines
+- **Direct NetSuite Customer Authentication**: Customers authenticate with NetSuite Customer Center credentials
+- **Customer Center Role Validation**: Validates SAML SSO permissions and customer center access
+- **Customer Data Isolation**: Strict data access control ensuring customers see only their own data
+- **Enhanced JWT-based authentication** with customer center validation and 24-hour expiration
+- **Customer Access Middleware**: validateCustomerAccess middleware protects all customer data endpoints
 - **Session management** with PostgreSQL session store and secure cookie handling
-- **Password hashing** using bcrypt for local demo accounts only
-- **Route protection** middleware for API endpoints with NetSuite user context
-- **User context** management throughout the React application
+- **Customer Record Validation**: Validates active customer status and web access permissions
+- **Route protection** middleware for API endpoints with customer center context validation
+- **User context** management with customer center role awareness throughout the application
 
-### Current NetSuite SSO Status  
-- **✅ WORKING**: Suitelet-based JWT SSO successfully implemented and tested
-- **SSO implementation**: NetSuite Suitelet generates JWT tokens for authentication in `netsuite-sso.ts`
+### Current NetSuite Customer Center SAML SSO Status  
+- **✅ UPDATED**: Customer Center SAML SSO implementation following NetSuite official guidelines
+- **Implementation Enhancement**: Modified to comply with NetSuite Customer Center SAML requirements
 - **Authentication flow**: 
-  - User clicks "Sign in with NetSuite SSO" button
-  - Redirected to NetSuite Suitelet (script=4389&deploy=1) with Replit callback URL
-  - User authenticates with NetSuite directly
-  - Suitelet generates JWT token with user information
-  - Suitelet redirects back to Replit domain `/api/auth/netsuite/sso?sso_token=JWT`
-  - Application verifies JWT and creates user session
-- **Configuration status**: 
-  - ✅ `NETSUITE_SSO_SECRET` environment variable configured and working
-  - ✅ `NETSUITE_ACCOUNT_ID`: 1212804
-  - ✅ `NETSUITE_SSO_SCRIPT_ID`: 4389 
-  - ✅ `NETSUITE_SSO_DEPLOY_ID`: 1
-  - ✅ Replit domain integration: `8ae361fb-6ae3-4428-bdcb-35ba3f53f886-00-v5e1qu1mb6wj.worf.replit.dev`
-- **Security features**: 
-  - JWT tokens signed with HMAC-SHA256 using shared secret
-  - Token expiration validation
-  - Multiple secret format support (base64, plaintext, hex, UTF8)
-  - No password storage in application
-  - Direct NetSuite authentication
-- **Recent fixes (Aug 11, 2025)**: 
-  - Fixed JWT signature verification with proper secret handling
-  - Added Replit domain callback URL to prevent localhost navigation issues
-  - Enhanced token payload parsing for NetSuite's format (id field support)
-  - Improved user creation/update logic for SSO users
-  - **REMOVED ALL DEMO DATA**: Cleared database and removed demo credentials, seed scripts, and hardcoded placeholder content
-- **Documentation**: See `NETSUITE_SSO_UPDATE.md` for current setup status and required NetSuite Suitelet updates
+  - User clicks "Sign in with NetSuite Customer Center" button
+  - Redirected to NetSuite Customer Center SAML Suitelet with proper role validation
+  - Customer authenticates with NetSuite Customer Center credentials
+  - Suitelet validates customer center access permissions and record status
+  - Suitelet generates JWT token with customer center specific information
+  - Suitelet redirects back with enhanced customer data in JWT payload
+  - Application verifies JWT with customer center validation
+  - Creates user session with customer data isolation
+- **Customer Center Compliance**:
+  - ✅ Customer center role permissions validated (SAML SSO permission = Full)
+  - ✅ Customer record validation (active status, web access enabled)
+  - ✅ Enhanced token payload with customer center specific data
+  - ✅ Customer data isolation middleware implemented
+  - ✅ Customer access validation on all data endpoints
+  - ✅ Customer-only data filtering and security
+- **Enhanced Security**: 
+  - Customer center access validation in JWT token processing
+  - Customer data isolation on all API endpoints
+  - Role-based access control for customer center users
+  - Enhanced token validation with customer center permissions
+  - Company name and billing address inclusion in customer profile
+- **Recent Updates (Aug 11, 2025)**: 
+  - **Customer Center SAML Compliance**: Updated SSO to follow NetSuite Customer Center guidelines
+  - **Enhanced Token Payload**: Added customer center specific fields (companyName, customerCenterAccess, billingAddress, phone)
+  - **Customer Data Isolation**: Implemented validateCustomerAccess middleware for all customer data endpoints
+  - **Improved Suitelet**: Created customer_center_sso_suitelet.js with proper customer validation
+  - **Updated Documentation**: Added NETSUITE_CUSTOMER_CENTER_SAML_SETUP.md with official NetSuite guidelines
+- **Documentation**: 
+  - `NETSUITE_CUSTOMER_CENTER_SAML_SETUP.md`: Official NetSuite Customer Center SAML setup guide
+  - `netsuite_scripts/customer_center_sso_suitelet.js`: Enhanced Suitelet with customer validation
+  - `NETSUITE_SUITELET_SSO_SETUP.md`: Updated with customer center deployment settings
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data

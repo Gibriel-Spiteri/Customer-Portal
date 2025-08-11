@@ -8,6 +8,10 @@ interface SSOTokenPayload {
   email?: string;
   customerId?: string;
   entityId?: string;
+  companyName?: string;
+  customerCenterAccess?: boolean;
+  billingAddress?: string;
+  phone?: string;
   aud?: string;
   iss?: string;
   iat?: number;
@@ -63,11 +67,27 @@ export class NetSuiteSSO {
         };
       }
 
-      // Validate required fields
+      // Validate required fields for customer center access
       if (!decoded.name) {
         return {
           valid: false,
           error: 'Token missing required name field'
+        };
+      }
+
+      // Validate customer center access if specified
+      if (decoded.customerCenterAccess === false) {
+        return {
+          valid: false,
+          error: 'Customer does not have center access permissions'
+        };
+      }
+
+      // Validate customer ID for customer center users
+      if (!decoded.customerId && !decoded.id) {
+        return {
+          valid: false,
+          error: 'Token missing required customer identification'
         };
       }
 
@@ -127,7 +147,7 @@ export class NetSuiteSSO {
           password: '', // No password needed for SSO users
           firstName: payload.name.split(' ')[0] || payload.name,
           lastName: payload.name.split(' ').slice(1).join(' ') || '',
-          companyName: null,
+          companyName: payload.companyName || null,
           netsuiteCustomerId: netsuiteId,
           netsuiteEntityId: payload.entityId || null,
           netsuiteAccessToken: null,
@@ -151,6 +171,11 @@ export class NetSuiteSSO {
         // Update NetSuite customer ID if we have it and user doesn't
         if (netsuiteId && !user.netsuiteCustomerId) {
           updateData.netsuiteCustomerId = netsuiteId;
+        }
+        
+        // Update company name from NetSuite if available
+        if (payload.companyName && payload.companyName !== user.companyName) {
+          updateData.companyName = payload.companyName;
         }
         
         await storage.updateUser(user.id, updateData);
