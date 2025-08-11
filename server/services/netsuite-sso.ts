@@ -3,10 +3,13 @@ import crypto from 'crypto';
 import { storage } from '../storage';
 
 interface SSOTokenPayload {
+  id?: number;
   name: string;
   email?: string;
   customerId?: string;
   entityId?: string;
+  aud?: string;
+  iss?: string;
   iat?: number;
   exp?: number;
 }
@@ -26,10 +29,39 @@ export class NetSuiteSSO {
    */
   async verifyToken(token: string): Promise<{ valid: boolean; payload?: SSOTokenPayload; error?: string }> {
     try {
-      // Decode the JWT token using the shared secret
-      const decoded = jwt.verify(token, Buffer.from(this.ssoSecret, 'base64'), {
-        algorithms: ['HS256']
-      }) as SSOTokenPayload;
+      let decoded: SSOTokenPayload | null = null;
+      
+      // Try different secret formats as NetSuite might encode it differently
+      const secretVariants = [
+        Buffer.from(this.ssoSecret, 'base64'), // Base64 encoded
+        this.ssoSecret,                        // Plain text
+        Buffer.from(this.ssoSecret, 'hex'),    // Hex encoded
+        Buffer.from(this.ssoSecret, 'utf8')    // UTF8 encoded
+      ];
+      
+      let verificationError: any;
+      
+      for (const secret of secretVariants) {
+        try {
+          decoded = jwt.verify(token, secret, {
+            algorithms: ['HS256']
+          }) as SSOTokenPayload;
+          
+          console.log('SSO: JWT verification successful with secret format:', typeof secret === 'string' ? 'plaintext' : 'buffer');
+          break;
+        } catch (error) {
+          verificationError = error;
+          continue;
+        }
+      }
+      
+      if (!decoded) {
+        console.error('SSO: All secret formats failed:', verificationError?.message);
+        return {
+          valid: false,
+          error: verificationError instanceof Error ? verificationError.message : 'Invalid token signature'
+        };
+      }
 
       // Validate required fields
       if (!decoded.name) {
@@ -68,9 +100,12 @@ export class NetSuiteSSO {
       // Try to find existing user by NetSuite customer ID or email
       let user = null;
       
-      if (payload.customerId) {
+      // Use the `id` field from NetSuite token if available
+      const netsuiteId = payload.id?.toString() || payload.customerId;
+      
+      if (netsuiteId) {
         try {
-          user = await storage.getUserByNetsuiteId(payload.customerId);
+          user = await storage.getUserByNetsuiteId(netsuiteId);
         } catch (error) {
           // User not found, continue searching by email
         }
@@ -93,7 +128,7 @@ export class NetSuiteSSO {
           firstName: payload.name.split(' ')[0] || payload.name,
           lastName: payload.name.split(' ').slice(1).join(' ') || '',
           companyName: null,
-          netsuiteCustomerId: payload.customerId || null,
+          netsuiteCustomerId: netsuiteId,
           netsuiteEntityId: payload.entityId || null,
           netsuiteAccessToken: null,
           netsuiteRefreshToken: null,
@@ -105,14 +140,21 @@ export class NetSuiteSSO {
         };
 
         user = await storage.createUser(newUser);
-        console.log('SSO: Created new user from NetSuite SSO:', user.id);
+        console.log('SSO: Created new user from NetSuite SSO:', user.id, 'for NetSuite ID:', netsuiteId);
       } else {
-        // Update last login time
-        await storage.updateUser(user.id, {
+        // Update last login time and NetSuite ID if needed
+        const updateData: any = {
           lastLoginAt: new Date(),
           updatedAt: new Date()
-        });
-        console.log('SSO: Updated existing user login:', user.id);
+        };
+        
+        // Update NetSuite customer ID if we have it and user doesn't
+        if (netsuiteId && !user.netsuiteCustomerId) {
+          updateData.netsuiteCustomerId = netsuiteId;
+        }
+        
+        await storage.updateUser(user.id, updateData);
+        console.log('SSO: Updated existing user login:', user.id, 'NetSuite ID:', netsuiteId);
       }
 
       return user;
