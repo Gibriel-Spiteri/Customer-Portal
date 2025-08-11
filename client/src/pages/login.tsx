@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,19 @@ export default function Login() {
   const [showNetsuitePassword, setShowNetsuitePassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'demo' | 'netsuite'>('netsuite');
   const [oauthLoading, setOauthLoading] = useState(false);
+  
+  // Check for error parameters in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get('error');
+    if (errorParam) {
+      const decodedError = decodeURIComponent(errorParam);
+      console.log('Login page: Received error from SSO:', decodedError);
+      setError(decodedError);
+      // Clear the error from URL
+      window.history.replaceState({}, '', '/login');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

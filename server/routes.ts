@@ -239,6 +239,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sso_token } = req.query;
       
+      console.log('SSO: Received callback with token:', sso_token ? 'Token present' : 'No token');
+      console.log('SSO: Token length:', sso_token ? (sso_token as string).length : 0);
+      
       if (!sso_token) {
         return res.redirect('/login?error=missing_token');
       }
@@ -246,11 +249,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteSSO } = await import('./services/netsuite-sso');
       const sso = new NetSuiteSSO();
       
+      // Log token structure for debugging
+      const tokenParts = (sso_token as string).split('.');
+      console.log('SSO: Token structure - parts:', tokenParts.length);
+      if (tokenParts.length !== 3) {
+        console.error('SSO: Invalid JWT structure. Expected 3 parts, got', tokenParts.length);
+        console.log('SSO: Token sample:', (sso_token as string).substring(0, 50) + '...');
+      }
+      
       // Verify the JWT token from NetSuite
       const verificationResult = await sso.verifyToken(sso_token as string);
       
       if (!verificationResult.valid || !verificationResult.payload) {
         console.error('SSO token verification failed:', verificationResult.error);
+        console.error('SSO: Secret configured:', process.env.NETSUITE_SSO_SECRET ? 'Yes' : 'No');
         return res.redirect(`/login?error=${encodeURIComponent(verificationResult.error || 'Invalid token')}`);
       }
       
