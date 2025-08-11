@@ -97,15 +97,15 @@ define(['N/runtime', 'N/https'], function(runtime, https) {
 ### 1.2 Upload and Deploy Script
 1. Go to **Customization → Scripting → Scripts → New**
 2. Upload the script file
-3. Set **Name**: "Customer Center SSO Suitelet"
-4. Set **ID**: "customscript_customer_center_sso"
+3. Set **Name**: "SSO Authentication Suitelet"
+4. Set **ID**: "customscript_sso_suitelet"
 5. Create a deployment:
-   - **Title**: "Customer Center SSO Authentication"
-   - **ID**: "customdeploy_customer_center_sso"
+   - **Title**: "SSO Authentication"
+   - **ID**: "customdeploy_sso_auth"
    - **Status**: Released
-   - **Audience**: Customer Center Users (NOT All Roles)
-   - **Execute As Role**: Customer Center Role (NOT Administrator)
-   - **Available Without Login**: No
+   - **Audience**: All Roles (IMPORTANT: Must be "All Roles" for SSO to work)
+   - **Execute As Role**: Current User (NOT Administrator or specific role)
+   - **Available Without Login**: Yes (CRITICAL: Must be "Yes" for SSO entry point)
 
 ## Step 2: Configure Environment Variables
 

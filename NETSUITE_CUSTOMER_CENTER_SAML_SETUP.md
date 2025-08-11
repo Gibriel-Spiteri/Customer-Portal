@@ -166,13 +166,21 @@ define(['N/runtime', 'N/https', 'N/crypto', 'N/record'],
 });
 ```
 
-### 5.2 Deployment Settings for Customer Access
+### 5.2 Deployment Settings for SSO Access
 Update the Suitelet deployment:
 
-1. **Audience**: Customer Center Users
-2. **Execute As Role**: Customer Center Role (not Administrator)
-3. **Available Without Login**: No
+**IMPORTANT**: For SSO to work properly, the initial deployment must allow access without login:
+
+1. **Audience**: All Roles (Required for SSO entry point)
+2. **Execute As Role**: Current User (Executes with authenticated user's permissions)
+3. **Available Without Login**: Yes (CRITICAL - allows users to reach SSO without being logged in first)
 4. **Show in Bundles**: Optional
+
+**Note**: The "Available Without Login: Yes" setting is required because:
+- Users need to access the Suitelet to initiate authentication
+- The Suitelet itself handles the authentication process
+- Without this, users get "You do not have privileges" error
+- The Suitelet only generates tokens after successful NetSuite authentication
 
 ## Step 6: Frontend Customer Authentication Flow
 
