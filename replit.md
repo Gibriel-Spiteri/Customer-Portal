@@ -44,26 +44,33 @@ Preferred communication style: Simple, everyday language.
 - **User context** management throughout the React application
 
 ### Current NetSuite SSO Status  
-- **Integration approach**: Suitelet-based JWT SSO (same method as previous PHP project)
+- **✅ WORKING**: Suitelet-based JWT SSO successfully implemented and tested
 - **SSO implementation**: NetSuite Suitelet generates JWT tokens for authentication in `netsuite-sso.ts`
 - **Authentication flow**: 
   - User clicks "Sign in with NetSuite SSO" button
-  - Redirected to NetSuite Suitelet (script=4354&deploy=1)
+  - Redirected to NetSuite Suitelet (script=4389&deploy=1) with Replit callback URL
   - User authenticates with NetSuite directly
   - Suitelet generates JWT token with user information
-  - Suitelet redirects back to `/api/auth/netsuite/sso?sso_token=JWT`
+  - Suitelet redirects back to Replit domain `/api/auth/netsuite/sso?sso_token=JWT`
   - Application verifies JWT and creates user session
-- **Required configuration**: 
-  - Create Suitelet script in NetSuite for JWT token generation
-  - Set `NETSUITE_SSO_SECRET` environment variable (base64 encoded shared secret)
-  - Set `NETSUITE_ACCOUNT_ID`, `NETSUITE_SSO_SCRIPT_ID`, `NETSUITE_SSO_DEPLOY_ID`
+- **Configuration status**: 
+  - ✅ `NETSUITE_SSO_SECRET` environment variable configured and working
+  - ✅ `NETSUITE_ACCOUNT_ID`: 1212804
+  - ✅ `NETSUITE_SSO_SCRIPT_ID`: 4389 
+  - ✅ `NETSUITE_SSO_DEPLOY_ID`: 1
+  - ✅ Replit domain integration: `8ae361fb-6ae3-4428-bdcb-35ba3f53f886-00-v5e1qu1mb6wj.worf.replit.dev`
 - **Security features**: 
   - JWT tokens signed with HMAC-SHA256 using shared secret
-  - Token expiration (1 hour default)
+  - Token expiration validation
+  - Multiple secret format support (base64, plaintext, hex, UTF8)
   - No password storage in application
   - Direct NetSuite authentication
-- **Migration completed**: Replaced OAuth 2.0 with reliable Suitelet-based SSO
-- **Documentation**: See `NETSUITE_SUITELET_SSO_SETUP.md` for detailed setup instructions
+- **Recent fixes (Aug 11, 2025)**: 
+  - Fixed JWT signature verification with proper secret handling
+  - Added Replit domain callback URL to prevent localhost navigation issues
+  - Enhanced token payload parsing for NetSuite's format (id field support)
+  - Improved user creation/update logic for SSO users
+- **Documentation**: See `NETSUITE_SSO_UPDATE.md` for current setup status and required NetSuite Suitelet updates
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data

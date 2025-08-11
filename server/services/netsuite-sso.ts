@@ -165,13 +165,32 @@ export class NetSuiteSSO {
   }
 
   /**
-   * Generate redirect URL to NetSuite Suitelet
+   * Generate redirect URL to NetSuite Suitelet with proper callback URL
    */
   generateSuiteLetURL(): string {
     const accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
     const scriptId = process.env.NETSUITE_SSO_SCRIPT_ID || '4354';
     const deployId = process.env.NETSUITE_SSO_DEPLOY_ID || '1';
     
-    return `https://${accountId}.app.netsuite.com/app/site/hosting/scriptlet.nl?script=${scriptId}&deploy=${deployId}`;
+    // Get the proper Replit domain from environment 
+    const replitDomain = process.env.REPLIT_DEV_DOMAIN;
+    
+    console.log('SSO: Environment values:', { accountId, scriptId, deployId, replitDomain });
+    
+    if (!replitDomain) {
+      console.warn('SSO: REPLIT_DEV_DOMAIN not found, using basic URL');
+      return `https://${accountId}.app.netsuite.com/app/site/hosting/scriptlet.nl?script=${scriptId}&deploy=${deployId}`;
+    }
+    
+    // Construct the callback URL that NetSuite should redirect to
+    const callbackUrl = `https://${replitDomain}/api/auth/netsuite/sso`;
+    
+    console.log('SSO: Generated NetSuite URL with callback:', callbackUrl);
+    
+    // Add the callback URL as a parameter so NetSuite Suitelet knows where to redirect
+    const finalUrl = `https://${accountId}.app.netsuite.com/app/site/hosting/scriptlet.nl?script=${scriptId}&deploy=${deployId}&callback=${encodeURIComponent(callbackUrl)}`;
+    
+    console.log('SSO: Final URL:', finalUrl);
+    return finalUrl;
   }
 }
