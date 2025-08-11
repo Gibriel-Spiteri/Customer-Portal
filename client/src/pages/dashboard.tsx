@@ -114,9 +114,9 @@ export default function Dashboard() {
           Here's what's happening with your account today.
         </p>
         {/* Debugging info - to be removed later */}
-        {user.isNetSuiteUser && (
+        {user.isNetSuiteUser && user.netsuiteCustomerId && (
           <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs font-mono">
-            <span className="text-blue-600 font-semibold">DEBUG:</span> Customer # {user.netsuiteCustomerId} | Record # 187409
+            <span className="text-blue-600 font-semibold">NetSuite:</span> Customer # {user.netsuiteCustomerId}
           </div>
         )}
       </div>

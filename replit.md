@@ -70,6 +70,7 @@ Preferred communication style: Simple, everyday language.
   - Added Replit domain callback URL to prevent localhost navigation issues
   - Enhanced token payload parsing for NetSuite's format (id field support)
   - Improved user creation/update logic for SSO users
+  - **REMOVED ALL DEMO DATA**: Cleared database and removed demo credentials, seed scripts, and hardcoded placeholder content
 - **Documentation**: See `NETSUITE_SSO_UPDATE.md` for current setup status and required NetSuite Suitelet updates
 
 ### Sync Architecture

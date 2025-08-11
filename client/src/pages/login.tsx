@@ -238,12 +238,12 @@ export default function Login() {
 
         {/* Login Instructions */}
         <div className="space-y-4">
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-6">
-              <h3 className="font-medium text-green-800 mb-2">Demo Login</h3>
-              <div className="text-sm text-green-700 space-y-1">
-                <p><strong>Username:</strong> demo@customer.com</p>
-                <p><strong>Password:</strong> demo123</p>
+              <h3 className="font-medium text-blue-800 mb-2">Getting Started</h3>
+              <div className="text-sm text-blue-700 space-y-1">
+                <p>Use NetSuite SSO for secure access to your account data</p>
+                <p>Demo mode is available for testing (requires account setup)</p>
               </div>
             </CardContent>
           </Card>

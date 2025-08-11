@@ -256,7 +256,7 @@ export default function Estimates() {
                               {estimate.estimateNumber}
                             </TableCell>
                             <TableCell>
-                              {estimate.customerName || estimate.description || 'Walsh Enterprises'}
+                              {estimate.customerName || estimate.description || 'N/A'}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">

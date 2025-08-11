@@ -47,11 +47,11 @@ export default function OAuthDebugPage() {
             </div>
             <div className="flex items-center justify-between">
               <span>Account ID</span>
-              <Badge variant="outline">1212804</Badge>
+              <Badge variant="outline">{process.env.NETSUITE_ACCOUNT_ID || 'Not configured'}</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span>Authorization URL</span>
-              <Badge variant="outline">https://1212804.app.netsuite.com</Badge>
+              <Badge variant="outline">Dynamic from environment</Badge>
             </div>
           </CardContent>
         </Card>
