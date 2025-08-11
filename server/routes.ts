@@ -324,32 +324,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth status endpoint
-  app.get('/api/auth/status', authenticateToken, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      res.json({
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          companyName: user.companyName,
-          isNetSuiteUser: req.user.isNetSuiteUser,
-          netsuiteCustomerId: req.user.netsuiteCustomerId,
-        },
-      });
-    } catch (error) {
-      console.error('Auth status error:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-
   app.post('/api/auth/register', async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
