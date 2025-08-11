@@ -286,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUser(user.id, {
         netsuiteAccessToken: tokenResponse.access_token,
         netsuiteRefreshToken: tokenResponse.refresh_token,
-        netsuiteTokenExpiresAt: new Date(Date.now() + tokenResponse.expires_in * 1000)
+        netsuiteTokenExpiry: new Date(Date.now() + tokenResponse.expires_in * 1000)
       });
       
       // Create JWT for our application
