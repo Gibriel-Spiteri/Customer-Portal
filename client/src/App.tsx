@@ -20,6 +20,7 @@ import OAuthCallback from "@/pages/oauth-callback";
 import Debug from "@/pages/debug";
 import { NetSuiteTest } from "@/pages/netsuite-test";
 import NetSuiteDebug from "@/pages/netsuite-debug";
+import OAuthDebugPage from "@/pages/oauth-debug";
 
 function Router() {
   return (
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/debug" component={Debug} />
       <Route path="/netsuite-test" component={NetSuiteTest} />
       <Route path="/netsuite-debug" component={NetSuiteDebug} />
+      <Route path="/oauth-debug" component={OAuthDebugPage} />
       <Route component={NotFound} />
     </Switch>
   );
