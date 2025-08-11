@@ -185,118 +185,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // NetSuite authentication disabled - using demo mode only
-
-  // NetSuite OAuth 2.0 Routes
+  // NetSuite SSO Routes (Suitelet-based authentication)
   app.get('/api/auth/netsuite', async (req, res) => {
     try {
-      const { NetSuiteOAuth2Service } = await import('./services/netsuite-auth');
-      const oauth = new NetSuiteOAuth2Service();
+      const { NetSuiteSSO } = await import('./services/netsuite-sso');
+      const sso = new NetSuiteSSO();
       
-      // Check if OAuth 2.0 is configured
-      if (!process.env.NETSUITE_CLIENT_ID || !process.env.NETSUITE_CLIENT_SECRET) {
+      // Check if SSO is configured
+      if (!process.env.NETSUITE_SSO_SECRET) {
         return res.status(400).json({
-          error: 'OAuth 2.0 not configured',
-          message: 'Please configure NETSUITE_CLIENT_ID and NETSUITE_CLIENT_SECRET'
+          error: 'NetSuite SSO not configured',
+          message: 'Please configure NETSUITE_SSO_SECRET environment variable'
         });
       }
       
-      // Generate authorization URL with PKCE
-      const { url, state, codeVerifier } = oauth.generateAuthorizationUrl();
+      // Generate SuiteScript URL for SSO
+      const suiteLetURL = sso.generateSuiteLetURL();
       
-      // Store state and codeVerifier in session or temporary storage
-      // For simplicity, we'll use a temporary in-memory store
-      (global as any).oauthSessions = (global as any).oauthSessions || {};
-      (global as any).oauthSessions[state] = {
-        codeVerifier,
-        timestamp: Date.now()
-      };
-      
-      // Clean up old sessions (older than 10 minutes)
-      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-      Object.keys((global as any).oauthSessions).forEach(key => {
-        if ((global as any).oauthSessions[key].timestamp < tenMinutesAgo) {
-          delete (global as any).oauthSessions[key];
-        }
-      });
-      
-      res.json({ authUrl: url, state });
+      res.json({ authUrl: suiteLetURL });
     } catch (error) {
-      console.error('OAuth initiation error:', error);
-      res.status(500).json({ error: 'Failed to initiate OAuth flow' });
+      console.error('SSO initiation error:', error);
+      res.status(500).json({ error: 'Failed to initiate SSO flow' });
     }
   });
   
-  // OAuth callback handler
-  app.get('/api/auth/netsuite/callback', async (req, res) => {
+  // SSO callback handler (receives JWT token from NetSuite Suitelet)
+  app.get('/api/auth/netsuite/sso', async (req, res) => {
     try {
-      const { code, state, error } = req.query;
+      const { sso_token } = req.query;
       
-      if (error) {
-        console.error('OAuth error:', error);
-        return res.redirect(`/login?error=${encodeURIComponent(error as string)}`);
+      if (!sso_token) {
+        return res.redirect('/login?error=missing_token');
       }
       
-      if (!code || !state) {
-        return res.redirect('/login?error=missing_parameters');
+      const { NetSuiteSSO } = await import('./services/netsuite-sso');
+      const sso = new NetSuiteSSO();
+      
+      // Verify the JWT token from NetSuite
+      const verificationResult = await sso.verifyToken(sso_token as string);
+      
+      if (!verificationResult.valid || !verificationResult.payload) {
+        console.error('SSO token verification failed:', verificationResult.error);
+        return res.redirect(`/login?error=${encodeURIComponent(verificationResult.error || 'Invalid token')}`);
       }
       
-      // Retrieve stored codeVerifier
-      const session = (global as any).oauthSessions?.[state as string];
-      if (!session) {
-        return res.redirect('/login?error=invalid_state');
-      }
-      
-      const { codeVerifier } = session;
-      delete (global as any).oauthSessions[state as string];
-      
-      const { NetSuiteOAuth2Service } = await import('./services/netsuite-auth');
-      const oauth = new NetSuiteOAuth2Service();
-      
-      // Exchange code for tokens
-      const tokenResponse = await oauth.exchangeCodeForToken(code as string, codeVerifier);
-      
-      // Get user info from NetSuite
-      const userInfo = await oauth.getCustomerInfo(tokenResponse.access_token);
-      
-      // Create or update user in database
-      let user;
-      const existingUser = await storage.getUserByUsername(userInfo.email);
-      
-      if (existingUser) {
-        user = existingUser;
-        console.log('OAuth: Updating existing user:', user.id);
-      } else {
-        const newUser = {
-          username: userInfo.email,
-          email: userInfo.email,
-          password: '', // OAuth users don't need local passwords
-          firstName: userInfo.firstName || '',
-          lastName: userInfo.lastName || '',
-          companyName: userInfo.companyName || '',
-          netsuiteCustomerId: userInfo.id,
-          netsuiteEntityId: userInfo.entityId
-        };
-        
-        user = await storage.createUser(newUser);
-        console.log('OAuth: Created new user:', user.id);
-      }
-      
-      // Store tokens securely
-      await storage.updateUser(user.id, {
-        netsuiteAccessToken: tokenResponse.access_token,
-        netsuiteRefreshToken: tokenResponse.refresh_token,
-        netsuiteTokenExpiry: new Date(Date.now() + tokenResponse.expires_in * 1000)
-      });
+      // Process SSO and create/update user
+      const user = await sso.processSSO(verificationResult.payload);
       
       // Create JWT for our application
       const token = jwt.sign(
         { 
           id: user.id, 
           username: user.username,
-          netsuiteCustomerId: userInfo.id,
+          netsuiteCustomerId: user.netsuiteCustomerId,
           isNetSuiteUser: true,
-          oauthUser: true
+          ssoUser: true
         },
         JWT_SECRET,
         { expiresIn: '24h' }
@@ -306,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.redirect(`/auth/netsuite/callback?token=${token}`);
       
     } catch (error) {
-      console.error('OAuth callback error:', error);
+      console.error('SSO callback error:', error);
       res.redirect(`/login?error=${encodeURIComponent('Authentication failed')}`);
     }
   });
