@@ -125,7 +125,7 @@ export class NetSuiteSSO {
   /**
    * Generate redirect URL to NetSuite Suitelet
    */
-  generateSuiteLetURL(): string {
+    generateSuiteLetURL(): string {
     const accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
     const scriptId = process.env.NETSUITE_SSO_SCRIPT_ID || '4354';
     const deployId = process.env.NETSUITE_SSO_DEPLOY_ID || '1';
