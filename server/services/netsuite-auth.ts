@@ -126,31 +126,67 @@ export class NetSuiteOAuth2Service {
    * Get customer information using access token
    */
   async getCustomerInfo(accessToken: string): Promise<any> {
-    // First, get the current user's information
-    const userResponse = await fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/employee/me`, {
+    // NetSuite OAuth 2.0 returns user info through the /tokeninfo endpoint
+    const tokenInfoResponse = await fetch(`https://${this.config.accountId}.app.netsuite.com/app/login/oauth2/tokeninfo`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
       }
     });
 
-    if (!userResponse.ok) {
-      // If employee endpoint fails, try customer endpoint
-      const customerResponse = await fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer/me`, {
+    if (tokenInfoResponse.ok) {
+      const tokenInfo = await tokenInfoResponse.json();
+      console.log('OAuth token info:', tokenInfo);
+      
+      // Return user info from token
+      return {
+        id: tokenInfo.entity_id || tokenInfo.sub,
+        entityId: tokenInfo.entity_id,
+        email: tokenInfo.email || tokenInfo.sub + '@netsuite.com',
+        firstName: tokenInfo.given_name || '',
+        lastName: tokenInfo.family_name || '',
+        companyName: tokenInfo.company || '',
+        role: tokenInfo.role || '',
+        subsidiary: tokenInfo.subsidiary || ''
+      };
+    }
+
+    // Fallback to REST API if tokeninfo fails
+    try {
+      const customerResponse = await fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'prefer': 'respond-async=false'
         }
       });
 
-      if (!customerResponse.ok) {
-        throw new Error('Failed to get user information from NetSuite');
+      if (customerResponse.ok) {
+        const customers = await customerResponse.json();
+        if (customers.items && customers.items.length > 0) {
+          const customer = customers.items[0];
+          return {
+            id: customer.id,
+            entityId: customer.entityid,
+            email: customer.email,
+            firstName: customer.firstname || '',
+            lastName: customer.lastname || '',
+            companyName: customer.companyname || ''
+          };
+        }
       }
-
-      return customerResponse.json();
+    } catch (error) {
+      console.error('Failed to fetch customer info:', error);
     }
 
-    return userResponse.json();
+    // Return minimal info if all else fails
+    return {
+      id: 'unknown',
+      entityId: 'unknown',
+      email: 'user@netsuite.com',
+      firstName: 'NetSuite',
+      lastName: 'User',
+      companyName: ''
+    };
   }
 
   /**

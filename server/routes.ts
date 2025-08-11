@@ -187,7 +187,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // NetSuite authentication disabled - using demo mode only
 
-  // NetSuite OAuth routes disabled - demo mode only
+  // NetSuite OAuth 2.0 Routes
+  app.get('/api/auth/netsuite', async (req, res) => {
+    try {
+      const { NetSuiteOAuth2Service } = await import('./services/netsuite-auth');
+      const oauth = new NetSuiteOAuth2Service();
+      
+      // Check if OAuth 2.0 is configured
+      if (!process.env.NETSUITE_CLIENT_ID || !process.env.NETSUITE_CLIENT_SECRET) {
+        return res.status(400).json({
+          error: 'OAuth 2.0 not configured',
+          message: 'Please configure NETSUITE_CLIENT_ID and NETSUITE_CLIENT_SECRET'
+        });
+      }
+      
+      // Generate authorization URL with PKCE
+      const { url, state, codeVerifier } = oauth.generateAuthorizationUrl();
+      
+      // Store state and codeVerifier in session or temporary storage
+      // For simplicity, we'll use a temporary in-memory store
+      (global as any).oauthSessions = (global as any).oauthSessions || {};
+      (global as any).oauthSessions[state] = {
+        codeVerifier,
+        timestamp: Date.now()
+      };
+      
+      // Clean up old sessions (older than 10 minutes)
+      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+      Object.keys((global as any).oauthSessions).forEach(key => {
+        if ((global as any).oauthSessions[key].timestamp < tenMinutesAgo) {
+          delete (global as any).oauthSessions[key];
+        }
+      });
+      
+      res.json({ authUrl: url, state });
+    } catch (error) {
+      console.error('OAuth initiation error:', error);
+      res.status(500).json({ error: 'Failed to initiate OAuth flow' });
+    }
+  });
+  
+  // OAuth callback handler
+  app.get('/api/auth/netsuite/callback', async (req, res) => {
+    try {
+      const { code, state, error } = req.query;
+      
+      if (error) {
+        console.error('OAuth error:', error);
+        return res.redirect(`/login?error=${encodeURIComponent(error as string)}`);
+      }
+      
+      if (!code || !state) {
+        return res.redirect('/login?error=missing_parameters');
+      }
+      
+      // Retrieve stored codeVerifier
+      const session = (global as any).oauthSessions?.[state as string];
+      if (!session) {
+        return res.redirect('/login?error=invalid_state');
+      }
+      
+      const { codeVerifier } = session;
+      delete (global as any).oauthSessions[state as string];
+      
+      const { NetSuiteOAuth2Service } = await import('./services/netsuite-auth');
+      const oauth = new NetSuiteOAuth2Service();
+      
+      // Exchange code for tokens
+      const tokenResponse = await oauth.exchangeCodeForToken(code as string, codeVerifier);
+      
+      // Get user info from NetSuite
+      const userInfo = await oauth.getCustomerInfo(tokenResponse.access_token);
+      
+      // Create or update user in database
+      let user;
+      const existingUser = await storage.getUserByUsername(userInfo.email);
+      
+      if (existingUser) {
+        user = existingUser;
+        console.log('OAuth: Updating existing user:', user.id);
+      } else {
+        const newUser = {
+          username: userInfo.email,
+          email: userInfo.email,
+          password: '', // OAuth users don't need local passwords
+          firstName: userInfo.firstName || '',
+          lastName: userInfo.lastName || '',
+          companyName: userInfo.companyName || '',
+          netsuiteCustomerId: userInfo.id,
+          netsuiteEntityId: userInfo.entityId
+        };
+        
+        user = await storage.createUser(newUser);
+        console.log('OAuth: Created new user:', user.id);
+      }
+      
+      // Store tokens securely
+      await storage.updateUser(user.id, {
+        netsuiteAccessToken: tokenResponse.access_token,
+        netsuiteRefreshToken: tokenResponse.refresh_token,
+        netsuiteTokenExpiresAt: new Date(Date.now() + tokenResponse.expires_in * 1000)
+      });
+      
+      // Create JWT for our application
+      const token = jwt.sign(
+        { 
+          id: user.id, 
+          username: user.username,
+          netsuiteCustomerId: userInfo.id,
+          isNetSuiteUser: true,
+          oauthUser: true
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      // Redirect to frontend with token
+      res.redirect(`/auth/netsuite/callback?token=${token}`);
+      
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect(`/login?error=${encodeURIComponent('Authentication failed')}`);
+    }
+  });
 
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -450,83 +572,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // NetSuite Direct Authentication endpoint
+  // Deprecated: Direct authentication endpoint removed
+  // NetSuite SSO is now the only authentication method for NetSuite accounts
   app.post('/api/auth/netsuite-direct', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      console.log('NetSuite direct auth attempt for:', email);
-
-      // Import the NetSuite direct auth service
-      const { netsuiteDirectAuth } = await import('./services/netsuite-direct-auth');
-      
-      const result = await netsuiteDirectAuth.authenticateUser({
-        email,
-        password,
-        accountId: process.env.NETSUITE_ACCOUNT_ID || ''
-      });
-
-      if (!result.success) {
-        return res.status(401).json({ 
-          message: result.error || 'NetSuite authentication failed' 
-        });
-      }
-
-      // Create or update user in our database
-      let user;
-      const existingUser = await storage.getUserByUsername(email);
-      
-      if (existingUser) {
-        // Update existing user with NetSuite data
-        user = existingUser;
-        console.log('Updating existing user:', user.id);
-      } else {
-        // Create new user from NetSuite data
-        const newUser = {
-          username: email,
-          email: result.user.email,
-          password: '', // NetSuite users don't need local passwords
-          firstName: result.user.firstname,
-          lastName: result.user.lastname,
-          companyName: result.user.companyname,
-          netsuiteCustomerId: result.user.customerId,
-          netsuiteEntityId: result.user.entityid
-        };
-        
-        user = await storage.createUser(newUser);
-        console.log('Created new NetSuite user:', user.id);
-      }
-
-      // Create JWT token
-      const token = jwt.sign(
-        { 
-          id: user.id, 
-          username: user.username,
-          netsuiteCustomerId: result.user.customerId,
-          isNetSuiteUser: true
-        },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-
-      res.json({
-        message: 'NetSuite authentication successful',
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          companyName: user.companyName,
-          netsuiteCustomerId: result.user.customerId,
-          isNetSuiteUser: true
-        }
-      });
-
-    } catch (error) {
-      console.error('NetSuite direct auth error:', error);
-      res.status(500).json({ message: 'NetSuite authentication failed' });
-    }
+    res.status(410).json({ 
+      message: 'Direct authentication has been replaced with NetSuite SSO. Please use the "Sign in with NetSuite SSO" button on the login page.',
+      error: 'method_deprecated'
+    });
   });
 
   // Loyalty endpoints

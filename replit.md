@@ -33,37 +33,36 @@ Preferred communication style: Simple, everyday language.
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
 ### Authentication and Authorization
-- **NetSuite API Integration**: Complete OAuth 1.0a token-based authentication implementation
-- **Real API calls**: System now makes actual NetSuite REST API calls (no fallback to mock data)
-- **OAuth credentials configured**: All 5 required NetSuite secrets properly set in environment
-- **Authentication issue identified**: 401 "Invalid login attempt" errors from NetSuite API
-- **Fail-fast approach**: Removed fallback protection to clearly show API authentication status
+- **NetSuite OAuth 2.0 SSO**: True Single Sign-On implementation with OAuth 2.0 authorization code flow
+- **Direct NetSuite Authentication**: Users authenticate directly with NetSuite, no password storage
+- **OAuth 2.0 with PKCE**: Enhanced security using Proof Key for Code Exchange
+- **Automatic Token Management**: Access and refresh tokens handled automatically
 - **JWT-based authentication** with secure token storage and 24-hour expiration
 - **Session management** with PostgreSQL session store and secure cookie handling
-- **Password hashing** using bcrypt for local demo accounts
+- **Password hashing** using bcrypt for local demo accounts only
 - **Route protection** middleware for API endpoints with NetSuite user context
 - **User context** management throughout the React application
 
-### Current NetSuite API Status  
-- **Integration approach**: Simplified, step-by-step integration starting with basic connection test
-- **OAuth implementation**: Clean OAuth 1.0a signature generation in `netsuite-simple.ts`
-- **Test endpoints**: 
-  - `/api/netsuite/test` for connection verification
-  - `/api/netsuite/debug` for configuration and environment status
-- **Debug interfaces**: 
-  - `/netsuite-test` page for visual testing
-  - `/netsuite-debug` page for comprehensive debugging and troubleshooting
-- **Enhanced logging**: Detailed console logging with emojis for easy identification of OAuth generation steps, API responses, and error details
-- **Current status**: Authentication failing with "token_rejected" errors
-- **Detailed error**: NetSuite returns "Invalid login attempt" with error code "INVALID_LOGIN"
-- **Root cause analysis**: OAuth signature generation is working correctly, but NetSuite rejects the token credentials
-- **Likely causes**: 
-  - Token credentials may be incorrect or expired
-  - Integration setup incomplete in NetSuite
-  - Insufficient token permissions
-  - Account access restrictions
-- **NetSuite recommendation**: Check Login Audit Trail at Setup → Users/Roles → User Management → View Login Audit Trail
-- **Next steps**: User needs to verify token credentials and integration setup in NetSuite
+### Current NetSuite SSO Status  
+- **Integration approach**: True OAuth 2.0 Single Sign-On with authorization code flow
+- **OAuth implementation**: Full OAuth 2.0 flow with PKCE in `netsuite-auth.ts`
+- **Authentication flow**: 
+  - User clicks "Sign in with NetSuite SSO" button
+  - Redirected to NetSuite login page
+  - After authentication, redirected back with authorization code
+  - Code exchanged for access/refresh tokens
+  - User session created with JWT
+- **Required configuration**: 
+  - Create OAuth 2.0 integration in NetSuite (Setup → Integration → Manage Integrations)
+  - Set `NETSUITE_CLIENT_ID` and `NETSUITE_CLIENT_SECRET` environment variables
+  - Configure redirect URI in NetSuite matching application callback URL
+- **Security features**: 
+  - PKCE (Proof Key for Code Exchange) for enhanced security
+  - No password storage in application
+  - Automatic token refresh
+  - User-controlled access revocation from NetSuite
+- **Migration completed**: Replaced broken OAuth 1.0a API-based authentication with true SSO
+- **Documentation**: See `NETSUITE_OAUTH_SETUP.md` for detailed setup instructions
 
 ### Sync Architecture
 - **Dual-sync strategy**: Live sync for critical data (orders, payments) and batch sync for reference data
@@ -83,7 +82,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Third-Party Services
 - **Neon Database** - Serverless PostgreSQL hosting
-- **NetSuite REST API** - ERP system integration for customer data with OAuth 2.0 authentication
+- **NetSuite OAuth 2.0 SSO** - Single Sign-On authentication for NetSuite customers
+- **NetSuite REST API** - ERP system integration for customer data
 - **Replit hosting platform** - Development and deployment environment
 
 ### Key Libraries and Frameworks

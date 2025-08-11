@@ -15,9 +15,16 @@ export default function OAuthCallback() {
       // Store the token
       localStorage.setItem('auth_token', token);
       
-      // Redirect to estimates page
+      // Trigger a storage event to notify auth context
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'auth_token',
+        newValue: token,
+        url: window.location.href
+      }));
+      
+      // Redirect to dashboard
       setTimeout(() => {
-        setLocation('/estimates');
+        setLocation('/');
       }, 1000);
     } else if (error) {
       // Handle error
@@ -33,7 +40,8 @@ export default function OAuthCallback() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 mb-4" />
-        <p className="text-gray-600">Completing authentication...</p>
+        <p className="text-gray-600">Completing NetSuite authentication...</p>
+        <p className="text-sm text-gray-500 mt-2">Please wait while we set up your session</p>
       </div>
     </div>
   );

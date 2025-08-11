@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, AlertCircle, Eye, EyeOff, ExternalLink } from "lucide-react";
 
 export default function Login() {
-  const { login, loginNetSuite, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -24,6 +24,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNetsuitePassword, setShowNetsuitePassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'demo' | 'netsuite'>('netsuite');
+  const [oauthLoading, setOauthLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,17 +47,27 @@ export default function Login() {
     }));
   };
 
-  const handleNetSuiteLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNetsuiteSubmitting(true);
+  const handleNetSuiteOAuth = async () => {
+    setOauthLoading(true);
     setError("");
     
     try {
-      await loginNetSuite(netsuiteFormData.email, netsuiteFormData.password);
+      // Get OAuth authorization URL from backend
+      const response = await fetch('/api/auth/netsuite');
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to initiate OAuth');
+      }
+      
+      const { authUrl } = await response.json();
+      
+      // Redirect to NetSuite for authentication
+      window.location.href = authUrl;
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NetSuite login failed");
-    } finally {
-      setNetsuiteSubmitting(false);
+      setError(err instanceof Error ? err.message : "Failed to initiate NetSuite SSO");
+      setOauthLoading(false);
     }
   };
 
@@ -190,68 +201,37 @@ export default function Login() {
             )}
 
             {activeTab === 'netsuite' && (
-              <form onSubmit={handleNetSuiteLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="netsuite-email">NetSuite Email</Label>
-                  <Input
-                    id="netsuite-email"
-                    name="email"
-                    type="email"
-                    value={netsuiteFormData.email}
-                    onChange={handleNetsuiteChange}
-                    required
-                    placeholder="Enter your NetSuite email"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="netsuite-password">NetSuite Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="netsuite-password"
-                      name="password"
-                      type={showNetsuitePassword ? "text" : "password"}
-                      value={netsuiteFormData.password}
-                      onChange={handleNetsuiteChange}
-                      required
-                      placeholder="Enter your NetSuite password"
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost" 
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowNetsuitePassword(!showNetsuitePassword)}
-                    >
-                      {showNetsuitePassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
-                      )}
-                    </Button>
-                  </div>
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Sign in using your NetSuite account credentials through secure OAuth 2.0
+                  </p>
                 </div>
                 
                 <Button
-                  type="submit"
+                  onClick={handleNetSuiteOAuth}
                   className="w-full bg-green-700 hover:bg-green-600 text-white font-medium"
-                  disabled={netsuiteSubmitting}
+                  disabled={oauthLoading}
                   style={{ color: 'white' }}
                 >
-                  {netsuiteSubmitting ? (
+                  {oauthLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Authenticating with NetSuite...
+                      Redirecting to NetSuite...
                     </>
                   ) : (
-                    'Sign in with NetSuite'
+                    <>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Sign in with NetSuite SSO
+                    </>
                   )}
                 </Button>
-                <p className="text-xs text-center text-gray-500">
-                  Enter your NetSuite customer portal credentials
-                </p>
-              </form>
+                
+                <div className="text-xs text-center text-gray-500 space-y-1">
+                  <p>You will be redirected to NetSuite to authenticate</p>
+                  <p>After login, you'll be returned to this portal</p>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
