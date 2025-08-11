@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyToken = async (token: string) => {
     try {
       console.log('AuthProvider: Verifying token...');
-      const response = await fetch('/api/profile', {
+      const response = await fetch('/api/auth/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('AuthProvider: Token verification response:', response.status);
 
       if (response.ok) {
-        const userData = await response.json();
+        const { user: userData } = await response.json();
         console.log('AuthProvider: User data received:', userData);
         setUser(userData);
       } else {
