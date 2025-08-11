@@ -1,18 +1,21 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('SW registered: ', registration);
-      })
-      .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError);
-      });
-  });
+// Minimal test first
+function TestApp() {
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1>React Test App</h1>
+      <p>If you see this, React is working!</p>
+      <button onClick={() => alert('Working!')}>Click Me</button>
+    </div>
+  );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+const root = document.getElementById("root");
+if (root) {
+  console.log('Root element found, rendering React app...');
+  createRoot(root).render(<TestApp />);
+} else {
+  console.error("Root element not found!");
+  document.body.innerHTML = '<h1>ERROR: Root element not found</h1>';
+}
