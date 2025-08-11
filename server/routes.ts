@@ -185,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // NetSuite Employee SSO Routes (Suitelet-based authentication)
+  // NetSuite SSO Routes (Suitelet-based authentication)
   app.get('/api/auth/netsuite', async (req, res) => {
     try {
       const { NetSuiteSSO } = await import('./services/netsuite-sso');
@@ -199,37 +199,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Generate SuiteScript URL for Employee SSO
+      // Generate SuiteScript URL for SSO
       const suiteLetURL = sso.generateSuiteLetURL();
       
       res.json({ authUrl: suiteLetURL });
     } catch (error) {
-      console.error('Employee SSO initiation error:', error);
-      res.status(500).json({ error: 'Failed to initiate employee SSO flow' });
-    }
-  });
-
-  // NetSuite Customer Center SSO Routes
-  app.get('/api/auth/netsuite/customer', async (req, res) => {
-    try {
-      const { NetSuiteCustomerSSO } = await import('./services/netsuite-customer-sso');
-      const customerSSO = new NetSuiteCustomerSSO();
-      
-      // Check if SSO is configured
-      if (!process.env.NETSUITE_SSO_SECRET) {
-        return res.status(400).json({
-          error: 'NetSuite Customer SSO not configured',
-          message: 'Please configure NETSUITE_SSO_SECRET environment variable'
-        });
-      }
-      
-      // Generate SuiteScript URL for Customer Center SSO
-      const customerCenterURL = customerSSO.generateCustomerCenterURL();
-      
-      res.json({ authUrl: customerCenterURL });
-    } catch (error) {
-      console.error('Customer SSO initiation error:', error);
-      res.status(500).json({ error: 'Failed to initiate customer SSO flow' });
+      console.error('SSO initiation error:', error);
+      res.status(500).json({ error: 'Failed to initiate SSO flow' });
     }
   });
   
@@ -275,52 +251,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('SSO callback error:', error);
       res.redirect(`/login?error=${encodeURIComponent('Authentication failed')}`);
-    }
-  });
-
-  // Customer SSO callback handler (receives JWT token from NetSuite Customer Center Suitelet)
-  app.get('/api/auth/netsuite/customer/sso', async (req, res) => {
-    try {
-      const { sso_token } = req.query;
-      
-      if (!sso_token) {
-        return res.redirect('/login?error=missing_customer_token');
-      }
-      
-      const { NetSuiteCustomerSSO } = await import('./services/netsuite-customer-sso');
-      const customerSSO = new NetSuiteCustomerSSO();
-      
-      // Verify the JWT token from NetSuite Customer Center
-      const verificationResult = await customerSSO.verifyCustomerToken(sso_token as string);
-      
-      if (!verificationResult.valid || !verificationResult.payload) {
-        console.error('Customer SSO token verification failed:', verificationResult.error);
-        return res.redirect(`/login?error=${encodeURIComponent(verificationResult.error || 'Invalid customer token')}`);
-      }
-      
-      // Process Customer SSO and create/update customer user
-      const user = await customerSSO.processCustomerSSO(verificationResult.payload);
-      
-      // Create JWT for our application with customer flag
-      const token = jwt.sign(
-        { 
-          id: user.id, 
-          username: user.username,
-          netsuiteCustomerId: user.netsuiteCustomerId,
-          isNetSuiteUser: true,
-          isCustomer: true,
-          ssoUser: true
-        },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-      
-      // Redirect to frontend with token
-      res.redirect(`/auth/netsuite/callback?token=${token}`);
-      
-    } catch (error) {
-      console.error('Customer SSO callback error:', error);
-      res.redirect(`/login?error=${encodeURIComponent('Customer authentication failed')}`);
     }
   });
 
