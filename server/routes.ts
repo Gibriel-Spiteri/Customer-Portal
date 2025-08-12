@@ -491,49 +491,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dashboard data
+  // Dashboard data - Aggregate from NetSuite
   app.get('/api/dashboard', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const dashboardData = await storage.getUserDashboardData(req.user.id);
-      
-      // If user is NetSuite user, fetch live data when possible
-      if (req.user.isNetSuiteUser && req.user.netsuiteCustomerId) {
-        try {
-          const { NetSuiteService } = await import('./services/netsuite');
-          const netsuiteService = new NetSuiteService();
-          
-          console.log('Fetching live NetSuite data for customer:', req.user.netsuiteCustomerId);
-          
-          // Try to get live account balance
-          const accountBalance = await netsuiteService.getCustomerBalance(req.user.netsuiteCustomerId);
-          if (accountBalance.success && accountBalance.data) {
-            dashboardData.account.balance = accountBalance.data.balance.toString();
-            dashboardData.account.dataFreshness = 'live';
-            console.log('Updated account balance with live NetSuite data:', accountBalance.data.balance);
-          }
-          
-          // Get live order count (recent orders)
-          const recentOrders = await netsuiteService.getCustomerOrders(req.user.netsuiteCustomerId, 5);
-          if (recentOrders.success && recentOrders.data) {
-            // Update the pending orders count based on NetSuite data
-            const pendingCount = recentOrders.data.filter(order => 
-              ['pending', 'processing'].includes(order.status.toLowerCase())
-            ).length;
-            
-            // Add metrics if they don't exist
-            if (!(dashboardData as any).metrics) {
-              (dashboardData as any).metrics = { pendingOrders: 0 };
-            }
-            (dashboardData as any).metrics.pendingOrders = pendingCount;
-            (dashboardData as any).metrics.dataFreshness = 'live';
-            console.log('Updated pending orders count with live NetSuite data:', pendingCount);
-          }
-          
-        } catch (error) {
-          console.log('Failed to fetch live NetSuite data, using cached data:', error);
-          // Continue with cached data on error
-        }
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning database dashboard');
+        const dashboardData = await storage.getUserDashboardData(req.user.id);
+        return res.json(dashboardData);
       }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Fetch all data in parallel for efficiency
+      const [account, orders, invoices, payments] = await Promise.all([
+        m2m.getCustomerAccount(req.user.netsuiteCustomerId).catch(err => {
+          console.error('Failed to fetch account:', err);
+          return null;
+        }),
+        m2m.getCustomerOrders(req.user.netsuiteCustomerId, 5).catch(err => {
+          console.error('Failed to fetch orders:', err);
+          return [];
+        }),
+        m2m.getCustomerInvoices(req.user.netsuiteCustomerId, 5).catch(err => {
+          console.error('Failed to fetch invoices:', err);
+          return [];
+        }),
+        m2m.getCustomerPayments(req.user.netsuiteCustomerId, 5).catch(err => {
+          console.error('Failed to fetch payments:', err);
+          return [];
+        })
+      ]);
+      
+      // Calculate metrics
+      const pendingOrdersCount = orders.filter((order: any) => 
+        ['A', 'B', 'F'].includes(order.status) // Pending, Pending Approval, Pending Fulfillment
+      ).length;
+      
+      const outstandingInvoices = invoices.filter((invoice: any) => 
+        parseFloat(invoice.balancedue || invoice.amountremaining || '0') > 0
+      );
+      
+      // Calculate monthly total (sum of payments in current month)
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyPayments = payments.filter((payment: any) => {
+        const paymentDate = new Date(payment.paymentdate || payment.trandate);
+        return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+      });
+      const monthlyTotal = monthlyPayments.reduce((sum: number, payment: any) => 
+        sum + parseFloat(payment.amount || payment.total || '0'), 0
+      ).toFixed(2);
+      
+      // Transform data for dashboard
+      const dashboardData = {
+        account: account ? {
+          balance: account.balance || '0.00',
+          creditLimit: account.creditlimit || '0.00',
+          dataFreshness: 'live' as const
+        } : null,
+        recentOrders: orders.slice(0, 5).map((order: any) => ({
+          id: order.id,
+          orderNumber: order.ordernumber || order.tranid,
+          status: order.status,
+          total: order.total || '0.00',
+          orderDate: order.orderdate || order.trandate
+        })),
+        recentPayments: payments.slice(0, 5).map((payment: any) => ({
+          id: payment.id,
+          paymentNumber: payment.paymentnumber || payment.tranid,
+          amount: payment.amount || payment.total || '0.00',
+          paymentDate: payment.paymentdate || payment.trandate
+        })),
+        outstandingInvoices: outstandingInvoices.slice(0, 5).map((invoice: any) => ({
+          id: invoice.id,
+          invoiceNumber: invoice.invoicenumber || invoice.tranid,
+          amount: invoice.total || '0.00',
+          balanceDue: invoice.balancedue || invoice.amountremaining || '0.00',
+          dueDate: invoice.duedate
+        })),
+        pendingOrdersCount,
+        monthlyTotal,
+        metrics: {
+          dataFreshness: 'live' as const,
+          lastSyncAt: new Date().toISOString()
+        }
+      };
       
       res.json(dashboardData);
     } catch (error) {
@@ -542,15 +586,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Orders
+  // Orders - Fetch from NetSuite using SuiteQL
   app.get('/api/orders', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
-      const orders = await storage.getUserOrders(req.user.id, limit);
-      res.json(orders);
-    } catch (error) {
-      console.error('Orders error:', error);
-      res.status(500).json({ message: 'Failed to fetch orders' });
+      
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning database orders');
+        const orders = await storage.getUserOrders(req.user.id, limit);
+        return res.json(orders);
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Map NetSuite status codes to friendly names
+      const mapStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+          'A': 'pending',
+          'B': 'pending approval',
+          'C': 'cancelled',
+          'D': 'partially fulfilled',
+          'E': 'pending billing',
+          'F': 'pending fulfillment',
+          'G': 'fully billed',
+          'H': 'closed',
+        };
+        return statusMap[status] || status.toLowerCase();
+      };
+      
+      // Transform NetSuite data to match frontend format
+      const transformOrder = (item: any) => ({
+        id: item.id,
+        orderNumber: item.ordernumber || item.orderNumber || item.tranid,
+        status: mapStatus(item.status),
+        total: item.total || '0.00',
+        orderDate: item.orderdate || item.orderDate || item.trandate,
+        shipDate: item.shipdate || item.shipDate,
+        shipMethod: item.shipmethod || item.shipMethod,
+        memo: item.memo || '',
+        customerName: item.customername || item.customerName,
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      });
+      
+      const orders = await m2m.getCustomerOrders(req.user.netsuiteCustomerId, limit);
+      const transformed = orders.map(transformOrder);
+      res.json(transformed);
+    } catch (error: any) {
+      console.error('Error fetching orders from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch orders from NetSuite' });
     }
   });
 
@@ -567,41 +653,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Payments
+  // Payments - Fetch from NetSuite using SuiteQL
   app.get('/api/payments', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
-      const payments = await storage.getUserPayments(req.user.id, limit);
-      res.json(payments);
-    } catch (error) {
-      console.error('Payments error:', error);
-      res.status(500).json({ message: 'Failed to fetch payments' });
+      
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning database payments');
+        const payments = await storage.getUserPayments(req.user.id, limit);
+        return res.json(payments);
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Transform NetSuite data to match frontend format
+      const transformPayment = (item: any) => ({
+        id: item.id,
+        paymentNumber: item.paymentnumber || item.paymentNumber || item.tranid,
+        amount: item.amount || item.total || '0.00',
+        paymentDate: item.paymentdate || item.paymentDate || item.trandate,
+        status: 'processed',
+        method: item.paymentmethod || 'Credit Card',
+        memo: item.memo || '',
+        customerName: item.customername || item.customerName,
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      });
+      
+      const payments = await m2m.getCustomerPayments(req.user.netsuiteCustomerId, limit);
+      const transformed = payments.map(transformPayment);
+      res.json(transformed);
+    } catch (error: any) {
+      console.error('Error fetching payments from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch payments from NetSuite' });
     }
   });
 
-  // Invoices
+  // Invoices - Fetch from NetSuite using SuiteQL
   app.get('/api/invoices', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
-      const invoices = await storage.getUserInvoices(req.user.id, limit);
-      res.json(invoices);
-    } catch (error) {
-      console.error('Invoices error:', error);
-      res.status(500).json({ message: 'Failed to fetch invoices' });
+      
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning database invoices');
+        const invoices = await storage.getUserInvoices(req.user.id, limit);
+        return res.json(invoices);
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Map NetSuite status codes to friendly names
+      const mapStatus = (status: string, balanceDue: string): string => {
+        if (parseFloat(balanceDue || '0') > 0) {
+          return 'open';
+        }
+        return 'paid';
+      };
+      
+      // Transform NetSuite data to match frontend format
+      const transformInvoice = (item: any) => ({
+        id: item.id,
+        invoiceNumber: item.invoicenumber || item.invoiceNumber || item.tranid,
+        status: mapStatus(item.status, item.balancedue || item.balanceDue || item.amountremaining),
+        amount: item.total || '0.00',
+        balanceDue: item.balancedue || item.balanceDue || item.amountremaining || '0.00',
+        invoiceDate: item.invoicedate || item.invoiceDate || item.trandate,
+        dueDate: item.duedate || item.dueDate,
+        memo: item.memo || '',
+        customerName: item.customername || item.customerName,
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      });
+      
+      const invoices = await m2m.getCustomerInvoices(req.user.netsuiteCustomerId, limit);
+      const transformed = invoices.map(transformInvoice);
+      res.json(transformed);
+    } catch (error: any) {
+      console.error('Error fetching invoices from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch invoices from NetSuite' });
     }
   });
 
-  // Account
+  // Account - Fetch from NetSuite using SuiteQL
   app.get('/api/account', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const account = await storage.getUserAccount(req.user.id);
-      if (!account) {
-        return res.status(404).json({ message: 'Account not found' });
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning database account');
+        const account = await storage.getUserAccount(req.user.id);
+        if (!account) {
+          return res.status(404).json({ message: 'Account not found' });
+        }
+        return res.json(account);
       }
-      res.json(account);
-    } catch (error) {
-      console.error('Account error:', error);
-      res.status(500).json({ message: 'Failed to fetch account' });
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const accountData = await m2m.getCustomerAccount(req.user.netsuiteCustomerId);
+      
+      // Transform NetSuite data to match frontend format
+      const transformedAccount = {
+        id: accountData.id,
+        customerNumber: accountData.customernumber || accountData.customerNumber || accountData.entityid,
+        companyName: accountData.companyname || accountData.companyName,
+        balance: accountData.balance || '0.00',
+        creditLimit: accountData.creditlimit || accountData.creditLimit || '0.00',
+        creditHold: accountData.credithold || accountData.creditHold || false,
+        daysOverdue: accountData.daysoverdue || accountData.daysOverdue || 0,
+        email: accountData.email,
+        phone: accountData.phone,
+        unbilledOrders: accountData.unbilledorders || accountData.unbilledOrders || '0.00',
+        depositBalance: accountData.depositbalance || accountData.depositBalance || '0.00',
+        paymentTerms: accountData.paymentterms || accountData.paymentTerms || 'Net 30',
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      };
+      
+      res.json(transformedAccount);
+    } catch (error: any) {
+      console.error('Error fetching account from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch account from NetSuite' });
     }
   });
 

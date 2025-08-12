@@ -366,6 +366,142 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Fetch customer sales orders
+   */
+  async getCustomerOrders(customerId: string, limit: number = 20): Promise<any[]> {
+    const query = `
+      SELECT DISTINCT
+        transaction.id,
+        transaction.tranid AS orderNumber,
+        transaction.trandate AS orderDate,
+        transaction.status,
+        transaction.total,
+        transaction.memo,
+        transaction.shipdate,
+        transaction.shipmethod,
+        BUILTIN.DF(transaction.entity) AS customerName,
+        transaction.entity AS customerId,
+        transaction.createddate,
+        transaction.lastmodifieddate
+      FROM 
+        transaction
+      WHERE 
+        transaction.type = 'SalesOrd'
+        AND transaction.entity = ${customerId}
+      ORDER BY 
+        transaction.trandate DESC
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, limit, 0);
+    return result.items;
+  }
+
+  /**
+   * Fetch customer invoices
+   */
+  async getCustomerInvoices(customerId: string, limit: number = 20): Promise<any[]> {
+    const query = `
+      SELECT DISTINCT
+        transaction.id,
+        transaction.tranid AS invoiceNumber,
+        transaction.trandate AS invoiceDate,
+        transaction.duedate,
+        transaction.status,
+        transaction.total,
+        transaction.memo,
+        BUILTIN.DF(transaction.entity) AS customerName,
+        transaction.entity AS customerId,
+        transaction.createddate,
+        transaction.lastmodifieddate
+      FROM 
+        transaction
+      WHERE 
+        transaction.type = 'CustInvc'
+        AND transaction.entity = ${customerId}
+      ORDER BY 
+        transaction.trandate DESC
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, limit, 0);
+    return result.items;
+  }
+
+  /**
+   * Fetch customer payments
+   */
+  async getCustomerPayments(customerId: string, limit: number = 20): Promise<any[]> {
+    const query = `
+      SELECT DISTINCT
+        transaction.id,
+        transaction.tranid AS paymentNumber,
+        transaction.trandate AS paymentDate,
+        transaction.total AS amount,
+        transaction.memo,
+        BUILTIN.DF(transaction.entity) AS customerName,
+        transaction.entity AS customerId,
+        transaction.createddate,
+        transaction.lastmodifieddate
+      FROM 
+        transaction
+      WHERE 
+        transaction.type = 'CustPymt'
+        AND transaction.entity = ${customerId}
+      ORDER BY 
+        transaction.trandate DESC
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, limit, 0);
+    return result.items;
+  }
+
+  /**
+   * Fetch customer account balance and credit information
+   */
+  async getCustomerAccount(customerId: string): Promise<any> {
+    const query = `
+      SELECT 
+        customer.id,
+        customer.entityid AS customerNumber,
+        customer.companyname,
+        customer.creditlimit,
+        customer.email,
+        customer.phone,
+        BUILTIN.DF(customer.terms) AS paymentTerms,
+        customer.datecreated,
+        customer.lastmodifieddate
+      FROM 
+        customer
+      WHERE 
+        customer.id = ${customerId}
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, 1, 0);
+    if (result.items.length === 0) {
+      throw new Error(`Customer ${customerId} not found`);
+    }
+    
+    // Calculate balance from open invoices (simplified)
+    const balanceQuery = `
+      SELECT 
+        SUM(transaction.total) AS balance
+      FROM 
+        transaction
+      WHERE 
+        transaction.entity = ${customerId}
+        AND transaction.type = 'CustInvc'
+        AND transaction.status IN ('A', 'B')
+    `.trim();
+    
+    const balanceResult = await this.executeSuiteQL(balanceQuery, 1, 0).catch(() => ({ items: [{ balance: '0.00' }] }));
+    const balance = balanceResult.items[0]?.balance || '0.00';
+    
+    return {
+      ...result.items[0],
+      balance
+    };
+  }
+
+  /**
    * Test connection and configuration
    */
   async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
