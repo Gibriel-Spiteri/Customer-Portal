@@ -136,12 +136,25 @@ export class NetSuiteM2M {
     try {
       const clientAssertion = this.generateClientAssertion();
       
+      // Decode the JWT to verify its structure
+      const [header, payload] = clientAssertion.split('.').slice(0, 2).map(part => 
+        JSON.parse(Buffer.from(part, 'base64').toString())
+      );
+      
+      console.log('NetSuite M2M: JWT Header:', JSON.stringify(header, null, 2));
+      console.log('NetSuite M2M: JWT Payload decoded:', JSON.stringify(payload, null, 2));
+      console.log('NetSuite M2M: Certificate ID in JWT:', header.kid);
+      
       const params = new URLSearchParams({
         grant_type: 'client_credentials',
         client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
         client_assertion: clientAssertion
       });
 
+      console.log('NetSuite M2M: Request parameters:');
+      console.log('  grant_type:', 'client_credentials');
+      console.log('  client_assertion_type:', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+      console.log('  client_assertion length:', clientAssertion.length);
       console.log('NetSuite M2M: Requesting access token from:', this.tokenUrl);
 
       const response = await fetch(this.tokenUrl, {
@@ -156,6 +169,18 @@ export class NetSuiteM2M {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('NetSuite M2M: Token request failed:', response.status, errorText);
+        
+        // Try to parse error details
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error('NetSuite M2M: Error details:', errorData);
+          if (errorData.error_description) {
+            console.error('NetSuite M2M: Error description:', errorData.error_description);
+          }
+        } catch (e) {
+          // If not JSON, just use the raw text
+        }
+        
         throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
       }
 
