@@ -8,7 +8,7 @@ The following certificate and private key have been generated for your portal:
 
 - **Certificate File**: `netsuite_certificate.pem`
 - **Private Key File**: `netsuite_private_key.pem`
-- **Key Type**: RSA 2048-bit
+- **Key Type**: RSA 4096-bit (NetSuite requirement)
 - **Validity**: 365 days
 
 ## Step 1: Upload Certificate to NetSuite
