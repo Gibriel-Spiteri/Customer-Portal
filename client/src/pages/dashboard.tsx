@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Download,
   Phone,
-  ArrowRight
+  ArrowRight,
+  Coins
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -282,6 +283,31 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               </div>
+
+      {/* Quick Access Section */}
+      <div className="mb-6">
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-full">
+                  <Coins className="h-8 w-8 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Consumers Cash</h3>
+                  <p className="text-sm text-gray-600">View your CRD rebate rewards</p>
+                </div>
+              </div>
+              <Link href="/consumers-cash">
+                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                  View Rewards
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* NetSuite Estimates Section */}
       {estimatesData && estimatesData.length > 0 && (

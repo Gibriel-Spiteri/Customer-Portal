@@ -25,6 +25,7 @@ Preferred communication style: Simple, everyday language.
 - **WebSocket server** for real-time updates using the `ws` library
 - **Drizzle ORM** for database operations with PostgreSQL
 - **Modular service architecture** with separate services for NetSuite integration, sync operations, and queue management
+- **CRD Rebate API** endpoint for fetching Consumers Cash data from NetSuite custom records
 
 ### Data Storage Solutions
 - **PostgreSQL database** via Neon serverless with connection pooling
@@ -99,6 +100,18 @@ Preferred communication style: Simple, everyday language.
 - **Toast notifications** for user feedback
 - **Request logging** with duration tracking for API calls
 - **WebSocket connection management** with automatic reconnection
+
+## Recent Features (Aug 12, 2025)
+
+### Consumers Cash (CRD Rebates)
+- **New Page**: `/consumers-cash` displays CRD rebate records from NetSuite
+- **Dashboard Integration**: Green quick-access card on dashboard for Consumers Cash
+- **API Endpoint**: `/api/crd-rebates` fetches customrecord_crdrebate data using SuiteQL
+- **Summary Statistics**: Shows available balance, redeemed amount, expired amount, and total rebates
+- **Rebate Details**: Displays date, amount, status, expiration, sales order, and earned percentage
+- **Demo Customers**: 
+  - Baloga (441667) - Purple button
+  - CRD (154783) - Indigo button
 
 ## External Dependencies
 

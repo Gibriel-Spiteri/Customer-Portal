@@ -1026,5 +1026,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CRD Rebate (Consumers Cash) endpoint
+  app.get('/api/crd-rebates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const customerId = req.user.netsuiteCustomerId;
+      
+      if (!customerId) {
+        return res.status(400).json({ message: 'No NetSuite customer ID found' });
+      }
+
+      console.log(`Fetching CRD rebates for customer ${customerId}`);
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const netsuiteM2M = new NetSuiteM2M();
+      
+      // SuiteQL query to fetch CRD rebate records
+      const query = `
+        SELECT 
+          customrecord_crdrebate.id,
+          customrecord_crdrebate.custrecord_crdrebate_date AS rebateDate,
+          customrecord_crdrebate.custrecord_crdrebate_amount AS amount,
+          customrecord_crdrebate.custrecord_crdrebate_type AS typeId,
+          customrecord_crdrebate.custrecord_crdrebate_reversed AS reversed,
+          customrecord_crdrebate.custrecord_crdrebate_salesorder AS salesOrderId,
+          customrecord_crdrebate.custrecord_crdrebate_expiration_date AS expirationDate,
+          customrecord_crdrebate.custrecord_crdrebate_applyingtxn AS applyingTxnId,
+          customrecord_crdrebate.custrecord_crdrebate_category AS categoryId,
+          customrecord_crdrebate.custrecord_crdrebate_earnedpercent AS earnedPercent,
+          customrecord_crdrebate.custrecord_crdrebate_sorebaterate AS salesOrderRebateRate
+        FROM 
+          customrecord_crdrebate
+        WHERE 
+          customrecord_crdrebate.custrecord_crdrebate_customer = '${customerId}'
+        ORDER BY 
+          customrecord_crdrebate.custrecord_crdrebate_date DESC
+      `;
+      
+      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query);
+      const rebates = rebatesResponse.items || [];
+      
+      // Calculate summary statistics
+      const totalAvailable = rebates
+        .filter((r: any) => !r.reversed && (!r.expirationDate || new Date(r.expirationDate) > new Date()))
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalExpired = rebates
+        .filter((r: any) => !r.reversed && r.expirationDate && new Date(r.expirationDate) <= new Date())
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalRedeemed = rebates
+        .filter((r: any) => r.applyingTxnId)
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      res.json({
+        rebates: rebates.map((rebate: any) => ({
+          id: rebate.id,
+          date: rebate.rebateDate,
+          amount: rebate.amount,
+          type: rebate.typeId,
+          reversed: rebate.reversed === 'T',
+          salesOrder: rebate.salesOrderId,
+          expirationDate: rebate.expirationDate,
+          applyingTransaction: rebate.applyingTxnId,
+          category: rebate.categoryId,
+          earnedPercent: rebate.earnedPercent,
+          salesOrderRebateRate: rebate.salesOrderRebateRate,
+          status: rebate.reversed === 'T' ? 'Reversed' : 
+                  rebate.applyingTxnId ? 'Redeemed' :
+                  (rebate.expirationDate && new Date(rebate.expirationDate) <= new Date()) ? 'Expired' : 
+                  'Available'
+        })),
+        summary: {
+          totalAvailable: totalAvailable.toFixed(2),
+          totalExpired: totalExpired.toFixed(2),
+          totalRedeemed: totalRedeemed.toFixed(2),
+          totalRebates: rebates.length
+        }
+      });
+    } catch (error) {
+      console.error('CRD rebates error:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch CRD rebates', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
   return httpServer;
 }
