@@ -313,47 +313,22 @@ export default function Login() {
 
             {activeTab === 'enterprise' && (
               <div className="space-y-4">
-                <div className="text-center py-4">
-                  <img
-                    src="https://1212804.app.netsuite.com/images/logos/netsuite-oracle.svg"
-                    alt="NetSuite Oracle"
-                    className="h-8 mx-auto mb-3"
-                  />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Enterprise Customer Portal
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Click below to access the NetSuite Customer Center login
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  <Button
-                    onClick={() => window.location.href = '/netsuite-iframe-login'}
-                    className="w-full"
+                <div className="relative" style={{ minHeight: '500px' }}>
+                  <iframe
+                    src="https://1212804.app.netsuite.com/core/media/media.nl?id=34239&c=1212804&h=bU0AhS-bagTi1W524HZ2uwUveDA5rz2RmnEUe-4SfDW4hTOh&_xt=.html"
+                    className="w-full border-0 rounded-lg"
                     style={{ 
-                      backgroundColor: '#e28212', 
-                      borderColor: '#e28212',
-                      color: 'white'
+                      height: '500px',
+                      backgroundColor: 'white'
                     }}
-                  >
-                    Access NetSuite Login Portal
-                  </Button>
-                  
-                  <div className="text-center text-xs text-gray-500">
-                    <p>You will be redirected to the secure NetSuite login form</p>
-                    <p>Your credentials are sent directly to NetSuite</p>
-                  </div>
+                    title="NetSuite Login"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                  />
                 </div>
                 
-                <div className="text-center">
-                  <a href="https://system.netsuite.com/pages/pwdreset.jsp" 
-                     className="text-sm"
-                     style={{ color: '#4b7c8b' }}
-                     target="_blank"
-                     rel="noopener noreferrer">
-                    Forgot your password?
-                  </a>
+                <div className="text-center text-xs text-gray-500">
+                  <p>This is a secure NetSuite login form.</p>
+                  <p>Your credentials are sent directly to NetSuite.</p>
                 </div>
               </div>
             )}

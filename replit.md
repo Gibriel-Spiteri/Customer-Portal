@@ -116,14 +116,15 @@ Preferred communication style: Simple, everyday language.
 ### Enhanced Login System (Aug 12, 2025)
 - **Multi-Tab Login Interface**: Four authentication methods in a single page
   - Customer Login: Standard email/password authentication
-  - Enterprise Login: Redirects to NetSuite iframe login page
+  - Enterprise Login: Embedded NetSuite iframe login directly in tab
   - SSO: NetSuite Customer Center SAML authentication
   - Demo Mode: Quick access to test accounts
-- **NetSuite Iframe Login**: 
-  - Embeds actual NetSuite login form (media.nl?id=34239)
+- **Enterprise Tab with NetSuite Iframe**: 
+  - NetSuite login form (media.nl?id=34239) embedded directly in tab
+  - No extra navigation steps - login available immediately
   - Credentials sent directly to NetSuite (no local database)
   - Secure iframe implementation with proper sandbox attributes
-  - Oracle branding and NetSuite styling preserved
+  - 500px height iframe for optimal viewing
 - **Direct NetSuite Authentication**: No local user database lookups for enterprise login
 - **Unified Authentication**: Demo and SSO modes still use JWT tokens
 
