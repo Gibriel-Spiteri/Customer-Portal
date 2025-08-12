@@ -113,6 +113,20 @@ Preferred communication style: Simple, everyday language.
   - Baloga (441667) - Purple button
   - CRD (154783) - Indigo button
 
+### Enhanced Login System (Aug 12, 2025)
+- **Multi-Tab Login Interface**: Four authentication methods in a single page
+  - Customer Login: Standard email/password authentication
+  - Enterprise Login: NetSuite-styled form with Oracle branding
+  - SSO: NetSuite Customer Center SAML authentication
+  - Demo Mode: Quick access to test accounts
+- **Enterprise Tab Features**: 
+  - NetSuite Oracle logo and styling
+  - Remember Me checkbox for 30-day token extension
+  - Password reset link to NetSuite's official page
+  - Orange NetSuite brand color for login button
+- **Real Authentication**: Removed hardcoded test accounts, now requires real database credentials
+- **Unified Authentication**: All login methods use secure JWT tokens with customer validation
+
 ## External Dependencies
 
 ### Third-Party Services

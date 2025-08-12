@@ -25,7 +25,7 @@ export default function Login() {
   const [netsuiteSubmitting, setNetsuiteSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNetsuitePassword, setShowNetsuitePassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'demo' | 'netsuite' | 'custom'>('custom');
+  const [activeTab, setActiveTab] = useState<'demo' | 'netsuite' | 'custom' | 'enterprise'>('custom');
   const [oauthLoading, setOauthLoading] = useState(false);
   const [customFormData, setCustomFormData] = useState({
     email: "",
@@ -33,6 +33,13 @@ export default function Login() {
   });
   const [showCustomPassword, setShowCustomPassword] = useState(false);
   const [customSubmitting, setCustomSubmitting] = useState(false);
+  const [enterpriseFormData, setEnterpriseFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showEnterprisePassword, setShowEnterprisePassword] = useState(false);
+  const [enterpriseSubmitting, setEnterpriseSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   
   // Check for error parameters in URL
   useEffect(() => {
@@ -130,35 +137,46 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setActiveTab('custom')}
-                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex-1 px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'custom'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Customer Login
+                Customer
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('enterprise')}
+                className={`flex-1 px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'enterprise'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Enterprise
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('netsuite')}
-                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex-1 px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'netsuite'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                NetSuite SSO
+                SSO
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('demo')}
-                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex-1 px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'demo'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Demo Mode
+                Demo
               </button>
             </div>
           </CardHeader>
@@ -295,11 +313,158 @@ export default function Login() {
                 <div className="text-xs text-center text-gray-500 mt-4">
                   <p>Your credentials are securely processed</p>
                   <p>No passwords are stored locally</p>
-                  <div className="mt-3">
-                    <a href="/netsuite-customer-login.html" className="text-blue-600 hover:text-blue-800">
-                      Use NetSuite-styled login form →
-                    </a>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'enterprise' && (
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <img
+                    src="https://1212804.app.netsuite.com/images/logos/netsuite-oracle.svg"
+                    alt="NetSuite Oracle"
+                    className="h-8 mx-auto mb-3"
+                  />
+                  <p className="text-sm text-gray-600 mb-2">
+                    Enterprise Customer Portal
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Sign in with your NetSuite Customer Center credentials
+                  </p>
+                </div>
+                
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setEnterpriseSubmitting(true);
+                  setError("");
+                  
+                  try {
+                    const response = await fetch('/api/auth/netsuite-customer', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: enterpriseFormData.email,
+                        password: enterpriseFormData.password,
+                        rememberMe: rememberMe
+                      })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                      // Store the token and user info
+                      localStorage.setItem('auth_token', data.token);
+                      localStorage.setItem('user', JSON.stringify(data.user));
+                      
+                      // Redirect to dashboard
+                      window.location.href = '/dashboard';
+                    } else {
+                      throw new Error(data.message || 'Authentication failed');
+                    }
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Login failed");
+                    setEnterpriseSubmitting(false);
+                  }
+                }} className="space-y-4">
+                  <div>
+                    <Input
+                      id="enterprise-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={enterpriseFormData.email}
+                      onChange={(e) => {
+                        setError("");
+                        setEnterpriseFormData(prev => ({
+                          ...prev,
+                          email: e.target.value,
+                        }));
+                      }}
+                      placeholder="Email address"
+                      disabled={enterpriseSubmitting}
+                      className="w-full"
+                    />
                   </div>
+                  
+                  <div>
+                    <div className="relative">
+                      <Input
+                        id="enterprise-password"
+                        name="password"
+                        type={showEnterprisePassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        required
+                        value={enterpriseFormData.password}
+                        onChange={(e) => {
+                          setError("");
+                          setEnterpriseFormData(prev => ({
+                            ...prev,
+                            password: e.target.value,
+                          }));
+                        }}
+                        className="pr-10"
+                        placeholder="Password"
+                        disabled={enterpriseSubmitting}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowEnterprisePassword(!showEnterprisePassword)}
+                        tabIndex={-1}
+                      >
+                        {showEnterprisePassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      name="remember-me"
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                      Remember Me
+                    </label>
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    style={{ 
+                      backgroundColor: '#e28212', 
+                      borderColor: '#e28212',
+                      color: 'white'
+                    }}
+                    disabled={enterpriseSubmitting}
+                  >
+                    {enterpriseSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Log In'
+                    )}
+                  </Button>
+                </form>
+                
+                <div className="text-center">
+                  <a href="https://system.netsuite.com/pages/pwdreset.jsp" 
+                     className="text-sm"
+                     style={{ color: '#4b7c8b' }}
+                     target="_blank"
+                     rel="noopener noreferrer">
+                    Forgot your password?
+                  </a>
                 </div>
               </div>
             )}
