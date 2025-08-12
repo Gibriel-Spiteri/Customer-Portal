@@ -245,35 +245,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
-  // Demo mode backdoor login for customer ID 441667
+  // Demo mode backdoor login for multiple customers
   app.post('/api/auth/demo', async (req, res) => {
     try {
-      console.log('Demo mode login - backdoor access for customer 441667');
+      // Get customer ID from request body or default to 441667
+      const customerId = req.body?.customerId || '441667';
+      
+      // Define demo customer configurations
+      const demoCustomers: Record<string, { email: string; firstName: string; lastName: string; companyName: string }> = {
+        '441667': {
+          email: 'demo@baloga.com',
+          firstName: 'Demo',
+          lastName: 'User',
+          companyName: '104453 Baloga'
+        },
+        '154129': {
+          email: 'demo@crd.com',
+          firstName: 'CRD',
+          lastName: 'Demo',
+          companyName: 'CRD Company'
+        }
+      };
+      
+      const customerConfig = demoCustomers[customerId];
+      if (!customerConfig) {
+        return res.status(400).json({ message: 'Invalid demo customer ID' });
+      }
+      
+      console.log(`Demo mode login - backdoor access for customer ${customerId}`);
       
       // Try to get demo user first
-      let user = await storage.getUserByUsername('demo_441667');
+      let user = await storage.getUserByUsername(`demo_${customerId}`);
       
       if (!user) {
         // Check if another user already has this customer ID
-        const existingUserWithCustomer = await storage.getUserByNetsuiteId('441667');
+        const existingUserWithCustomer = await storage.getUserByNetsuiteId(customerId);
         
         if (existingUserWithCustomer) {
           // Use the existing user with this customer ID
           user = existingUserWithCustomer;
-          console.log('Using existing user with customer ID 441667:', user.username);
+          console.log(`Using existing user with customer ID ${customerId}:`, user.username);
         } else {
           // Create new demo user
-          const hashedPassword = await bcrypt.hash('demo_password_441667', 10);
+          const hashedPassword = await bcrypt.hash(`demo_password_${customerId}`, 10);
           user = await storage.createUser({
-            username: 'demo_441667',
-            email: 'demo@baloga.com',
+            username: `demo_${customerId}`,
+            email: customerConfig.email,
             password: hashedPassword,
-            firstName: 'Demo',
-            lastName: 'User',
-            companyName: '104453 Baloga',
-            netsuiteCustomerId: '441667',
+            firstName: customerConfig.firstName,
+            lastName: customerConfig.lastName,
+            companyName: customerConfig.companyName,
+            netsuiteCustomerId: customerId,
           });
-          console.log('Created new demo user with customer ID 441667');
+          console.log(`Created new demo user with customer ID ${customerId}`);
         }
       } else {
         console.log('Using existing demo user:', user.username);
@@ -287,10 +311,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionData = {
         userId: user.id,
         username: user.username,
-        netsuiteCustomerId: '441667',
+        netsuiteCustomerId: customerId,
         isNetSuiteUser: true,
         customerCenterAccess: true,
-        companyName: '104453 Baloga'
+        companyName: customerConfig.companyName
       };
 
       const token = jwt.sign(
@@ -305,10 +329,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           username: user.username,
           email: user.email,
-          firstName: 'Demo',
-          lastName: 'User (Customer 441667)',
-          companyName: '104453 Baloga',
-          netsuiteCustomerId: '441667',
+          firstName: customerConfig.firstName,
+          lastName: `${customerConfig.lastName} (Customer ${customerId})`,
+          companyName: customerConfig.companyName,
+          netsuiteCustomerId: customerId,
         },
       });
     } catch (error) {

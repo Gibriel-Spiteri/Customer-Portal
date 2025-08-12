@@ -157,13 +157,14 @@ export default function Login() {
               <div className="space-y-4">
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-600 mb-2">
-                    Quick access to demo customer account
+                    Quick access to demo customer accounts
                   </p>
                   <p className="text-xs text-gray-500">
-                    Customer ID: 441667 (104453 Baloga)
+                    Choose a test customer below
                   </p>
                 </div>
                 
+                {/* Baloga Customer Demo */}
                 <Button
                   onClick={async () => {
                     setIsSubmitting(true);
@@ -173,6 +174,7 @@ export default function Login() {
                       const response = await fetch('/api/auth/demo', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ customerId: '441667' })
                       });
                       
                       if (!response.ok) {
@@ -205,14 +207,62 @@ export default function Login() {
                   ) : (
                     <>
                       <User className="mr-2 h-4 w-4" />
-                      Sign in as Demo Customer 441667
+                      Sign in as Baloga (Customer 441667)
+                    </>
+                  )}
+                </Button>
+                
+                {/* CRD Customer Demo */}
+                <Button
+                  onClick={async () => {
+                    setIsSubmitting(true);
+                    setError("");
+                    
+                    try {
+                      const response = await fetch('/api/auth/demo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ customerId: '154129' })
+                      });
+                      
+                      if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Demo login failed');
+                      }
+                      
+                      const data = await response.json();
+                      
+                      // Store the token and user info using the correct keys
+                      localStorage.setItem('auth_token', data.token);
+                      localStorage.setItem('user', JSON.stringify(data.user));
+                      
+                      // Force a page reload to trigger auth context
+                      window.location.href = '/dashboard';
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Demo login failed");
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+                  disabled={isSubmitting}
+                  style={{ color: 'white' }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Accessing Demo Account...
+                    </>
+                  ) : (
+                    <>
+                      <User className="mr-2 h-4 w-4" />
+                      Sign in as CRD (Customer 154129)
                     </>
                   )}
                 </Button>
                 
                 <div className="text-xs text-center text-gray-500 space-y-1">
-                  <p>This will log you in with backdoor access</p>
-                  <p>Full access to customer 441667's estimates and data</p>
+                  <p>These demo accounts provide backdoor access</p>
+                  <p>Full access to each customer's estimates and data</p>
                 </div>
               </div>
             )}
