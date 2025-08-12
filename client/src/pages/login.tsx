@@ -222,7 +222,7 @@ export default function Login() {
                       const response = await fetch('/api/auth/demo', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ customerId: '154129' })
+                        body: JSON.stringify({ customerId: '154783' })
                       });
                       
                       if (!response.ok) {
@@ -255,7 +255,7 @@ export default function Login() {
                   ) : (
                     <>
                       <User className="mr-2 h-4 w-4" />
-                      Sign in as CRD (Customer 154129)
+                      Sign in as CRD (Customer 154783)
                     </>
                   )}
                 </Button>
