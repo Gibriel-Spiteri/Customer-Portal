@@ -245,100 +245,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
-  // NetSuite Customer Center login endpoint (for HTML form)
-  app.post('/api/auth/netsuite-customer', async (req, res) => {
+  // NetSuite Enterprise callback - handles redirect after NetSuite login
+  app.get('/auth/netsuite/enterprise-callback', async (req, res) => {
     try {
-      const { email, password, rememberMe } = req.body;
+      const { customerId, customerName, email, success } = req.query;
       
-      if (!email || !password) {
-        return res.status(400).json({ 
-          success: false,
-          message: 'Email and password are required' 
-        });
+      if (success !== 'true' || !customerId || !email) {
+        return res.redirect('/login?error=enterprise_auth_failed');
       }
       
-      console.log('NetSuite customer login attempt for:', email);
+      console.log('NetSuite enterprise login callback:', { customerId, customerName, email });
       
-      // In production, this would authenticate against NetSuite's Customer Center API
-      // For now, we'll implement a real authentication flow that validates credentials
-      // against our database and NetSuite
+      // Check if user exists in our database
+      let user = await storage.getUserByUsername(email as string);
       
-      try {
-        // First, check if user exists in our database
-        let user = await storage.getUserByUsername(email);
+      if (!user) {
+        // Create new user from NetSuite data
+        const newUser = {
+          email: email as string,
+          username: email as string,
+          password: '', // No password for NetSuite users
+          firstName: '',
+          lastName: '',
+          companyName: customerName as string || '',
+          netsuiteCustomerId: customerId as string,
+          isNetSuiteUser: true,
+          customerCenterAccess: true
+        };
         
-        if (!user) {
-          // User doesn't exist, try to authenticate with NetSuite
-          // In production: Make API call to NetSuite Customer Center authentication
-          // For now, we'll return an error since we can't authenticate without NetSuite API
-          return res.status(401).json({ 
-            success: false,
-            message: 'Invalid email or password. Please use your NetSuite Customer Center credentials.' 
-          });
-        }
-        
-        // Verify password
-        const isValidPassword = await bcrypt.compare(password, user.password || '');
-        if (!isValidPassword) {
-          return res.status(401).json({ 
-            success: false,
-            message: 'Invalid email or password' 
-          });
-        }
-        
-        // Get customer details from user record
-        const customerId = user.netsuiteCustomerId;
-        if (!customerId) {
-          return res.status(401).json({ 
-            success: false,
-            message: 'Account not linked to NetSuite Customer Center' 
-          });
-        }
-        
-        // Generate JWT token with extended expiry if Remember Me is checked
-        const tokenExpiry = rememberMe ? '30d' : '24h';
-        const token = jwt.sign(
-          {
-            userId: user.id,
-            email: user.email,
-            netsuiteCustomerId: customerId,
-            isNetSuiteUser: true
-          },
-          JWT_SECRET,
-          { expiresIn: tokenExpiry }
-        );
-        
-        console.log('NetSuite customer login successful for:', email);
-        
-        res.json({
-          success: true,
-          token,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            companyName: user.companyName,
-            netsuiteCustomerId: customerId,
-            isNetSuiteUser: true,
-            customerCenterAccess: true
-          }
+        user = await storage.createUser(newUser);
+        console.log('Created new user from NetSuite enterprise login:', user.id);
+      } else {
+        // Update existing user with NetSuite data
+        await storage.updateUser(user.id, {
+          netsuiteCustomerId: customerId as string,
+          companyName: customerName as string || user.companyName,
+          isNetSuiteUser: true,
+          customerCenterAccess: true
         });
-      } catch (authError) {
-        console.error('Authentication error:', authError);
-        return res.status(401).json({ 
-          success: false,
-          message: 'Authentication failed. Please check your credentials.' 
-        });
+        console.log('Updated existing user with NetSuite data:', user.id);
       }
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          netsuiteCustomerId: customerId,
+          isNetSuiteUser: true,
+          customerCenterAccess: true
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      // Set session
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        companyName: customerName as string || user.companyName || '',
+        netsuiteCustomerId: customerId as string,
+        isNetSuiteUser: true,
+        customerCenterAccess: true
+      };
+      
+      // Redirect to dashboard with token
+      res.redirect(`/?token=${token}`);
     } catch (error) {
-      console.error('NetSuite customer login error:', error);
-      res.status(500).json({ 
-        success: false,
-        message: 'Login failed. Please try again.',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('NetSuite enterprise callback error:', error);
+      res.redirect('/login?error=enterprise_callback_failed');
     }
+  });
+  
+  // NetSuite customer login endpoint - deprecated
+  app.post('/api/auth/netsuite-customer', async (req, res) => {
+    // This endpoint is deprecated - authentication happens directly through NetSuite's iframe
+    return res.status(400).json({ 
+      success: false,
+      message: 'Please use the NetSuite Enterprise login tab. Credentials should be sent directly to NetSuite.' 
+    });
   });
   
   // Custom login endpoint for direct NetSuite authentication
