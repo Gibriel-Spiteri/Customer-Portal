@@ -522,18 +522,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
+      // Map NetSuite status codes to friendly names
+      const mapStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+          'A': 'accepted',
+          'B': 'sent',
+          'C': 'closed',
+          'E': 'expired',
+          'O': 'open',
+          'P': 'pending',
+          'R': 'rejected',
+          'X': 'cancelled'
+        };
+        return statusMap[status] || status.toLowerCase();
+      };
+      
+      // Transform NetSuite data to match frontend format
+      const transformEstimate = (item: any) => ({
+        id: item.id,
+        estimateNumber: item.documentnumber || item.documentNumber || item.tranid,
+        status: mapStatus(item.status),
+        amount: item.total || item.amount || '0.00',
+        currency: item.currency || 'USD',
+        estimateDate: item.date || item.trandate || item.createddate,
+        expiryDate: item.expirationdate || item.expirationDate || item.duedate,
+        description: item.memo || '',
+        customerName: item.customername || item.customerName,
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      });
+      
       // If user has NetSuite customer ID, fetch their estimates
       if (req.user.netsuiteCustomerId) {
         const estimates = await m2m.getCustomerEstimates(req.user.netsuiteCustomerId, limit);
-        res.json({
-          items: estimates,
-          hasMore: estimates.length === limit,
-          totalResults: estimates.length
-        });
+        const transformed = estimates.map(transformEstimate);
+        res.json(transformed);
       } else {
-        // For testing/demo, fetch all estimates (admin only)
+        // For testing/demo, fetch all estimates
         const result = await m2m.getAllEstimates(limit, offset);
-        res.json(result);
+        const transformed = result.items.map(transformEstimate);
+        res.json(transformed);
       }
     } catch (error: any) {
       console.error('Error fetching estimates from NetSuite:', error);

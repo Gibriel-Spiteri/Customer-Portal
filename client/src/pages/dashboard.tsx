@@ -84,7 +84,7 @@ export default function Dashboard() {
   });
   
   // Fetch estimates from NetSuite
-  const { data: estimatesData, isLoading: estimatesLoading } = useQuery<{ items: EstimateData[] }>({
+  const { data: estimatesData, isLoading: estimatesLoading } = useQuery<EstimateData[]>({
     queryKey: ['/api/estimates?limit=5'],
     enabled: !!token,
   });
@@ -284,7 +284,7 @@ export default function Dashboard() {
               </div>
 
       {/* NetSuite Estimates Section */}
-      {estimatesData?.items && estimatesData.items.length > 0 && (
+      {estimatesData && estimatesData.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -317,38 +317,31 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {estimatesData.items.map((estimate) => (
+                {estimatesData.slice(0, 5).map((estimate: any) => (
                   <div key={estimate.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">
-                        Estimate #{estimate.documentNumber}
+                        {estimate.estimateNumber}
                       </p>
                       <p className="text-sm text-gray-500">
-                        Date: {formatDate(estimate.date)}
+                        {estimate.customerName}
                       </p>
-                      {estimate.expirationDate && (
-                        <p className="text-xs text-gray-400">
-                          Expires: {formatDate(estimate.expirationDate)}
-                        </p>
-                      )}
-                      {estimate.memo && (
+                      <p className="text-xs text-gray-400">
+                        {formatDate(estimate.estimateDate)} • Expires {formatDate(estimate.expiryDate)}
+                      </p>
+                      {estimate.description && (
                         <p className="text-xs text-gray-600 mt-1 truncate max-w-xs">
-                          {estimate.memo}
+                          {estimate.description}
                         </p>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(estimate.total, estimate.currency)}
+                        {formatCurrency(estimate.amount, estimate.currency)}
                       </p>
                       <Badge className={getStatusColor(estimate.status?.toLowerCase() || 'open')}>
                         {estimate.status || 'Open'}
                       </Badge>
-                      {estimate.location && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {estimate.location}
-                        </p>
-                      )}
                     </div>
                   </div>
                 ))}
