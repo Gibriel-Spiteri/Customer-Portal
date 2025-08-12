@@ -35,7 +35,18 @@ export class NetSuiteM2M {
   private tokenExpiry: Date | null = null;
 
   constructor() {
-    this.accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
+    // Extract account ID from full URL if provided as URL
+    const rawAccountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
+    
+    // Check if it's a full URL and extract just the account ID
+    if (rawAccountId.includes('.')) {
+      // Extract account ID from URL like https://1212804.app.netsuite.com/
+      const match = rawAccountId.match(/(?:https?:\/\/)?(\d+(?:_\w+)?)\./);
+      this.accountId = match ? match[1] : rawAccountId;
+    } else {
+      this.accountId = rawAccountId;
+    }
+    
     this.consumerKey = process.env.NETSUITE_CONSUMER_KEY || '';
     this.consumerSecret = process.env.NETSUITE_CONSUMER_SECRET || '';
     this.certificateId = process.env.NETSUITE_CERTIFICATE_ID || '';
@@ -65,6 +76,9 @@ export class NetSuiteM2M {
     this.tokenUrl = `https://${accountIdForUrl}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token`;
     this.apiBaseUrl = `https://${accountIdForUrl}.suitetalk.api.netsuite.com/services/rest`;
     
+    console.log('NetSuite M2M: Using account ID:', this.accountId);
+    console.log('NetSuite M2M: Token URL:', this.tokenUrl);
+    
     if (!this.consumerKey || !this.consumerSecret) {
       console.warn('NetSuite M2M: Missing NETSUITE_CONSUMER_KEY or NETSUITE_CONSUMER_SECRET');
     }
@@ -88,20 +102,23 @@ export class NetSuiteM2M {
       iat: now
     };
 
+    console.log('NetSuite M2M: JWT payload:', JSON.stringify(payload, null, 2));
+    console.log('NetSuite M2M: Using certificate ID:', this.certificateId);
+
     // NetSuite M2M requires RSA256 signing with a certificate
-    if (this.privateKey) {
-      // Generate a certificate ID if not provided (use a hash of the consumer key)
-      const certId = this.certificateId || crypto.createHash('sha256').update(this.consumerKey).digest('hex').substring(0, 16);
-      
-      // Sign with RSA private key
-      return jwt.sign(payload, this.privateKey, {
+    if (this.privateKey) {      
+      // Sign with RSA private key - use the actual certificate ID from NetSuite
+      const token = jwt.sign(payload, this.privateKey, {
         algorithm: 'RS256',
         header: {
           typ: 'JWT',
           alg: 'RS256',
-          kid: certId
+          kid: this.certificateId // Use the actual certificate ID from NetSuite
         }
       });
+      
+      console.log('NetSuite M2M: Generated JWT assertion (first 100 chars):', token.substring(0, 100) + '...');
+      return token;
     } else {
       throw new Error('NetSuite M2M requires a private key for certificate-based authentication');
     }
