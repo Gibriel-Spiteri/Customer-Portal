@@ -182,12 +182,12 @@ export default function Login() {
                       
                       const data = await response.json();
                       
-                      // Store the token and user info
-                      localStorage.setItem('token', data.token);
+                      // Store the token and user info using the correct keys
+                      localStorage.setItem('auth_token', data.token);
                       localStorage.setItem('user', JSON.stringify(data.user));
                       
-                      // Navigate to dashboard
-                      navigate('/dashboard');
+                      // Force a page reload to trigger auth context
+                      window.location.href = '/dashboard';
                     } catch (err) {
                       setError(err instanceof Error ? err.message : "Demo login failed");
                       setIsSubmitting(false);
