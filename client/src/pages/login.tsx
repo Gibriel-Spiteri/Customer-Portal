@@ -313,23 +313,104 @@ export default function Login() {
 
             {activeTab === 'enterprise' && (
               <div className="space-y-4">
-                <div className="relative" style={{ minHeight: '500px' }}>
-                  <iframe
-                    src="https://1212804.app.netsuite.com/core/media/media.nl?id=34239&c=1212804&h=bU0AhS-bagTi1W524HZ2uwUveDA5rz2RmnEUe-4SfDW4hTOh&_xt=.html"
-                    className="w-full border-0 rounded-lg"
-                    style={{ 
-                      height: '500px',
-                      backgroundColor: 'white'
-                    }}
-                    title="NetSuite Login"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                  />
-                </div>
-                
-                <div className="text-center text-xs text-gray-500">
-                  <p>This is a secure NetSuite login form.</p>
-                  <p>Your credentials are sent directly to NetSuite.</p>
-                </div>
+                <form
+                  method="post"
+                  action="https://1212804.app.netsuite.com/app/login/secure/enterpriselogin.nl"
+                  target="_parent"
+                  onSubmit={(e) => {
+                    const form = e.currentTarget;
+                    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+                    const password = (form.elements.namedItem('password') as HTMLInputElement)?.value;
+                    
+                    // Email validation
+                    if (!email || !email.includes('@')) {
+                      e.preventDefault();
+                      setError('Please enter a valid email address');
+                      return false;
+                    }
+                    
+                    // Password validation
+                    if (!password || password.trim() === '') {
+                      e.preventDefault();
+                      setError('Password is required');
+                      return false;
+                    }
+                    
+                    // Clear errors and allow form submission
+                    setError('');
+                    return true;
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-2xl font-bold">Log In</h2>
+                    <img
+                      src="https://1212804.app.netsuite.com/images/logos/netsuite-oracle.svg"
+                      alt="NetSuite Oracle"
+                      className="h-8"
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Input
+                      type="email"
+                      name="email"
+                      placeholder="Email address"
+                      required
+                      className="w-full"
+                      onChange={() => setError('')}
+                    />
+                    
+                    <Input
+                      type="password"
+                      name="password"
+                      placeholder="Password"
+                      maxLength={16}
+                      required
+                      className="w-full"
+                      onChange={() => setError('')}
+                    />
+                    
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="rememberme"
+                        value="T"
+                        id="rememberme"
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="rememberme" className="ml-2 block text-sm text-gray-900">
+                        Remember Me
+                      </label>
+                    </div>
+                    
+                    <input type="hidden" name="jsenabled" value="T" />
+                    
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      style={{ 
+                        backgroundColor: '#e28212', 
+                        borderColor: '#e28212',
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Log In
+                    </Button>
+                    
+                    <div className="text-center">
+                      <a 
+                        href="https://system.netsuite.com/pages/pwdreset.jsp" 
+                        style={{ color: '#4b7c8b' }}
+                        className="text-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Forgot your password?
+                      </a>
+                    </div>
+                  </div>
+                </form>
               </div>
             )}
 
