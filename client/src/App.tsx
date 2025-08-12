@@ -28,6 +28,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/auth/netsuite/callback" component={OAuthCallback} />
       <Route path="/" component={Dashboard} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/estimates" component={Estimates} />
