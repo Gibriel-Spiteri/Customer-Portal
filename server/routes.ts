@@ -134,9 +134,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // NetSuite Debug Endpoint - Get configuration and debug info
-  // Test NetSuite M2M connection
-  app.get('/api/netsuite/m2m/test', authenticateToken, async (req, res) => {
+  // Test NetSuite M2M connection (debug endpoint)
+  app.get('/api/debug/netsuite-m2m', async (req, res) => {
     try {
+      console.log('Testing NetSuite M2M connection...');
+      console.log('Environment check:', {
+        hasConsumerKey: !!process.env.NETSUITE_CONSUMER_KEY,
+        hasConsumerSecret: !!process.env.NETSUITE_CONSUMER_SECRET,
+        accountId: process.env.NETSUITE_ACCOUNT_ID
+      });
+      
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
@@ -147,7 +154,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: 'Failed to test NetSuite M2M connection',
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined
       });
     }
   });
