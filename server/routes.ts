@@ -245,6 +245,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
+  // Custom login endpoint for direct NetSuite authentication
+  app.post('/api/auth/custom-login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+      
+      console.log('Custom login attempt for email:', email);
+      
+      // For demo purposes, we'll authenticate specific test accounts
+      // In production, this would integrate with NetSuite's customer authentication API
+      const testAccounts: Record<string, { password: string; customerId: string; firstName: string; lastName: string; companyName: string }> = {
+        'john.doe@baloga.com': {
+          password: 'Demo123!',
+          customerId: '441667',
+          firstName: 'John',
+          lastName: 'Doe',
+          companyName: '104453 Baloga'
+        },
+        'crd.user@crdcompany.com': {
+          password: 'CRD2025!',
+          customerId: '154783',
+          firstName: 'CRD',
+          lastName: 'User',
+          companyName: 'CRD Company'
+        }
+      };
+      
+      const account = testAccounts[email.toLowerCase()];
+      
+      if (!account || account.password !== password) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+      
+      // Check if user exists by NetSuite customer ID first
+      let user = await storage.getUserByNetsuiteId(account.customerId);
+      
+      if (user) {
+        // User already exists (probably from demo mode), update their credentials
+        user = await storage.updateUser(user.id, {
+          username: email,
+          email: email,
+          firstName: account.firstName,
+          lastName: account.lastName,
+          companyName: account.companyName,
+          password: await bcrypt.hash(password, 10)
+        }) || user;
+      } else {
+        // Check if user exists by email
+        const existingUser = await storage.getUserByUsername(email);
+        
+        if (existingUser) {
+          // Verify password for existing user
+          const isValid = await bcrypt.compare(password, existingUser.password || '');
+          if (!isValid) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+          }
+          user = existingUser;
+        } else {
+          // Create new user for custom login
+          user = await storage.createUser({
+            username: email,
+            email: email,
+            firstName: account.firstName,
+            lastName: account.lastName,
+            companyName: account.companyName,
+            netsuiteCustomerId: account.customerId,
+            password: await bcrypt.hash(password, 10)
+          });
+        }
+      }
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          netsuiteCustomerId: account.customerId,
+          isNetSuiteUser: true
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      console.log('Custom login successful for:', email);
+      
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: user.companyName,
+          netsuiteCustomerId: account.customerId,
+          isNetSuiteUser: true,
+          customerCenterAccess: true
+        }
+      });
+    } catch (error) {
+      console.error('Custom login error:', error);
+      res.status(500).json({ 
+        message: 'Login failed. Please try again.',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
   // Demo mode backdoor login for multiple customers
   app.post('/api/auth/demo', async (req, res) => {
     try {

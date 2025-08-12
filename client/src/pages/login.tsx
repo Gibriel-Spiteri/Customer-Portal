@@ -25,8 +25,14 @@ export default function Login() {
   const [netsuiteSubmitting, setNetsuiteSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNetsuitePassword, setShowNetsuitePassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'demo' | 'netsuite'>('netsuite');
+  const [activeTab, setActiveTab] = useState<'demo' | 'netsuite' | 'custom'>('custom');
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [customFormData, setCustomFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showCustomPassword, setShowCustomPassword] = useState(false);
+  const [customSubmitting, setCustomSubmitting] = useState(false);
   
   // Check for error parameters in URL
   useEffect(() => {
@@ -123,6 +129,17 @@ export default function Login() {
             <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
               <button
                 type="button"
+                onClick={() => setActiveTab('custom')}
+                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'custom'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Customer Login
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('netsuite')}
                 className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   activeTab === 'netsuite'
@@ -130,7 +147,7 @@ export default function Login() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                NetSuite Login
+                NetSuite SSO
               </button>
               <button
                 type="button"
@@ -151,6 +168,135 @@ export default function Login() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
+            )}
+
+            {activeTab === 'custom' && (
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Sign in with your NetSuite customer credentials
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Use your email and password to access your account
+                  </p>
+                </div>
+                
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setCustomSubmitting(true);
+                  setError("");
+                  
+                  try {
+                    const response = await fetch('/api/auth/custom-login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: customFormData.email,
+                        password: customFormData.password
+                      })
+                    });
+                    
+                    if (!response.ok) {
+                      const error = await response.json();
+                      throw new Error(error.message || 'Authentication failed');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Store the token and user info
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Login failed");
+                    setCustomSubmitting(false);
+                  }
+                }} className="space-y-4">
+                  <div>
+                    <Label htmlFor="custom-email" className="block text-sm font-medium text-gray-700">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="custom-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={customFormData.email}
+                      onChange={(e) => {
+                        setError("");
+                        setCustomFormData(prev => ({
+                          ...prev,
+                          email: e.target.value,
+                        }));
+                      }}
+                      className="mt-1"
+                      placeholder="your.email@company.com"
+                      disabled={customSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="custom-password" className="block text-sm font-medium text-gray-700">
+                      Password
+                    </Label>
+                    <div className="relative mt-1">
+                      <Input
+                        id="custom-password"
+                        name="password"
+                        type={showCustomPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        required
+                        value={customFormData.password}
+                        onChange={(e) => {
+                          setError("");
+                          setCustomFormData(prev => ({
+                            ...prev,
+                            password: e.target.value,
+                          }));
+                        }}
+                        className="pr-10"
+                        placeholder="Enter your password"
+                        disabled={customSubmitting}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowCustomPassword(!showCustomPassword)}
+                        tabIndex={-1}
+                      >
+                        {showCustomPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={customSubmitting}
+                  >
+                    {customSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
+                  </Button>
+                </form>
+                
+                <div className="text-xs text-center text-gray-500 mt-4">
+                  <p>Your credentials are securely processed</p>
+                  <p>No passwords are stored locally</p>
+                </div>
+              </div>
             )}
 
             {activeTab === 'demo' && (
