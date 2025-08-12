@@ -94,26 +94,28 @@ export class NetSuiteM2M {
   private generateClientAssertion(): string {
     const now = Math.floor(Date.now() / 1000);
     
+    // Match PHP implementation exactly - scope as array
     const payload = {
       iss: this.consumerKey,
-      scope: 'rest_webservices',
-      aud: this.tokenUrl,
-      exp: now + 300, // 5 minutes expiry
-      iat: now
+      scope: ['restlets', 'rest_webservices'], // Array of scopes like PHP
+      iat: now,
+      exp: now + 3600, // 1 hour expiry like PHP
+      aud: this.tokenUrl
     };
 
     console.log('NetSuite M2M: JWT payload:', JSON.stringify(payload, null, 2));
     console.log('NetSuite M2M: Using certificate ID:', this.certificateId);
+    console.log('NetSuite M2M: Using algorithm: PS256');
 
-    // NetSuite M2M requires RSA256 signing with a certificate
+    // NetSuite M2M requires PS256 signing (RSASSA-PSS with SHA-256) like PHP implementation
     if (this.privateKey) {      
-      // Sign with RSA private key - use the actual certificate ID from NetSuite
+      // Sign with PS256 algorithm matching PHP implementation
       const token = jwt.sign(payload, this.privateKey, {
-        algorithm: 'RS256',
+        algorithm: 'PS256', // Changed from RS256 to PS256
         header: {
+          alg: 'PS256', // PS256 algorithm
           typ: 'JWT',
-          alg: 'RS256',
-          kid: this.certificateId // Use the actual certificate ID from NetSuite
+          kid: this.certificateId // Certificate ID from NetSuite
         }
       });
       
@@ -281,23 +283,15 @@ export class NetSuiteM2M {
         transaction.trandate AS date,
         transaction.duedate AS expirationDate,
         transaction.status,
-        transaction.total,
-        transaction.subtotal,
-        transaction.taxtotal AS tax,
-        transaction.shippingcost AS shipping,
         transaction.memo,
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
-        BUILTIN.DF(transaction.location) AS location,
-        BUILTIN.DF(transaction.currency) AS currency,
-        transaction.exchangerate,
         transaction.createddate,
         transaction.lastmodifieddate
       FROM 
         transaction
       WHERE 
         transaction.type = 'Estimate'
-        AND transaction.mainline = 'T'
       ORDER BY 
         transaction.trandate DESC
     `.trim();

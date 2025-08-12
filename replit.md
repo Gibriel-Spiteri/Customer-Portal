@@ -34,6 +34,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication and Authorization
 - **NetSuite Customer Center SAML SSO**: Compliant with official NetSuite Customer Center guidelines
+- **NetSuite M2M OAuth2 Authentication**: Certificate-based machine-to-machine authentication with PS256 algorithm (WORKING as of Aug 12, 2025)
 - **Direct NetSuite Customer Authentication**: Customers authenticate with NetSuite Customer Center credentials
 - **Customer Center Role Validation**: Validates SAML SSO permissions and customer center access
 - **Customer Data Isolation**: Strict data access control ensuring customers see only their own data
@@ -44,7 +45,12 @@ Preferred communication style: Simple, everyday language.
 - **Route protection** middleware for API endpoints with customer center context validation
 - **User context** management with customer center role awareness throughout the application
 
-### Current NetSuite Customer Center SAML SSO Status  
+### NetSuite Integration Status
+- **✅ M2M OAuth2 WORKING (Aug 12, 2025)**: Successfully fetching estimate data using SuiteQL queries
+  - Using PS256 algorithm (RSASSA-PSS with SHA-256) for JWT signing
+  - 4096-bit RSA certificate configured and validated
+  - SuiteQL queries executing successfully against transaction records
+  - Real-time data retrieval from NetSuite confirmed
 - **✅ UPDATED**: Customer Center SAML SSO implementation following NetSuite official guidelines
 - **Implementation Enhancement**: Modified to comply with NetSuite Customer Center SAML requirements
 - **Authentication flow**: 
