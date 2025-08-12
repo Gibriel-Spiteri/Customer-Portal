@@ -245,6 +245,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
+  // NetSuite Customer Center login endpoint (for HTML form)
+  app.post('/api/auth/netsuite-customer', async (req, res) => {
+    try {
+      const { email, password, rememberMe } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Email and password are required' 
+        });
+      }
+      
+      console.log('NetSuite customer login attempt for:', email);
+      
+      // Test accounts that work with the NetSuite-style form
+      const testAccounts: Record<string, { password: string; customerId: string; firstName: string; lastName: string; companyName: string }> = {
+        'john.doe@baloga.com': {
+          password: 'Demo123!',
+          customerId: '441667',
+          firstName: 'John',
+          lastName: 'Doe',
+          companyName: '104453 Baloga'
+        },
+        'crd.user@crdcompany.com': {
+          password: 'CRD2025!',
+          customerId: '154783',
+          firstName: 'CRD',
+          lastName: 'User',
+          companyName: 'CRD Company'
+        }
+      };
+      
+      const account = testAccounts[email.toLowerCase()];
+      
+      if (!account || account.password !== password) {
+        return res.status(401).json({ 
+          success: false,
+          message: 'Invalid email or password' 
+        });
+      }
+      
+      // Check if user exists by NetSuite customer ID
+      let user = await storage.getUserByNetsuiteId(account.customerId);
+      
+      if (user) {
+        // Update existing user
+        user = await storage.updateUser(user.id, {
+          username: email,
+          email: email,
+          firstName: account.firstName,
+          lastName: account.lastName,
+          companyName: account.companyName,
+          password: await bcrypt.hash(password, 10)
+        }) || user;
+      } else {
+        // Check by email
+        const existingUser = await storage.getUserByUsername(email);
+        
+        if (existingUser) {
+          const isValid = await bcrypt.compare(password, existingUser.password || '');
+          if (!isValid) {
+            return res.status(401).json({ 
+              success: false,
+              message: 'Invalid email or password' 
+            });
+          }
+          user = existingUser;
+        } else {
+          // Create new user
+          user = await storage.createUser({
+            username: email,
+            email: email,
+            firstName: account.firstName,
+            lastName: account.lastName,
+            companyName: account.companyName,
+            netsuiteCustomerId: account.customerId,
+            password: await bcrypt.hash(password, 10)
+          });
+        }
+      }
+      
+      // Generate JWT token with extended expiry if Remember Me is checked
+      const tokenExpiry = rememberMe ? '30d' : '24h';
+      const token = jwt.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          netsuiteCustomerId: account.customerId,
+          isNetSuiteUser: true
+        },
+        JWT_SECRET,
+        { expiresIn: tokenExpiry }
+      );
+      
+      console.log('NetSuite customer login successful for:', email);
+      
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: user.companyName,
+          netsuiteCustomerId: account.customerId,
+          isNetSuiteUser: true,
+          customerCenterAccess: true
+        }
+      });
+    } catch (error) {
+      console.error('NetSuite customer login error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Login failed. Please try again.',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
   // Custom login endpoint for direct NetSuite authentication
   app.post('/api/auth/custom-login', async (req, res) => {
     try {

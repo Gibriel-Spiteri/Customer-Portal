@@ -295,6 +295,11 @@ export default function Login() {
                 <div className="text-xs text-center text-gray-500 mt-4">
                   <p>Your credentials are securely processed</p>
                   <p>No passwords are stored locally</p>
+                  <div className="mt-3">
+                    <a href="/netsuite-customer-login.html" className="text-blue-600 hover:text-blue-800">
+                      Use NetSuite-styled login form →
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
