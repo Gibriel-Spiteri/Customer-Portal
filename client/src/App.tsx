@@ -22,11 +22,13 @@ import { NetSuiteTest } from "@/pages/netsuite-test";
 import NetSuiteDebug from "@/pages/netsuite-debug";
 import OAuthDebugPage from "@/pages/oauth-debug";
 import { ConsumersCashPage } from "@/pages/consumers-cash";
+import NetSuiteIframeLogin from "@/pages/netsuite-iframe-login";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/netsuite-iframe-login" component={NetSuiteIframeLogin} />
       <Route path="/auth/netsuite/callback" component={OAuthCallback} />
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />

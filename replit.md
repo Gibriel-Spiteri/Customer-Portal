@@ -116,16 +116,16 @@ Preferred communication style: Simple, everyday language.
 ### Enhanced Login System (Aug 12, 2025)
 - **Multi-Tab Login Interface**: Four authentication methods in a single page
   - Customer Login: Standard email/password authentication
-  - Enterprise Login: NetSuite-styled form with Oracle branding
+  - Enterprise Login: Redirects to NetSuite iframe login page
   - SSO: NetSuite Customer Center SAML authentication
   - Demo Mode: Quick access to test accounts
-- **Enterprise Tab Features**: 
-  - NetSuite Oracle logo and styling
-  - Remember Me checkbox for 30-day token extension
-  - Password reset link to NetSuite's official page
-  - Orange NetSuite brand color for login button
-- **Real Authentication**: Removed hardcoded test accounts, now requires real database credentials
-- **Unified Authentication**: All login methods use secure JWT tokens with customer validation
+- **NetSuite Iframe Login**: 
+  - Embeds actual NetSuite login form (media.nl?id=34239)
+  - Credentials sent directly to NetSuite (no local database)
+  - Secure iframe implementation with proper sandbox attributes
+  - Oracle branding and NetSuite styling preserved
+- **Direct NetSuite Authentication**: No local user database lookups for enterprise login
+- **Unified Authentication**: Demo and SSO modes still use JWT tokens
 
 ## External Dependencies
 
