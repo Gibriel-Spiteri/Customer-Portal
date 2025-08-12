@@ -250,15 +250,11 @@ export class NetSuiteM2M {
         transaction.trandate AS date,
         transaction.duedate AS expirationDate,
         transaction.status,
-        transaction.total,
-        transaction.subtotal,
-        transaction.taxtotal AS tax,
-        transaction.shippingcost AS shipping,
         transaction.memo,
         BUILTIN.DF(transaction.entity) AS customerName,
-        BUILTIN.DF(transaction.location) AS location,
-        BUILTIN.DF(transaction.currency) AS currency,
-        transaction.exchangerate
+        transaction.entity AS customerId,
+        transaction.createddate,
+        transaction.lastmodifieddate
       FROM 
         transaction
       WHERE 

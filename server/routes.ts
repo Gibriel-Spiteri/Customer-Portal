@@ -161,6 +161,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Test endpoint to fetch estimates from NetSuite using M2M
+  // Debug endpoint to check specific customer estimates
+  app.get('/api/debug/customer-estimates/:customerId', async (req, res) => {
+    try {
+      const customerId = req.params.customerId;
+      console.log(`Checking estimates for customer ID: ${customerId}`);
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const estimates = await m2m.getCustomerEstimates(customerId, 50);
+      
+      res.json({
+        success: true,
+        customerId: customerId,
+        count: estimates.length,
+        hasEstimates: estimates.length > 0,
+        estimates: estimates
+      });
+    } catch (error) {
+      console.error('Error fetching customer estimates:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch customer estimates',
+        error: error instanceof Error ? error.message : error
+      });
+    }
+  });
+  
   app.get('/api/debug/netsuite-estimates', async (req, res) => {
     try {
       console.log('Fetching estimates from NetSuite using M2M...');
