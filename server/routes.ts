@@ -245,6 +245,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
+  // Demo mode backdoor login for customer ID 441667
+  app.post('/api/auth/demo', async (req, res) => {
+    try {
+      console.log('Demo mode login - backdoor access for customer 441667');
+      
+      // Try to get demo user first
+      let user = await storage.getUserByUsername('demo_441667');
+      
+      if (!user) {
+        // Check if another user already has this customer ID
+        const existingUserWithCustomer = await storage.getUserByNetsuiteId('441667');
+        
+        if (existingUserWithCustomer) {
+          // Use the existing user with this customer ID
+          user = existingUserWithCustomer;
+          console.log('Using existing user with customer ID 441667:', user.username);
+        } else {
+          // Create new demo user
+          const hashedPassword = await bcrypt.hash('demo_password_441667', 10);
+          user = await storage.createUser({
+            username: 'demo_441667',
+            email: 'demo@baloga.com',
+            password: hashedPassword,
+            firstName: 'Demo',
+            lastName: 'User',
+            companyName: '104453 Baloga',
+            netsuiteCustomerId: '441667',
+          });
+          console.log('Created new demo user with customer ID 441667');
+        }
+      } else {
+        console.log('Using existing demo user:', user.username);
+        // Update last login
+        await storage.updateUser(user.id, {
+          lastLoginAt: new Date(),
+        });
+      }
+
+      // Create session with NetSuite customer info
+      const sessionData = {
+        userId: user.id,
+        username: user.username,
+        netsuiteCustomerId: '441667',
+        isNetSuiteUser: true,
+        customerCenterAccess: true,
+        companyName: '104453 Baloga'
+      };
+
+      const token = jwt.sign(
+        sessionData,
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: 'Demo',
+          lastName: 'User (Customer 441667)',
+          companyName: '104453 Baloga',
+          netsuiteCustomerId: '441667',
+        },
+      });
+    } catch (error) {
+      console.error('Demo login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { username, password } = req.body;

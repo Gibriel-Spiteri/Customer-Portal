@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, AlertCircle, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff, ExternalLink, User } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function Login() {
   const { login, isLoading } = useAuth();
+  const [location, navigate] = useLocation();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -152,65 +154,67 @@ export default function Login() {
             )}
 
             {activeTab === 'demo' && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your username"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter your password"
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost" 
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
-                      )}
-                    </Button>
-                  </div>
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Quick access to demo customer account
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Customer ID: 441667 (104453 Baloga)
+                  </p>
                 </div>
                 
                 <Button
-                  type="submit"
-                  className="w-full bg-blue-800 hover:bg-blue-700 text-white font-medium"
+                  onClick={async () => {
+                    setIsSubmitting(true);
+                    setError("");
+                    
+                    try {
+                      const response = await fetch('/api/auth/demo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                      });
+                      
+                      if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Demo login failed');
+                      }
+                      
+                      const data = await response.json();
+                      
+                      // Store the token and user info
+                      localStorage.setItem('token', data.token);
+                      localStorage.setItem('user', JSON.stringify(data.user));
+                      
+                      // Navigate to dashboard
+                      navigate('/dashboard');
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Demo login failed");
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium"
                   disabled={isSubmitting}
                   style={{ color: 'white' }}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
+                      Accessing Demo Account...
                     </>
                   ) : (
-                    'Sign In'
+                    <>
+                      <User className="mr-2 h-4 w-4" />
+                      Sign in as Demo Customer 441667
+                    </>
                   )}
                 </Button>
-              </form>
+                
+                <div className="text-xs text-center text-gray-500 space-y-1">
+                  <p>This will log you in with backdoor access</p>
+                  <p>Full access to customer 441667's estimates and data</p>
+                </div>
+              </div>
             )}
 
             {activeTab === 'netsuite' && (
