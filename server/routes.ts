@@ -134,6 +134,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // NetSuite Debug Endpoint - Get configuration and debug info
+  // Test NetSuite M2M connection
+  app.get('/api/netsuite/m2m/test', authenticateToken, async (req, res) => {
+    try {
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const result = await m2m.testConnection();
+      res.json(result);
+    } catch (error) {
+      console.error('Error testing NetSuite M2M:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to test NetSuite M2M connection',
+        error: error instanceof Error ? error.message : error
+      });
+    }
+  });
+  
   app.get('/api/netsuite/debug', async (req, res) => {
     try {
       const configStatus = netsuiteClient.getConfigStatus();
@@ -451,17 +469,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Support tickets
-  // Estimates
+  // Estimates - Fetch from NetSuite using SuiteQL
   app.get('/api/estimates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
       
-      // NetSuite integration will be added later - for now use database data
-      const estimates = await storage.getUserEstimates(req.user.id, limit);
-      res.json(estimates);
+      // Check if NetSuite M2M is configured
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        console.log('NetSuite M2M not configured, returning database estimates');
+        const estimates = await storage.getUserEstimates(req.user.id, limit);
+        return res.json({ items: estimates, hasMore: false, totalResults: estimates.length });
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // If user has NetSuite customer ID, fetch their estimates
+      if (req.user.netsuiteCustomerId) {
+        const estimates = await m2m.getCustomerEstimates(req.user.netsuiteCustomerId, limit);
+        res.json({
+          items: estimates,
+          hasMore: estimates.length === limit,
+          totalResults: estimates.length
+        });
+      } else {
+        // For testing/demo, fetch all estimates (admin only)
+        const result = await m2m.getAllEstimates(limit, offset);
+        res.json(result);
+      }
     } catch (error: any) {
-      console.error('Estimates error:', error);
-      res.status(500).json({ message: 'Failed to fetch estimates' });
+      console.error('Error fetching estimates from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch estimates from NetSuite' });
+    }
+  });
+  
+  // Get specific estimate details
+  app.get('/api/estimates/:id', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const estimateId = req.params.id;
+      
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.status(400).json({ message: 'NetSuite M2M not configured' });
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const estimate = await m2m.getEstimateDetails(estimateId);
+      
+      // Verify customer has access to this estimate
+      if (req.user.netsuiteCustomerId && estimate.customerId !== req.user.netsuiteCustomerId) {
+        return res.status(403).json({ message: 'Access denied to this estimate' });
+      }
+      
+      res.json(estimate);
+    } catch (error: any) {
+      console.error('Error fetching estimate details:', error);
+      res.status(500).json({ message: 'Failed to fetch estimate details' });
     }
   });
 

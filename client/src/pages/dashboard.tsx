@@ -59,11 +59,33 @@ interface DashboardData {
   monthlyTotal: string;
 }
 
+interface EstimateData {
+  id: string;
+  documentNumber: string;
+  date: string;
+  expirationDate: string;
+  status: string;
+  total: string;
+  subtotal: string;
+  tax: string;
+  shipping: string;
+  memo: string;
+  customerName: string;
+  location: string;
+  currency: string;
+}
+
 export default function Dashboard() {
   const { user, token } = useAuth();
 
   const { data: dashboardData, isLoading, error } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard'],
+    enabled: !!token,
+  });
+  
+  // Fetch estimates from NetSuite
+  const { data: estimatesData, isLoading: estimatesLoading } = useQuery<{ items: EstimateData[] }>({
+    queryKey: ['/api/estimates?limit=5'],
     enabled: !!token,
   });
 
@@ -261,6 +283,81 @@ export default function Dashboard() {
                 </Card>
               </div>
 
+      {/* NetSuite Estimates Section */}
+      {estimatesData?.items && estimatesData.items.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent Estimates from NetSuite</CardTitle>
+              <div className="flex items-center space-x-2">
+                <DataBadge freshness="live" />
+                <Link href="/estimates">
+                  <Button variant="ghost" size="sm">
+                    View all
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {estimatesLoading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {estimatesData.items.map((estimate) => (
+                  <div key={estimate.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        Estimate #{estimate.documentNumber}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Date: {formatDate(estimate.date)}
+                      </p>
+                      {estimate.expirationDate && (
+                        <p className="text-xs text-gray-400">
+                          Expires: {formatDate(estimate.expirationDate)}
+                        </p>
+                      )}
+                      {estimate.memo && (
+                        <p className="text-xs text-gray-600 mt-1 truncate max-w-xs">
+                          {estimate.memo}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(estimate.total, estimate.currency)}
+                      </p>
+                      <Badge className={getStatusColor(estimate.status?.toLowerCase() || 'open')}>
+                        {estimate.status || 'Open'}
+                      </Badge>
+                      {estimate.location && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {estimate.location}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Recent Orders */}
