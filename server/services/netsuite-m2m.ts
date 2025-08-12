@@ -5,6 +5,8 @@
 
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 interface TokenResponse {
   access_token: string;
@@ -37,7 +39,26 @@ export class NetSuiteM2M {
     this.consumerKey = process.env.NETSUITE_CONSUMER_KEY || '';
     this.consumerSecret = process.env.NETSUITE_CONSUMER_SECRET || '';
     this.certificateId = process.env.NETSUITE_CERTIFICATE_ID || '';
-    this.privateKey = process.env.NETSUITE_PRIVATE_KEY || '';
+    
+    // Try to read private key from file if not in environment
+    if (process.env.NETSUITE_PRIVATE_KEY) {
+      this.privateKey = process.env.NETSUITE_PRIVATE_KEY;
+    } else {
+      // Try to read from file
+      try {
+        const keyPath = path.join(process.cwd(), 'netsuite_private_key.pem');
+        if (fs.existsSync(keyPath)) {
+          this.privateKey = fs.readFileSync(keyPath, 'utf8');
+          console.log('NetSuite M2M: Private key loaded from file');
+        } else {
+          this.privateKey = '';
+          console.warn('NetSuite M2M: Private key file not found');
+        }
+      } catch (error) {
+        console.error('NetSuite M2M: Error reading private key:', error);
+        this.privateKey = '';
+      }
+    }
     
     // Replace underscores with hyphens in account ID for URL
     const accountIdForUrl = this.accountId.replace('_', '-').toLowerCase();
@@ -46,6 +67,10 @@ export class NetSuiteM2M {
     
     if (!this.consumerKey || !this.consumerSecret) {
       console.warn('NetSuite M2M: Missing NETSUITE_CONSUMER_KEY or NETSUITE_CONSUMER_SECRET');
+    }
+    
+    if (!this.privateKey) {
+      console.warn('NetSuite M2M: Private key not configured - certificate-based auth will not work');
     }
   }
 
@@ -63,27 +88,22 @@ export class NetSuiteM2M {
       iat: now
     };
 
-    // If we have a certificate ID and private key, use them for signing
-    // Otherwise, use the consumer secret as a symmetric key
-    if (this.certificateId && this.privateKey) {
+    // NetSuite M2M requires RSA256 signing with a certificate
+    if (this.privateKey) {
+      // Generate a certificate ID if not provided (use a hash of the consumer key)
+      const certId = this.certificateId || crypto.createHash('sha256').update(this.consumerKey).digest('hex').substring(0, 16);
+      
       // Sign with RSA private key
       return jwt.sign(payload, this.privateKey, {
         algorithm: 'RS256',
         header: {
           typ: 'JWT',
           alg: 'RS256',
-          kid: this.certificateId
+          kid: certId
         }
       });
     } else {
-      // Sign with consumer secret (HMAC)
-      return jwt.sign(payload, this.consumerSecret, {
-        algorithm: 'HS256',
-        header: {
-          typ: 'JWT',
-          alg: 'HS256'
-        }
-      });
+      throw new Error('NetSuite M2M requires a private key for certificate-based authentication');
     }
   }
 
