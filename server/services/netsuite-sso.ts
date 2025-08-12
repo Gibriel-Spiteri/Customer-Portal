@@ -193,7 +193,20 @@ export class NetSuiteSSO {
    * Generate redirect URL to NetSuite Suitelet with proper callback URL
    */
   generateSuiteLetURL(): string {
-    const accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
+    let accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
+    
+    // Extract account ID if full URL is provided
+    if (accountId.includes('netsuite.com')) {
+      // Extract account ID from URL like "https://1212804.app.netsuite.com/"
+      const match = accountId.match(/(?:https?:\/\/)?(\d+)\.app\.netsuite\.com/);
+      if (match && match[1]) {
+        accountId = match[1];
+      }
+    }
+    
+    // Remove any trailing slashes or https:// prefix
+    accountId = accountId.replace(/^https?:\/\//, '').replace(/\/$/, '').replace('.app.netsuite.com', '');
+    
     const scriptId = process.env.NETSUITE_SSO_SCRIPT_ID || '4354';
     const deployId = process.env.NETSUITE_SSO_DEPLOY_ID || '1';
     
