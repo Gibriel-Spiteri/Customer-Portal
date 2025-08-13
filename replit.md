@@ -116,21 +116,25 @@ Preferred communication style: Simple, everyday language.
 ### Enhanced Login System (Aug 13, 2025)
 - **Multi-Tab Login Interface**: Four authentication methods in a single page
   - Customer Login: Standard email/password authentication
-  - Enterprise Login: Direct redirect to NetSuite login page
+  - Enterprise Login: NetSuite OIDC authentication
   - SSO: NetSuite Customer Center SAML authentication
   - Demo Mode: Quick access to test accounts
-- **Enterprise Tab Updates**: 
-  - NetSuite blocks iframe embedding for security (connection refused)
-  - Solution: Direct redirect to NetSuite login page
-  - User clicks button to go to NetSuite login
-  - After authentication, portlet redirects back to Replit
-  - NetSuite Oracle branding preserved
-- **Post-Login Redirect Solutions**:
-  - Portlet script that auto-redirects after successful login
-  - Customer Center customization option
-  - Returns customer ID, name, and email to Replit app
-- **Secure NetSuite Authentication**: Users authenticate directly on NetSuite's domain
-- **Unified Authentication**: Demo and SSO modes still use JWT tokens
+- **NetSuite OIDC Integration (NEW)**: 
+  - OpenID Connect provider discovered: https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration
+  - Authorization endpoint: https://1212804.app.netsuite.com/app/login/oauth2/authorize.nl
+  - Token endpoint: https://1212804.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token
+  - UserInfo endpoint: https://1212804.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/userinfo
+  - PKCE support with S256 code challenge method
+  - Supports 'openid' and 'email' scopes
+- **OIDC Service Features**:
+  - Automatic customer ID retrieval from userinfo endpoint
+  - Secure state and PKCE verification
+  - Session-based token storage for API calls
+  - Automatic user creation or update from OIDC claims
+- **Configuration**:
+  - NETSUITE_OIDC_CLIENT_ID and NETSUITE_OIDC_CLIENT_SECRET environment variables
+  - OAuth 2.0 Client Credentials setup in NetSuite required
+  - Redirect URI: /auth/netsuite/oidc/callback
 
 ## External Dependencies
 

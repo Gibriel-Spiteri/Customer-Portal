@@ -1,4 +1,4 @@
-import { Issuer, generators } from 'openid-client';
+import * as openidClient from 'openid-client';
 import { Request, Response } from 'express';
 
 interface OIDCConfig {
@@ -9,7 +9,7 @@ interface OIDCConfig {
 }
 
 class NetSuiteOIDCService {
-  private client: any;
+  private client: any = null;
   private config: OIDCConfig;
   private issuer: any;
   private initialized = false;
@@ -28,7 +28,7 @@ class NetSuiteOIDCService {
     
     try {
       // Discover NetSuite OIDC configuration
-      this.issuer = await Issuer.discover('https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration');
+      this.issuer = await openidClient.Issuer.discover('https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration');
       
       console.log('NetSuite OIDC Issuer discovered:', {
         issuer: this.issuer.issuer,
@@ -56,11 +56,11 @@ class NetSuiteOIDCService {
     await this.initialize();
 
     // Generate PKCE verifier and challenge
-    const codeVerifier = generators.codeVerifier();
-    const codeChallenge = generators.codeChallenge(codeVerifier);
+    const codeVerifier = openidClient.generators.codeVerifier();
+    const codeChallenge = openidClient.generators.codeChallenge(codeVerifier);
     
     // Generate state for CSRF protection
-    const state = generators.state();
+    const state = openidClient.generators.state();
     
     // Store verifier and state in session
     req.session.oidc = {
