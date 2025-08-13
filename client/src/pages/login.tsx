@@ -315,7 +315,7 @@ export default function Login() {
               <div className="space-y-4">
                 <div className="relative" style={{ minHeight: '400px' }}>
                   <iframe
-                    src="https://1212804.app.netsuite.com/c.1212804/suitebundle63418/customer_login.html"
+                    src="https://1212804.app.netsuite.com/c.1212804/suitebundle63418/customer_login_simple.html"
                     className="w-full border-0 rounded-lg"
                     style={{ 
                       height: '400px',
@@ -328,7 +328,8 @@ export default function Login() {
                 
                 <div className="text-center text-xs text-gray-500">
                   <p>This login form is hosted on NetSuite for security.</p>
-                  <p>Your credentials are sent directly to NetSuite.</p>
+                  <p>After login, you'll be redirected back to the portal.</p>
+                  <p>Note: You may need to deploy the redirect portlet in NetSuite.</p>
                 </div>
               </div>
             )}

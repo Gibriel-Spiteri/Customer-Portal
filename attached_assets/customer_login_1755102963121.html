@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script>
+            // Get the redirect URL from query parameters
+            function getRedirectUrl() {
+                const params = new URLSearchParams(window.location.search);
+                return 'https://2fdee256-490e-452c-b9d3-9acfca1ecfa0.worf.prod.repl.run/';
+            }
+
+            // Handle form submission
+            function handleLogin(event) {
+                event.preventDefault();
+
+                const form = event.target;
+                const email = form.email.value;
+                const password = form.password.value;
+                const rememberMe = form.rememberme.checked;
+
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Logging in...';
+                submitBtn.disabled = true;
+
+                // Create form data for NetSuite login
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+                formData.append('jsenabled', 'T');
+                if (rememberMe) {
+                    formData.append('rememberme', 'T');
+                }
+
+                // Submit to NetSuite login endpoint
+                fetch('/app/login/secure/enterpriselogin.nl', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                })
+                    .then((response) => {
+                        if (response.ok || response.redirected) {
+                            // Login successful - NetSuite will set session cookies
+                            // Now fetch customer data
+                            return fetch('/app/site/hosting/restlet.nl?script=customscript_customer_data&deploy=customdeploy_customer_data', {
+                                credentials: 'include'
+                            });
+                        } else {
+                            throw new Error('Login failed');
+                        }
+                    })
+                    .then((response) => response.json())
+                    .then((customerData) => {
+                        // Redirect back to Replit app with customer data
+                        const redirectUrl = getRedirectUrl();
+                        const params = new URLSearchParams({
+                            customerId: customerData.id || '',
+                            customerName: customerData.companyname || customerData.entityid || '',
+                            email: email,
+                            success: 'true'
+                        });
+
+                        // Redirect to Replit app with customer info
+                        window.top.location.href = redirectUrl + '/auth/netsuite/enterprise-callback?' + params.toString();
+                    })
+                    .catch((error) => {
+                        console.error('Login error:', error);
+                        // Reset button
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+
+                        // Show error message
+                        const errorDiv = document.getElementById('error-message');
+                        if (errorDiv) {
+                            errorDiv.style.display = 'block';
+                            errorDiv.textContent = 'Invalid email or password. Please try again.';
+                        }
+                    });
+
+                return false;
+            }
+
+            // Alternative: Direct form submission with redirect parameter
+            function setupFormRedirect() {
+                const form = document.getElementById('loginForm');
+                if (form) {
+                    // Add redirect URL as hidden field
+                    const redirectInput = document.createElement('input');
+                    redirectInput.type = 'hidden';
+                    redirectInput.name = 'redirect';
+                    redirectInput.value = getRedirectUrl() + '/auth/netsuite/enterprise-callback';
+                    form.appendChild(redirectInput);
+                }
+            }
+
+            // Initialize on page load
+            window.onload = function () {
+                setupFormRedirect();
+            };
+        </script>
+    </head>
+    <body>
+        <form id="loginForm" method="post" action="/app/login/secure/enterpriselogin.nl" target="_parent" onsubmit="return handleLogin(event);">
+            <div class="form-control" style="border: 0">
+                <div class="row">
+                    <div class="col">
+                        <h2 style="font-weight: 800; font-size: 24px; margin-bottom: 0.5rem">Log In</h2>
+                    </div>
+                    <div class="col">
+                        <img style="max-width: 250px; max-height: 100; vertical-align: middle; margin-bottom: 15px; padding-right: 10px" src="https://1212804.app.netsuite.com/images/logos/netsuite-oracle.svg" alt="Company logo" align="right" id="login-logo" class="logo-img" />
+                    </div>
+                </div>
+
+                <div id="error-message" class="alert alert-danger" style="display: none"></div>
+
+                <div class="mb-3">
+                    <input type="email" class="form-control input" name="email" id="exampleInputEmail1" placeholder="Email address" required />
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control input" id="exampleInputPassword1" name="password" size="30" maxlength="16" placeholder="Password" required />
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input checkbox" id="exampleCheck1" name="rememberme" value="T" tabindex="-1" />
+                    <label class="form-check-label" for="exampleCheck1">Remember Me</label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; background-color: #e28212; color: white; font-weight: bold; margin-bottom: 15px">Log In</button>
+                <div class="mb-3">
+                    <a href="https://system.netsuite.com/pages/pwdreset.jsp" style="color: #4b7c8b">Forgot your password?</a>
+                </div>
+            </div>
+        </form>
+    </body>
+</html>

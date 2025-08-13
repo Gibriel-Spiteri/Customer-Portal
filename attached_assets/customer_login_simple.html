@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous"
+        >
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script>
+            // This simplified version lets NetSuite handle the entire login flow
+            // After successful login, you can set up a NetSuite portlet or script 
+            // to redirect back to your Replit app
+            
+            function validateForm() {
+                var email = document.getElementById('email').value;
+                var password = document.getElementById('password').value;
+                
+                if (!email || !email.includes('@')) {
+                    alert('Please enter a valid email address');
+                    return false;
+                }
+                
+                if (!password) {
+                    alert('Please enter your password');
+                    return false;
+                }
+                
+                // Add the redirect URL as a hidden parameter
+                var redirectField = document.getElementById('redirect_url');
+                redirectField.value = 'https://2fdee256-490e-452c-b9d3-9acfca1ecfa0.worf.prod.repl.run/auth/netsuite/enterprise-callback';
+                
+                return true;
+            }
+        </script>
+    </head>
+    <body>
+        <form
+            method="post"
+            action="/app/login/secure/enterpriselogin.nl"
+            target="_top"
+            onsubmit="return validateForm();"
+        >
+            <div class="form-control" style="border: 0">
+                <div class="row">
+                    <div class="col">
+                        <h2 style="font-weight: 800; font-size: 24px; margin-bottom: 0.5rem;">Log In</h2>
+                    </div>
+                    <div class="col">
+                        <img
+                            style="max-width: 250px; max-height: 100; vertical-align: middle; margin-bottom: 15px; padding-right: 10px;"
+                            src="https://1212804.app.netsuite.com/images/logos/netsuite-oracle.svg"
+                            alt="NetSuite Oracle"
+                            align="right"
+                            id="login-logo"
+                            class="logo-img"
+                        >
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <input
+                        type="email"
+                        class="form-control input"
+                        name="email"
+                        id="email"
+                        placeholder="Email address"
+                        required
+                    >
+                </div>
+                
+                <div class="mb-3">
+                    <input
+                        type="password"
+                        class="form-control input"
+                        id="password"
+                        name="password"
+                        placeholder="Password"
+                        maxlength="16"
+                        required
+                    >
+                </div>
+                
+                <div class="mb-3 form-check">
+                    <input
+                        type="checkbox"
+                        class="form-check-input checkbox"
+                        id="rememberme"
+                        name="rememberme"
+                        value="T"
+                    >
+                    <label class="form-check-label" for="rememberme">Remember Me</label>
+                </div>
+                
+                <!-- Hidden fields for NetSuite -->
+                <input type="hidden" name="jsenabled" value="T">
+                <input type="hidden" id="redirect_url" name="redirect_url" value="">
+                
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    style="width:100%; background-color: #e28212; color: white; font-weight: bold; margin-bottom: 15px;"
+                >Log In</button>
+                
+                <div class="mb-3">
+                    <a href="https://system.netsuite.com/pages/pwdreset.jsp" style="color: #4b7c8b;">Forgot your password?</a>
+                </div>
+                
+                <div class="text-center text-xs text-muted">
+                    <p>After login, you'll be redirected to the Customer Portal</p>
+                </div>
+            </div>
+        </form>
+    </body>
+</html>

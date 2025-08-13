@@ -113,19 +113,23 @@ Preferred communication style: Simple, everyday language.
   - Baloga (441667) - Purple button
   - CRD (154783) - Indigo button
 
-### Enhanced Login System (Aug 12, 2025)
+### Enhanced Login System (Aug 13, 2025)
 - **Multi-Tab Login Interface**: Four authentication methods in a single page
   - Customer Login: Standard email/password authentication
   - Enterprise Login: NetSuite-hosted login form via iframe
   - SSO: NetSuite Customer Center SAML authentication
   - Demo Mode: Quick access to test accounts
 - **Enterprise Tab with NetSuite-Hosted Form**: 
-  - Login HTML hosted on NetSuite at /c.1212804/suitebundle63418/customer_login.html
-  - Loaded via iframe to maintain NetSuite domain trust
+  - Login HTML hosted on NetSuite at /c.1212804/suitebundle63418/customer_login_simple.html
+  - Simple form POST to NetSuite's enterprise login endpoint
   - Bypasses CORS and "untrusted origin" security restrictions
-  - Form posts directly to NetSuite's enterprise login endpoint
+  - Requires post-login redirect mechanism (portlet or Customer Center customization)
   - NetSuite Oracle branding and orange login button preserved
   - Remember Me checkbox for extended sessions
+- **Post-Login Redirect Solutions**:
+  - Portlet script that auto-redirects after successful login
+  - Customer Center customization option
+  - Returns customer ID, name, and email to Replit app
 - **Secure NetSuite Authentication**: Form hosted and executed on NetSuite domain
 - **Unified Authentication**: Demo and SSO modes still use JWT tokens
 
