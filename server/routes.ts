@@ -248,16 +248,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NetSuite OIDC login initiation
   app.get('/api/auth/netsuite/oidc/login', async (req, res) => {
     try {
-      const { netsuiteOIDC } = await import('./services/netsuite-oidc');
+      const { netsuiteOIDCService } = await import('./services/netsuite-oidc');
       
-      if (!netsuiteOIDC.isConfigured()) {
+      const status = netsuiteOIDCService.getStatus();
+      if (!status.configured) {
         return res.status(400).json({
           success: false,
           message: 'NetSuite OIDC is not configured. Please set NETSUITE_OIDC_CLIENT_ID and NETSUITE_OIDC_CLIENT_SECRET environment variables.'
         });
       }
 
-      const authUrl = await netsuiteOIDC.getAuthorizationUrl(req);
+      const authUrl = await netsuiteOIDCService.getAuthorizationUrl(req);
       res.json({ success: true, authUrl });
     } catch (error) {
       console.error('NetSuite OIDC login error:', error);
@@ -272,10 +273,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NetSuite OIDC callback
   app.get('/auth/netsuite/oidc/callback', async (req, res) => {
     try {
-      const { netsuiteOIDC } = await import('./services/netsuite-oidc');
+      const { netsuiteOIDCService } = await import('./services/netsuite-oidc');
       
       // Handle the OIDC callback
-      const { tokenSet, userinfo } = await netsuiteOIDC.handleCallback(req);
+      const result = await netsuiteOIDCService.handleCallback(req);
+      const userinfo = result.userinfo;
+      const tokenSet = result.tokens;
       
       console.log('NetSuite OIDC callback - userinfo:', userinfo);
       
@@ -357,8 +360,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // NetSuite OIDC status endpoint
   app.get('/api/auth/netsuite/oidc/status', async (req, res) => {
     try {
-      const { netsuiteOIDC } = await import('./services/netsuite-oidc');
-      const status = netsuiteOIDC.getConfigStatus();
+      const { netsuiteOIDCService } = await import('./services/netsuite-oidc');
+      const status = netsuiteOIDCService.getStatus();
       res.json(status);
     } catch (error) {
       res.status(500).json({

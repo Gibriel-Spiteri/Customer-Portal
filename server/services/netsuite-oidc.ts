@@ -1,5 +1,5 @@
-import * as openidClient from 'openid-client';
 import { Request, Response } from 'express';
+import * as client from 'openid-client';
 
 interface OIDCConfig {
   clientId: string;
@@ -9,9 +9,8 @@ interface OIDCConfig {
 }
 
 class NetSuiteOIDCService {
-  private client: any = null;
   private config: OIDCConfig;
-  private issuer: any;
+  private configuration: any = null;
   private initialized = false;
 
   constructor() {
@@ -28,20 +27,17 @@ class NetSuiteOIDCService {
     
     try {
       // Discover NetSuite OIDC configuration
-      this.issuer = await openidClient.Issuer.discover('https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration');
+      const discoveryUrl = new URL('https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration');
       
-      console.log('NetSuite OIDC Issuer discovered:', {
-        issuer: this.issuer.issuer,
-        authorizationEndpoint: this.issuer.authorization_endpoint,
-        tokenEndpoint: this.issuer.token_endpoint
-      });
-
-      // Create OIDC client
-      this.client = new this.issuer.Client({
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-        redirect_uris: [this.config.redirectUri],
-        response_types: ['code']
+      // For openid-client v6, discovery returns the configuration object directly
+      this.configuration = await client.discovery(discoveryUrl, this.config.clientId, this.config.clientSecret);
+      
+      // Fetch the server metadata to log it
+      const serverMetadata = await fetch(discoveryUrl.href).then(r => r.json());
+      console.log('NetSuite OIDC Configuration discovered:', {
+        issuer: serverMetadata.issuer,
+        authorizationEndpoint: serverMetadata.authorization_endpoint,
+        tokenEndpoint: serverMetadata.token_endpoint
       });
 
       this.initialized = true;
@@ -56,11 +52,11 @@ class NetSuiteOIDCService {
     await this.initialize();
 
     // Generate PKCE verifier and challenge
-    const codeVerifier = openidClient.generators.codeVerifier();
-    const codeChallenge = openidClient.generators.codeChallenge(codeVerifier);
+    const codeVerifier = client.randomPKCECodeVerifier();
+    const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
     
     // Generate state for CSRF protection
-    const state = openidClient.generators.state();
+    const state = client.randomState();
     
     // Store verifier and state in session
     req.session.oidc = {
@@ -68,56 +64,108 @@ class NetSuiteOIDCService {
       state
     };
 
-    // Generate authorization URL
-    const authUrl = this.client.authorizationUrl({
-      scope: this.config.scope,
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
-      state: state
-    });
+    // Build authorization URL
+    const parameters = new URLSearchParams();
+    parameters.set('client_id', this.config.clientId);
+    parameters.set('redirect_uri', this.config.redirectUri);
+    parameters.set('response_type', 'code');
+    parameters.set('scope', this.config.scope);
+    parameters.set('state', state);
+    parameters.set('code_challenge', codeChallenge);
+    parameters.set('code_challenge_method', 'S256');
 
-    return authUrl;
+    const authUrl = client.buildAuthorizationUrl(this.configuration, parameters);
+    
+    return authUrl.href;
   }
 
   async handleCallback(req: Request): Promise<any> {
     await this.initialize();
 
-    const params = this.client.callbackParams(req);
-    
+    const currentUrl = new URL(req.url, `http://${req.headers.host}`);
+    const sessionOidc = req.session.oidc;
+
+    if (!sessionOidc) {
+      throw new Error('OIDC session data not found');
+    }
+
     // Verify state
-    if (!req.session.oidc || params.state !== req.session.oidc.state) {
+    const state = currentUrl.searchParams.get('state');
+    if (state !== sessionOidc.state) {
       throw new Error('State mismatch - possible CSRF attack');
     }
 
     // Exchange code for tokens
-    const tokenSet = await this.client.callback(
-      this.config.redirectUri,
-      params,
+    const tokens = await client.authorizationCodeGrant(
+      this.configuration,
+      currentUrl,
       {
-        code_verifier: req.session.oidc.codeVerifier,
-        state: req.session.oidc.state
+        pkceCodeVerifier: sessionOidc.codeVerifier,
+        expectedState: sessionOidc.state
       }
     );
 
-    // Get user info
-    const userinfo = await this.client.userinfo(tokenSet);
+    // Get user info if we have an access token
+    let userinfo: any = {};
+    if (tokens.access_token) {
+      try {
+        // The subject is from the ID token, not tokens.claims()
+        const subject = tokens.id_token ? JSON.parse(Buffer.from(tokens.id_token.split('.')[1], 'base64').toString()).sub : undefined;
+        userinfo = await client.fetchUserInfo(
+          this.configuration,
+          tokens.access_token,
+          subject
+        );
+      } catch (error) {
+        console.warn('Failed to fetch userinfo:', error);
+        // Fallback to basic info from ID token if available
+        if (tokens.id_token) {
+          const payload = JSON.parse(Buffer.from(tokens.id_token.split('.')[1], 'base64').toString());
+          userinfo = {
+            sub: payload.sub,
+            email: payload.email,
+            email_verified: payload.email_verified
+          };
+        }
+      }
+    }
 
     // Clean up session
     delete req.session.oidc;
 
+    // Store tokens in session for API calls
+    req.session.netsuiteTokens = {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      idToken: tokens.id_token,
+      expiresAt: tokens.expires_at
+    };
+
     return {
-      tokenSet,
-      userinfo
+      userinfo,
+      tokens
     };
   }
 
-  isConfigured(): boolean {
-    return !!(this.config.clientId && this.config.clientSecret);
+  async refreshTokens(refreshToken: string): Promise<any> {
+    await this.initialize();
+    
+    const tokens = await client.refreshTokenGrant(
+      this.configuration,
+      refreshToken
+    );
+    
+    return {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      idToken: tokens.id_token,
+      expiresAt: tokens.expires_at
+    };
   }
 
-  getConfigStatus() {
+  getStatus() {
     return {
-      configured: this.isConfigured(),
+      configured: !!(this.config.clientId && this.config.clientSecret),
       clientId: this.config.clientId ? 'Set' : 'Not set',
       clientSecret: this.config.clientSecret ? 'Set' : 'Not set',
       redirectUri: this.config.redirectUri,
@@ -126,4 +174,4 @@ class NetSuiteOIDCService {
   }
 }
 
-export const netsuiteOIDC = new NetSuiteOIDCService();
+export const netsuiteOIDCService = new NetSuiteOIDCService();
