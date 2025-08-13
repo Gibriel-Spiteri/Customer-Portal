@@ -116,21 +116,20 @@ Preferred communication style: Simple, everyday language.
 ### Enhanced Login System (Aug 13, 2025)
 - **Multi-Tab Login Interface**: Four authentication methods in a single page
   - Customer Login: Standard email/password authentication
-  - Enterprise Login: NetSuite-hosted login form via iframe
+  - Enterprise Login: Direct redirect to NetSuite login page
   - SSO: NetSuite Customer Center SAML authentication
   - Demo Mode: Quick access to test accounts
-- **Enterprise Tab with NetSuite-Hosted Form**: 
-  - Login HTML hosted on NetSuite at /c.1212804/suitebundle63418/customer_login_simple.html
-  - Simple form POST to NetSuite's enterprise login endpoint
-  - Bypasses CORS and "untrusted origin" security restrictions
-  - Requires post-login redirect mechanism (portlet or Customer Center customization)
-  - NetSuite Oracle branding and orange login button preserved
-  - Remember Me checkbox for extended sessions
+- **Enterprise Tab Updates**: 
+  - NetSuite blocks iframe embedding for security (connection refused)
+  - Solution: Direct redirect to NetSuite login page
+  - User clicks button to go to NetSuite login
+  - After authentication, portlet redirects back to Replit
+  - NetSuite Oracle branding preserved
 - **Post-Login Redirect Solutions**:
   - Portlet script that auto-redirects after successful login
   - Customer Center customization option
   - Returns customer ID, name, and email to Replit app
-- **Secure NetSuite Authentication**: Form hosted and executed on NetSuite domain
+- **Secure NetSuite Authentication**: Users authenticate directly on NetSuite's domain
 - **Unified Authentication**: Demo and SSO modes still use JWT tokens
 
 ## External Dependencies

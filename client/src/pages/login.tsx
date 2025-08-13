@@ -313,23 +313,59 @@ export default function Login() {
 
             {activeTab === 'enterprise' && (
               <div className="space-y-4">
-                <div className="relative" style={{ minHeight: '400px' }}>
-                  <iframe
-                    src="https://1212804.app.netsuite.com/c.1212804/suitebundle63418/customer_login_simple.html"
-                    className="w-full border-0 rounded-lg"
-                    style={{ 
-                      height: '400px',
-                      backgroundColor: 'white'
-                    }}
-                    title="NetSuite Customer Login"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"
+                <div className="text-center py-4">
+                  <img
+                    src="https://1212804.app.netsuite.com/images/logos/netsuite-oracle.svg"
+                    alt="NetSuite Oracle"
+                    className="h-8 mx-auto mb-3"
                   />
-                </div>
-                
-                <div className="text-center text-xs text-gray-500">
-                  <p>This login form is hosted on NetSuite for security.</p>
-                  <p>After login, you'll be redirected back to the portal.</p>
-                  <p>Note: You may need to deploy the redirect portlet in NetSuite.</p>
+                  <h3 className="text-lg font-semibold mb-2">NetSuite Enterprise Login</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Click below to access the secure NetSuite login page
+                  </p>
+                  
+                  <Button
+                    onClick={() => {
+                      // Open NetSuite login in a new tab/window
+                      const netsuiteUrl = 'https://1212804.app.netsuite.com/app/login/nllogin.nl';
+                      const replitCallback = encodeURIComponent(window.location.origin + '/auth/netsuite/enterprise-callback');
+                      const loginUrl = `${netsuiteUrl}?redirect=${replitCallback}`;
+                      
+                      // Open in same tab for better UX
+                      window.location.href = loginUrl;
+                    }}
+                    className="w-full"
+                    style={{ 
+                      backgroundColor: '#e28212', 
+                      borderColor: '#e28212',
+                      color: 'white'
+                    }}
+                  >
+                    Access NetSuite Login
+                  </Button>
+                  
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      <strong>How it works:</strong>
+                    </p>
+                    <ol className="text-xs text-blue-600 mt-2 text-left list-decimal list-inside">
+                      <li>You'll be redirected to NetSuite's secure login page</li>
+                      <li>Enter your NetSuite Customer Center credentials</li>
+                      <li>After successful login, you'll be redirected back here</li>
+                    </ol>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <a 
+                      href="https://system.netsuite.com/pages/pwdreset.jsp" 
+                      className="text-sm"
+                      style={{ color: '#4b7c8b' }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
