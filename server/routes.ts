@@ -245,45 +245,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
-  // NetSuite Enterprise callback - handles redirect after NetSuite login
-  app.get('/auth/netsuite/enterprise-callback', async (req, res) => {
+  // NetSuite OIDC login initiation
+  app.get('/api/auth/netsuite/oidc/login', async (req, res) => {
     try {
-      const { customerId, customerName, email, success } = req.query;
+      const { netsuiteOIDC } = await import('./services/netsuite-oidc');
       
-      if (success !== 'true' || !customerId || !email) {
-        return res.redirect('/login?error=enterprise_auth_failed');
+      if (!netsuiteOIDC.isConfigured()) {
+        return res.status(400).json({
+          success: false,
+          message: 'NetSuite OIDC is not configured. Please set NETSUITE_OIDC_CLIENT_ID and NETSUITE_OIDC_CLIENT_SECRET environment variables.'
+        });
       }
+
+      const authUrl = await netsuiteOIDC.getAuthorizationUrl(req);
+      res.json({ success: true, authUrl });
+    } catch (error) {
+      console.error('NetSuite OIDC login error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to initiate NetSuite OIDC login',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // NetSuite OIDC callback
+  app.get('/auth/netsuite/oidc/callback', async (req, res) => {
+    try {
+      const { netsuiteOIDC } = await import('./services/netsuite-oidc');
       
-      console.log('NetSuite enterprise login callback:', { customerId, customerName, email });
+      // Handle the OIDC callback
+      const { tokenSet, userinfo } = await netsuiteOIDC.handleCallback(req);
+      
+      console.log('NetSuite OIDC callback - userinfo:', userinfo);
+      
+      // Extract customer information from userinfo
+      const email = userinfo.email;
+      const customerId = userinfo.sub; // Subject is typically the user/customer ID
       
       // Check if user exists in our database
-      let user = await storage.getUserByUsername(email as string);
+      let user = await storage.getUserByUsername(email);
       
       if (!user) {
-        // Create new user from NetSuite data
+        // Create new user from OIDC data
         const newUser = {
-          email: email as string,
-          username: email as string,
-          password: '', // No password for NetSuite users
-          firstName: '',
-          lastName: '',
-          companyName: customerName as string || '',
-          netsuiteCustomerId: customerId as string,
+          email: email,
+          username: email,
+          password: '', // No password for OIDC users
+          firstName: userinfo.given_name || '',
+          lastName: userinfo.family_name || '',
+          companyName: userinfo.company || '',
+          netsuiteCustomerId: customerId,
           isNetSuiteUser: true,
           customerCenterAccess: true
         };
         
         user = await storage.createUser(newUser);
-        console.log('Created new user from NetSuite enterprise login:', user.id);
+        console.log('Created new user from NetSuite OIDC:', user.id);
       } else {
-        // Update existing user with NetSuite data
+        // Update existing user with OIDC data
         await storage.updateUser(user.id, {
-          netsuiteCustomerId: customerId as string,
-          companyName: customerName as string || user.companyName,
+          netsuiteCustomerId: customerId,
           isNetSuiteUser: true,
           customerCenterAccess: true
         });
-        console.log('Updated existing user with NetSuite data:', user.id);
+        console.log('Updated existing user with OIDC data:', user.id);
       }
       
       // Generate JWT token
@@ -306,27 +332,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        companyName: customerName as string || user.companyName || '',
-        netsuiteCustomerId: customerId as string,
+        companyName: user.companyName || '',
+        netsuiteCustomerId: customerId,
         isNetSuiteUser: true,
         customerCenterAccess: true
+      };
+      
+      // Store tokens in session for API calls
+      req.session.oidcTokens = {
+        accessToken: tokenSet.access_token,
+        refreshToken: tokenSet.refresh_token,
+        idToken: tokenSet.id_token,
+        expiresAt: tokenSet.expires_at
       };
       
       // Redirect to dashboard with token
       res.redirect(`/?token=${token}`);
     } catch (error) {
-      console.error('NetSuite enterprise callback error:', error);
-      res.redirect('/login?error=enterprise_callback_failed');
+      console.error('NetSuite OIDC callback error:', error);
+      res.redirect('/login?error=oidc_callback_failed');
     }
   });
-  
-  // NetSuite customer login endpoint - deprecated
-  app.post('/api/auth/netsuite-customer', async (req, res) => {
-    // This endpoint is deprecated - authentication happens directly through NetSuite's iframe
-    return res.status(400).json({ 
-      success: false,
-      message: 'Please use the NetSuite Enterprise login tab. Credentials should be sent directly to NetSuite.' 
-    });
+
+  // NetSuite OIDC status endpoint
+  app.get('/api/auth/netsuite/oidc/status', async (req, res) => {
+    try {
+      const { netsuiteOIDC } = await import('./services/netsuite-oidc');
+      const status = netsuiteOIDC.getConfigStatus();
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get OIDC status',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
   
   // Custom login endpoint for direct NetSuite authentication

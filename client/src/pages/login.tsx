@@ -321,18 +321,35 @@ export default function Login() {
                   />
                   <h3 className="text-lg font-semibold mb-2">NetSuite Enterprise Login</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Click below to access the secure NetSuite login page
+                    Sign in with your NetSuite account using secure OIDC authentication
                   </p>
                   
                   <Button
-                    onClick={() => {
-                      // Open NetSuite login in a new tab/window
-                      const netsuiteUrl = 'https://1212804.app.netsuite.com/app/login/nllogin.nl';
-                      const replitCallback = encodeURIComponent(window.location.origin + '/auth/netsuite/enterprise-callback');
-                      const loginUrl = `${netsuiteUrl}?redirect=${replitCallback}`;
-                      
-                      // Open in same tab for better UX
-                      window.location.href = loginUrl;
+                    onClick={async () => {
+                      try {
+                        // Check if OIDC is configured
+                        const statusResponse = await fetch('/api/auth/netsuite/oidc/status');
+                        const status = await statusResponse.json();
+                        
+                        if (!status.configured) {
+                          setError('NetSuite OIDC is not configured. Please contact your administrator.');
+                          return;
+                        }
+                        
+                        // Get authorization URL
+                        const response = await fetch('/api/auth/netsuite/oidc/login');
+                        const data = await response.json();
+                        
+                        if (data.success && data.authUrl) {
+                          // Redirect to NetSuite OIDC authorization
+                          window.location.href = data.authUrl;
+                        } else {
+                          setError(data.message || 'Failed to initiate NetSuite login');
+                        }
+                      } catch (error) {
+                        console.error('NetSuite OIDC error:', error);
+                        setError('Failed to connect to NetSuite. Please try again.');
+                      }
                     }}
                     className="w-full"
                     style={{ 
@@ -341,17 +358,18 @@ export default function Login() {
                       color: 'white'
                     }}
                   >
-                    Access NetSuite Login
+                    Sign in with NetSuite
                   </Button>
                   
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-xs text-blue-700">
-                      <strong>How it works:</strong>
+                      <strong>Secure OIDC Authentication:</strong>
                     </p>
                     <ol className="text-xs text-blue-600 mt-2 text-left list-decimal list-inside">
-                      <li>You'll be redirected to NetSuite's secure login page</li>
-                      <li>Enter your NetSuite Customer Center credentials</li>
-                      <li>After successful login, you'll be redirected back here</li>
+                      <li>Uses NetSuite's OpenID Connect provider</li>
+                      <li>No passwords are stored locally</li>
+                      <li>Automatic customer ID retrieval</li>
+                      <li>Single sign-on with your NetSuite account</li>
                     </ol>
                   </div>
                   
