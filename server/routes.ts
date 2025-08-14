@@ -592,6 +592,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user profile endpoint
+  app.get('/api/profile', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      res.json({
+        id: user.id.toString(),
+        username: user.email, // Using email as username for backward compatibility
+        email: user.email,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        companyName: user.companyName || '',
+        netsuiteCustomerId: user.netsuiteCustomerId,
+      });
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Change password endpoint
   app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
     try {
