@@ -199,7 +199,7 @@ export default function Login() {
                   setError("");
                   
                   try {
-                    const response = await fetch('/api/auth/custom-login', {
+                    const response = await fetch('/api/auth/login', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -303,6 +303,15 @@ export default function Login() {
                     )}
                   </Button>
                 </form>
+                
+                <div className="flex justify-between items-center mt-4">
+                  <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                    Forgot Password?
+                  </a>
+                  <a href="/register" className="text-sm text-blue-600 hover:underline">
+                    Create Account
+                  </a>
+                </div>
                 
                 <div className="text-xs text-center text-gray-500 mt-4">
                   <p>Your credentials are securely processed</p>

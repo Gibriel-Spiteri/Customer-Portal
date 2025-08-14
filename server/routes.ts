@@ -4,7 +4,13 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { syncService } from "./services/sync";
 import { queueService } from "./services/queue";
-import { insertUserSchema, insertSupportTicketSchema } from "@shared/schema";
+import { 
+  loginSchema, 
+  registrationSchema, 
+  changePasswordSchema, 
+  requestPasswordResetSchema, 
+  resetPasswordSchema
+} from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -543,31 +549,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { email, password } = loginSchema.parse(req.body);
       
-      const user = await storage.getUserByUsername(username);
+      // Verify credentials
+      const user = await storage.verifyPassword(email, password);
       if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       // Update last login
       await storage.updateUser(user.id, {
-        lastLoginAt: new Date(),
+        updatedAt: new Date(),
       });
 
-      // NetSuite integration disabled - demo mode only
-      const sessionData = {
-        userId: user.id,
-        username: user.username
-      };
-
       const token = jwt.sign(
-        sessionData,
+        { 
+          id: user.id, 
+          email: user.email,
+          netsuiteCustomerId: user.netsuiteCustomerId
+        },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -576,15 +576,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         user: {
           id: user.id,
-          username: user.username,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           companyName: user.companyName,
+          netsuiteCustomerId: user.netsuiteCustomerId
         },
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
       console.error('Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Change password endpoint
+  app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+      const userId = req.user.id;
+      
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Verify current password
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
+      
+      // Update password
+      const updated = await storage.updatePassword(userId, newPassword);
+      if (!updated) {
+        return res.status(500).json({ message: 'Failed to update password' });
+      }
+      
+      res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      console.error('Change password error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Request password reset endpoint
+  app.post('/api/auth/request-password-reset', async (req, res) => {
+    try {
+      const { email } = requestPasswordResetSchema.parse(req.body);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: 'If an account exists with this email, a password reset link has been sent' });
+      }
+      
+      // Create reset token
+      const resetToken = await storage.createPasswordResetToken(user.id);
+      
+      // In production, you would send an email here
+      // For now, we'll return the token in development mode
+      const resetUrl = `${process.env.APP_URL || 'http://localhost:5000'}/reset-password?token=${resetToken.token}`;
+      
+      console.log('Password reset URL:', resetUrl);
+      
+      // In development, return the URL for testing
+      if (process.env.NODE_ENV === 'development') {
+        return res.json({ 
+          message: 'Password reset link generated',
+          resetUrl // Only in development
+        });
+      }
+      
+      res.json({ message: 'If an account exists with this email, a password reset link has been sent' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      console.error('Request password reset error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Reset password endpoint
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = resetPasswordSchema.parse(req.body);
+      
+      // Get valid reset token
+      const resetToken = await storage.getPasswordResetToken(token);
+      if (!resetToken) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+      
+      // Update password
+      const updated = await storage.updatePassword(resetToken.userId, newPassword);
+      if (!updated) {
+        return res.status(500).json({ message: 'Failed to reset password' });
+      }
+      
+      // Mark token as used
+      await storage.markTokenAsUsed(resetToken.id);
+      
+      res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Validation error', errors: error.errors });
+      }
+      console.error('Reset password error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
@@ -673,24 +779,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      const userData = registrationSchema.parse(req.body);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByUsername(userData.username);
+      const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
+        return res.status(400).json({ message: 'An account with this email already exists' });
       }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
       
+      // Check if NetSuite customer ID is already in use
+      const existingCustomer = await storage.getUserByNetSuiteCustomerId(userData.netsuiteCustomerId);
+      if (existingCustomer) {
+        return res.status(400).json({ message: 'This customer ID is already registered' });
+      }
+      
+      // Create user (password will be hashed in storage layer)
       const user = await storage.createUser({
-        ...userData,
-        password: hashedPassword,
+        email: userData.email,
+        password: userData.password,
+        netsuiteCustomerId: userData.netsuiteCustomerId,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
+        companyName: userData.companyName || null,
+        isActive: true
       });
 
       const token = jwt.sign(
-        { userId: user.id, username: user.username },
+        { 
+          id: user.id, 
+          email: user.email,
+          netsuiteCustomerId: user.netsuiteCustomerId
+        },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -699,11 +818,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         user: {
           id: user.id,
-          username: user.username,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           companyName: user.companyName,
+          netsuiteCustomerId: user.netsuiteCustomerId
         },
       });
     } catch (error) {

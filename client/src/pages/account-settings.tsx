@@ -22,6 +22,7 @@ import {
   Loader2
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
+import { ChangePassword } from "@/components/change-password";
 
 interface Account {
   id: string;
@@ -282,58 +283,8 @@ export default function AccountSettings() {
                   </CardContent>
                 </Card>
 
-                {/* Security Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Shield className="h-5 w-5" />
-                      <span>Security Settings</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between py-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900">Password</h3>
-                          <p className="text-sm text-gray-500">
-                            Last updated: Never
-                          </p>
-                        </div>
-                        <Button variant="outline">
-                          Change Password
-                        </Button>
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex items-center justify-between py-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900">Two-Factor Authentication</h3>
-                          <p className="text-sm text-gray-500">
-                            Add an extra layer of security to your account
-                          </p>
-                        </div>
-                        <Button variant="outline">
-                          Enable 2FA
-                        </Button>
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex items-center justify-between py-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900">Login History</h3>
-                          <p className="text-sm text-gray-500">
-                            View your recent login activity
-                          </p>
-                        </div>
-                        <Button variant="outline">
-                          View History
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Password Change */}
+                <ChangePassword />
 
                 {/* Data Sync Settings */}
                 <Card>
