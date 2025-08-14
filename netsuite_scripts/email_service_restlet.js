@@ -10,7 +10,7 @@ define(['N/email', 'N/runtime', 'N/log', 'N/record', 'N/search', 'N/render'],
 function(email, runtime, log, record, search, render) {
 
     /**
-     * Send password reset email using email template 432
+     * Send password reset email
      * @param {Object} params
      * @param {string} params.email - Recipient email
      * @param {string} params.resetUrl - Password reset URL
@@ -19,12 +19,69 @@ function(email, runtime, log, record, search, render) {
     function sendPasswordResetEmail(params) {
         try {
             const authorId = runtime.getCurrentScript().getParameter({name: 'custscript_email_author_id'}) || -5; // -5 is system
-            const emailTemplateId = 432; // Email template ID for password reset
             
+            const subject = 'Password Reset Request - Customer Portal';
+            
+            const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Password Reset Request</h1>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+            <p>We received a request to reset the password for your Customer Portal account associated with ${params.email}.</p>
+            <p>To reset your password, please click the button below:</p>
+            <div style="text-align: center;">
+                <a href="${params.resetUrl}" class="button" style="color: white;">Reset Password</a>
+            </div>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #667eea;">${params.resetUrl}</p>
+            <p><strong>This link will expire in 1 hour for security reasons.</strong></p>
+            <p>If you did not request a password reset, please ignore this email and your password will remain unchanged.</p>
+            <p>Best regards,<br>Customer Portal Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+            <p>© 2024 Customer Portal. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            const textBody = `
+Password Reset Request
+
+Hello,
+
+We received a request to reset the password for your Customer Portal account associated with ${params.email}.
+
+To reset your password, please visit the following link:
+${params.resetUrl}
+
+This link will expire in 1 hour for security reasons.
+
+If you did not request a password reset, please ignore this email and your password will remain unchanged.
+
+Best regards,
+Customer Portal Team
+
+This is an automated message, please do not reply to this email.`;
+
             // Look up the customer's internal ID if we have their customer ID
             let recipientId = null;
-            let customerRecord = null;
-            
             if (params.customerId) {
                 try {
                     const customerSearch = search.create({
@@ -38,68 +95,18 @@ function(email, runtime, log, record, search, render) {
                     const searchResult = customerSearch.run().getRange({start: 0, end: 1});
                     if (searchResult.length > 0) {
                         recipientId = searchResult[0].getValue('internalid');
-                        // Load customer record for merge fields
-                        customerRecord = record.load({
-                            type: record.Type.CUSTOMER,
-                            id: recipientId
-                        });
                     }
                 } catch (e) {
                     log.error('Customer lookup error', e.toString());
                 }
             }
 
-            // Create a custom record or use a temporary object to hold merge data
-            const mergeData = {
-                email: params.email,
-                resetUrl: params.resetUrl,
-                customerId: params.customerId,
-                customerName: customerRecord ? customerRecord.getValue('companyname') || customerRecord.getValue('firstname') + ' ' + customerRecord.getValue('lastname') : '',
-                currentDate: new Date().toLocaleDateString(),
-                expirationTime: '1 hour'
-            };
-
-            // Render the email template with merge data
-            const mergeResult = render.mergeEmail({
-                templateId: emailTemplateId,
-                entity: recipientId ? {
-                    type: 'customer',
-                    id: recipientId
-                } : null,
-                recipient: {
-                    type: 'customer',
-                    id: recipientId
-                },
-                customRecord: {
-                    type: 'customrecord_email_data',
-                    id: null,
-                    data: mergeData
-                }
-            });
-
-            // If template rendering fails, use fallback
-            let emailSubject = mergeResult.subject || 'Password Reset Request - Customer Portal';
-            let emailBody = mergeResult.body;
-            
-            // If template is not available or doesn't render, provide a simple fallback
-            if (!emailBody) {
-                emailBody = `
-                    <p>Hello,</p>
-                    <p>We received a request to reset your password for ${params.email}.</p>
-                    <p>Please click here to reset your password: <a href="${params.resetUrl}">${params.resetUrl}</a></p>
-                    <p>This link will expire in 1 hour.</p>
-                    <p>If you did not request this, please ignore this email.</p>
-                    <p>Best regards,<br>Customer Portal Team</p>
-                `;
-                log.error('Template 432 not found or failed to render', 'Using fallback email body');
-            }
-
             // Send the email
             email.send({
                 author: authorId,
                 recipients: params.email,
-                subject: emailSubject,
-                body: emailBody,
+                subject: subject,
+                body: htmlBody,
                 isInternalOnly: false,
                 relatedRecords: recipientId ? {
                     entityId: recipientId
@@ -108,8 +115,7 @@ function(email, runtime, log, record, search, render) {
 
             log.audit('Password Reset Email Sent', {
                 recipient: params.email,
-                customerId: params.customerId,
-                templateUsed: emailTemplateId
+                customerId: params.customerId
             });
 
             return {
