@@ -149,7 +149,7 @@ This is an automated message, please do not reply to this email.`;
             let recipientId = null;
             let customerRecord = null;
             
-            if (params.customerId) {
+            if (params.customerId && params.customerId !== 'GUEST') {
                 try {
                     const customerSearch = search.create({
                         type: search.Type.CUSTOMER,
@@ -173,48 +173,57 @@ This is an automated message, please do not reply to this email.`;
                 }
             }
 
-            // Create merge data for the template
-            const mergeData = {
-                email: params.email,
-                loginUrl: loginUrl,
-                customerId: params.customerId,
-                customerName: customerRecord ? customerRecord.getValue('companyname') || customerRecord.getValue('firstname') + ' ' + customerRecord.getValue('lastname') : '',
-                currentDate: new Date().toLocaleDateString()
-            };
-
-            // Render the email template with merge data
-            const mergeResult = render.mergeEmail({
-                templateId: emailTemplateId,
-                entity: recipientId ? {
-                    type: 'customer',
-                    id: recipientId
-                } : null,
-                recipient: {
-                    type: 'customer',
-                    id: recipientId
-                },
-                customRecord: {
-                    type: 'customrecord_email_data',
-                    id: null,
-                    data: mergeData
-                }
-            });
-
-            // If template rendering fails, use fallback
-            let emailSubject = mergeResult.subject || 'Welcome to Customer Portal';
-            let emailBody = mergeResult.body;
+            let emailSubject = 'Welcome to Customer Portal';
+            let emailBody;
             
-            // If template is not available or doesn't render, provide a simple fallback
+            // Only try to use template if we have a valid customer record
+            if (recipientId) {
+                try {
+                    // Create merge data for the template
+                    const mergeData = {
+                        email: params.email,
+                        loginUrl: loginUrl,
+                        customerId: params.customerId,
+                        customerName: customerRecord ? customerRecord.getValue('companyname') || customerRecord.getValue('firstname') + ' ' + customerRecord.getValue('lastname') : '',
+                        currentDate: new Date().toLocaleDateString()
+                    };
+
+                    // Render the email template with merge data
+                    const mergeResult = render.mergeEmail({
+                        templateId: emailTemplateId,
+                        entity: {
+                            type: 'customer',
+                            id: recipientId
+                        },
+                        recipient: {
+                            type: 'customer',
+                            id: recipientId
+                        },
+                        customRecord: {
+                            type: 'customrecord_email_data',
+                            id: null,
+                            data: mergeData
+                        }
+                    });
+                    
+                    emailSubject = mergeResult.subject || emailSubject;
+                    emailBody = mergeResult.body;
+                } catch (e) {
+                    log.error('Template merge error', e.toString());
+                }
+            }
+            
+            // Use fallback if template didn't work or no customer ID
             if (!emailBody) {
                 emailBody = `
                     <p>Hello,</p>
                     <p>Your Customer Portal account has been successfully created!</p>
-                    <p>Customer ID: ${params.customerId}</p>
+                    <p>Customer ID: ${params.customerId || 'N/A'}</p>
                     <p>Login Email: ${params.email}</p>
                     <p>Login to your account: <a href="${loginUrl}">${loginUrl}</a></p>
                     <p>Best regards,<br>Customer Portal Team</p>
                 `;
-                log.error('Template 432 not found or failed to render', 'Using fallback email body for welcome email');
+                log.audit('Using fallback email body', 'Template 432 not used - customer ID: ' + params.customerId);
             }
 
             // Send the email

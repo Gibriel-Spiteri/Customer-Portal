@@ -1565,5 +1565,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to send welcome email (for development/testing)
+  app.post('/api/test/send-welcome-email', async (req, res) => {
+    try {
+      const { email, customerId } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+      
+      console.log(`Sending test welcome email to ${email}`);
+      
+      // Send email via NetSuite RESTlet
+      const { netsuiteEmailService } = await import('./services/netsuite-email');
+      const emailSent = await netsuiteEmailService.sendWelcomeEmail(
+        email, 
+        customerId || 'GUEST'
+      );
+      
+      if (emailSent) {
+        console.log(`Welcome email sent to ${email} via NetSuite template 432`);
+        res.json({ 
+          success: true, 
+          message: `Welcome email sent successfully to ${email} using NetSuite template 432` 
+        });
+      } else {
+        console.log(`Failed to send welcome email to ${email}`);
+        res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send welcome email - NetSuite email service may not be configured' 
+        });
+      }
+    } catch (error) {
+      console.error('Test welcome email error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Internal server error', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
   return httpServer;
 }
