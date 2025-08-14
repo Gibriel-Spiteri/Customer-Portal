@@ -4,13 +4,13 @@
  * @NModuleScope Public
  * 
  * Email Service RESTlet for Customer Portal
- * Handles sending password reset and welcome emails
+ * Handles sending password reset and welcome emails using email template 432
  */
-define(['N/email', 'N/runtime', 'N/log', 'N/record', 'N/search'], 
-function(email, runtime, log, record, search) {
+define(['N/email', 'N/runtime', 'N/log', 'N/record', 'N/search', 'N/render'], 
+function(email, runtime, log, record, search, render) {
 
     /**
-     * Send password reset email
+     * Send password reset email using email template 432
      * @param {Object} params
      * @param {string} params.email - Recipient email
      * @param {string} params.resetUrl - Password reset URL
@@ -19,69 +19,12 @@ function(email, runtime, log, record, search) {
     function sendPasswordResetEmail(params) {
         try {
             const authorId = runtime.getCurrentScript().getParameter({name: 'custscript_email_author_id'}) || -5; // -5 is system
+            const emailTemplateId = 432; // Email template ID for password reset
             
-            const subject = 'Password Reset Request - Customer Portal';
-            
-            const htmlBody = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Password Reset Request</h1>
-        </div>
-        <div class="content">
-            <p>Hello,</p>
-            <p>We received a request to reset the password for your Customer Portal account associated with ${params.email}.</p>
-            <p>To reset your password, please click the button below:</p>
-            <div style="text-align: center;">
-                <a href="${params.resetUrl}" class="button" style="color: white;">Reset Password</a>
-            </div>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #667eea;">${params.resetUrl}</p>
-            <p><strong>This link will expire in 1 hour for security reasons.</strong></p>
-            <p>If you did not request a password reset, please ignore this email and your password will remain unchanged.</p>
-            <p>Best regards,<br>Customer Portal Team</p>
-        </div>
-        <div class="footer">
-            <p>This is an automated message, please do not reply to this email.</p>
-            <p>© 2024 Customer Portal. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>`;
-
-            const textBody = `
-Password Reset Request
-
-Hello,
-
-We received a request to reset the password for your Customer Portal account associated with ${params.email}.
-
-To reset your password, please visit the following link:
-${params.resetUrl}
-
-This link will expire in 1 hour for security reasons.
-
-If you did not request a password reset, please ignore this email and your password will remain unchanged.
-
-Best regards,
-Customer Portal Team
-
-This is an automated message, please do not reply to this email.`;
-
             // Look up the customer's internal ID if we have their customer ID
             let recipientId = null;
+            let customerRecord = null;
+            
             if (params.customerId) {
                 try {
                     const customerSearch = search.create({
@@ -95,18 +38,68 @@ This is an automated message, please do not reply to this email.`;
                     const searchResult = customerSearch.run().getRange({start: 0, end: 1});
                     if (searchResult.length > 0) {
                         recipientId = searchResult[0].getValue('internalid');
+                        // Load customer record for merge fields
+                        customerRecord = record.load({
+                            type: record.Type.CUSTOMER,
+                            id: recipientId
+                        });
                     }
                 } catch (e) {
                     log.error('Customer lookup error', e.toString());
                 }
             }
 
+            // Create a custom record or use a temporary object to hold merge data
+            const mergeData = {
+                email: params.email,
+                resetUrl: params.resetUrl,
+                customerId: params.customerId,
+                customerName: customerRecord ? customerRecord.getValue('companyname') || customerRecord.getValue('firstname') + ' ' + customerRecord.getValue('lastname') : '',
+                currentDate: new Date().toLocaleDateString(),
+                expirationTime: '1 hour'
+            };
+
+            // Render the email template with merge data
+            const mergeResult = render.mergeEmail({
+                templateId: emailTemplateId,
+                entity: recipientId ? {
+                    type: 'customer',
+                    id: recipientId
+                } : null,
+                recipient: {
+                    type: 'customer',
+                    id: recipientId
+                },
+                customRecord: {
+                    type: 'customrecord_email_data',
+                    id: null,
+                    data: mergeData
+                }
+            });
+
+            // If template rendering fails, use fallback
+            let emailSubject = mergeResult.subject || 'Password Reset Request - Customer Portal';
+            let emailBody = mergeResult.body;
+            
+            // If template is not available or doesn't render, provide a simple fallback
+            if (!emailBody) {
+                emailBody = `
+                    <p>Hello,</p>
+                    <p>We received a request to reset your password for ${params.email}.</p>
+                    <p>Please click here to reset your password: <a href="${params.resetUrl}">${params.resetUrl}</a></p>
+                    <p>This link will expire in 1 hour.</p>
+                    <p>If you did not request this, please ignore this email.</p>
+                    <p>Best regards,<br>Customer Portal Team</p>
+                `;
+                log.error('Template 432 not found or failed to render', 'Using fallback email body');
+            }
+
             // Send the email
             email.send({
                 author: authorId,
                 recipients: params.email,
-                subject: subject,
-                body: htmlBody,
+                subject: emailSubject,
+                body: emailBody,
                 isInternalOnly: false,
                 relatedRecords: recipientId ? {
                     entityId: recipientId
@@ -115,7 +108,8 @@ This is an automated message, please do not reply to this email.`;
 
             log.audit('Password Reset Email Sent', {
                 recipient: params.email,
-                customerId: params.customerId
+                customerId: params.customerId,
+                templateUsed: emailTemplateId
             });
 
             return {
@@ -133,7 +127,7 @@ This is an automated message, please do not reply to this email.`;
     }
 
     /**
-     * Send welcome email
+     * Send welcome email using email template 432
      * @param {Object} params
      * @param {string} params.email - Recipient email
      * @param {string} params.customerId - NetSuite customer ID
@@ -142,89 +136,13 @@ This is an automated message, please do not reply to this email.`;
     function sendWelcomeEmail(params) {
         try {
             const authorId = runtime.getCurrentScript().getParameter({name: 'custscript_email_author_id'}) || -5;
-            
-            const subject = 'Welcome to Customer Portal';
+            const emailTemplateId = 432; // Email template ID for welcome email
             const loginUrl = params.loginUrl || 'https://customerportal.com/login';
             
-            const htmlBody = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-        .features { background: white; padding: 20px; margin: 20px 0; border-radius: 5px; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Welcome to Customer Portal!</h1>
-        </div>
-        <div class="content">
-            <p>Hello,</p>
-            <p>Your Customer Portal account has been successfully created!</p>
-            <p><strong>Your Customer ID:</strong> ${params.customerId}</p>
-            <p><strong>Your Login Email:</strong> ${params.email}</p>
-            
-            <div class="features">
-                <h3>With your account, you can:</h3>
-                <ul>
-                    <li>View and track your orders</li>
-                    <li>Access invoices and payment history</li>
-                    <li>Download documents and reports</li>
-                    <li>Manage your account settings</li>
-                    <li>Submit support tickets</li>
-                </ul>
-            </div>
-            
-            <div style="text-align: center;">
-                <a href="${loginUrl}" class="button" style="color: white;">Login to Your Account</a>
-            </div>
-            
-            <p>If you have any questions, please don't hesitate to contact our support team.</p>
-            <p>Best regards,<br>Customer Portal Team</p>
-        </div>
-        <div class="footer">
-            <p>This is an automated message, please do not reply to this email.</p>
-            <p>© 2024 Customer Portal. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>`;
-
-            const textBody = `
-Welcome to Customer Portal!
-
-Hello,
-
-Your Customer Portal account has been successfully created!
-
-Your Customer ID: ${params.customerId}
-Your Login Email: ${params.email}
-
-With your account, you can:
-- View and track your orders
-- Access invoices and payment history
-- Download documents and reports
-- Manage your account settings
-- Submit support tickets
-
-Login to your account: ${loginUrl}
-
-If you have any questions, please don't hesitate to contact our support team.
-
-Best regards,
-Customer Portal Team
-
-This is an automated message, please do not reply to this email.`;
-
             // Look up the customer's internal ID
             let recipientId = null;
+            let customerRecord = null;
+            
             if (params.customerId) {
                 try {
                     const customerSearch = search.create({
@@ -238,18 +156,67 @@ This is an automated message, please do not reply to this email.`;
                     const searchResult = customerSearch.run().getRange({start: 0, end: 1});
                     if (searchResult.length > 0) {
                         recipientId = searchResult[0].getValue('internalid');
+                        // Load customer record for merge fields
+                        customerRecord = record.load({
+                            type: record.Type.CUSTOMER,
+                            id: recipientId
+                        });
                     }
                 } catch (e) {
                     log.error('Customer lookup error', e.toString());
                 }
             }
 
+            // Create merge data for the template
+            const mergeData = {
+                email: params.email,
+                loginUrl: loginUrl,
+                customerId: params.customerId,
+                customerName: customerRecord ? customerRecord.getValue('companyname') || customerRecord.getValue('firstname') + ' ' + customerRecord.getValue('lastname') : '',
+                currentDate: new Date().toLocaleDateString()
+            };
+
+            // Render the email template with merge data
+            const mergeResult = render.mergeEmail({
+                templateId: emailTemplateId,
+                entity: recipientId ? {
+                    type: 'customer',
+                    id: recipientId
+                } : null,
+                recipient: {
+                    type: 'customer',
+                    id: recipientId
+                },
+                customRecord: {
+                    type: 'customrecord_email_data',
+                    id: null,
+                    data: mergeData
+                }
+            });
+
+            // If template rendering fails, use fallback
+            let emailSubject = mergeResult.subject || 'Welcome to Customer Portal';
+            let emailBody = mergeResult.body;
+            
+            // If template is not available or doesn't render, provide a simple fallback
+            if (!emailBody) {
+                emailBody = `
+                    <p>Hello,</p>
+                    <p>Your Customer Portal account has been successfully created!</p>
+                    <p>Customer ID: ${params.customerId}</p>
+                    <p>Login Email: ${params.email}</p>
+                    <p>Login to your account: <a href="${loginUrl}">${loginUrl}</a></p>
+                    <p>Best regards,<br>Customer Portal Team</p>
+                `;
+                log.error('Template 432 not found or failed to render', 'Using fallback email body for welcome email');
+            }
+
             // Send the email
             email.send({
                 author: authorId,
                 recipients: params.email,
-                subject: subject,
-                body: htmlBody,
+                subject: emailSubject,
+                body: emailBody,
                 isInternalOnly: false,
                 relatedRecords: recipientId ? {
                     entityId: recipientId
@@ -258,7 +225,8 @@ This is an automated message, please do not reply to this email.`;
 
             log.audit('Welcome Email Sent', {
                 recipient: params.email,
-                customerId: params.customerId
+                customerId: params.customerId,
+                templateUsed: emailTemplateId
             });
 
             return {
