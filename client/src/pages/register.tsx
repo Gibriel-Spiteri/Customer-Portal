@@ -186,9 +186,12 @@ export default function Register() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <Link href="/login" className="text-sm text-muted-foreground hover:text-primary">
+        <CardFooter className="flex flex-col gap-2">
+          <Link href="/login" className="text-sm text-muted-foreground hover:text-primary text-center">
             Already have an account? Sign in
+          </Link>
+          <Link href="/create-account" className="text-sm text-muted-foreground hover:text-primary text-center">
+            Learn about account benefits
           </Link>
         </CardFooter>
       </Card>

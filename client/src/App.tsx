@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { SyncProvider } from "@/contexts/sync-context";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
+import CreateAccount from "@/pages/create-account";
 import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
@@ -30,6 +31,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/create-account" component={CreateAccount} />
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />

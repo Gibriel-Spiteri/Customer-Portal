@@ -308,7 +308,7 @@ export default function Login() {
                   <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
                     Forgot Password?
                   </a>
-                  <a href="/register" className="text-sm text-blue-600 hover:underline">
+                  <a href="/create-account" className="text-sm text-blue-600 hover:underline">
                     Create Account
                   </a>
                 </div>
