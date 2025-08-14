@@ -2,7 +2,17 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Service worker registration disabled temporarily
-// TODO: Re-enable after fixing blank page issue
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('SW registered: ', registration);
+      })
+      .catch((registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
 
 createRoot(document.getElementById("root")!).render(<App />);

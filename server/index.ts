@@ -9,14 +9,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Configure session middleware with database store
-import { storage } from "./storage";
+// Configure session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret-here',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
+// Configure session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-here-change-in-production',
   resave: false,
   saveUninitialized: false,
-  store: storage.sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,

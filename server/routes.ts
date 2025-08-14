@@ -4,20 +4,16 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { syncService } from "./services/sync";
 import { queueService } from "./services/queue";
-import { authService } from "./services/auth";
-import { registrationSchema, loginSchema } from "@shared/schema";
+import { insertUserSchema, insertSupportTicketSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { netsuiteClient } from "./services/netsuite-simple";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
 interface AuthenticatedRequest extends Request {
-  user?: { 
-    id: string; 
-    email: string;
-    netsuiteCustomerId: string;
-  };
+  user?: { id: string; username: string };
 }
 
 // Middleware to verify JWT token
@@ -30,8 +26,11 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   }
 
   try {
-    const decoded = authService.verifyAccessToken(token);
-    const user = await storage.getUserById(decoded.userId);
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    
+    // Handle both old format (userId) and new format (id)
+    const userId = decoded.id || decoded.userId;
+    const user = await storage.getUser(userId);
     
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
@@ -39,43 +38,40 @@ const authenticateToken = async (req: any, res: any, next: any) => {
 
     req.user = { 
       id: user.id, 
-      email: user.email,
-      netsuiteCustomerId: user.netsuiteCustomerId
+      username: user.username,
+      netsuiteCustomerId: decoded.netsuiteCustomerId,
+      isNetSuiteUser: decoded.isNetSuiteUser,
+      ssoUser: decoded.ssoUser || false
     };
     next();
   } catch (error) {
     console.error('Token verification error:', error);
-    return res.status(403).json({ message: 'Invalid or expired token' });
+    return res.status(403).json({ message: 'Invalid token' });
   }
 };
 
-// Middleware to validate customer access
+// Middleware to validate customer center access
 const validateCustomerAccess = async (req: any, res: any, next: any) => {
   const user = req.user;
   
-  // Ensure user has NetSuite customer ID
-  if (!user.netsuiteCustomerId) {
-    return res.status(403).json({ 
-      message: 'Customer access required',
-      error: 'Missing NetSuite customer identification'
-    });
+  // For NetSuite customer center users, validate they have customer access
+  if (user.isNetSuiteUser && user.ssoUser) {
+    if (!user.netsuiteCustomerId) {
+      return res.status(403).json({ 
+        message: 'Customer center access required',
+        error: 'Missing NetSuite customer identification'
+      });
+    }
+    
+    // Add customer filter for data isolation
+    req.customerFilter = {
+      customerId: user.netsuiteCustomerId
+    };
+    
+    console.log('Customer center access validated for NetSuite customer:', user.netsuiteCustomerId);
   }
   
-  // Add customer filter for data isolation
-  req.customerFilter = {
-    customerId: user.netsuiteCustomerId
-  };
-  
-  console.log('Customer access validated for customer:', user.netsuiteCustomerId);
   next();
-};
-
-// Helper to get client IP address
-const getClientIp = (req: any): string => {
-  return req.headers['x-forwarded-for']?.split(',')[0] || 
-         req.connection?.remoteAddress || 
-         req.socket?.remoteAddress || 
-         'unknown';
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -107,232 +103,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', () => {
       console.log('WebSocket client disconnected');
     });
-  });
-
-  // ==========================================
-  // Authentication Endpoints
-  // ==========================================
-
-  // Validate invitation token
-  app.post('/api/auth/validate-invitation', async (req, res) => {
-    try {
-      const { token } = req.body;
-      
-      if (!token) {
-        return res.status(400).json({ message: 'Token is required' });
-      }
-
-      const result = await authService.validateInvitation(token);
-      
-      if (!result.valid) {
-        return res.status(400).json({ 
-          valid: false, 
-          message: result.error 
-        });
-      }
-
-      res.json({ 
-        valid: true, 
-        data: result.invitation 
-      });
-    } catch (error) {
-      console.error('Invitation validation error:', error);
-      res.status(500).json({ message: 'Failed to validate invitation' });
-    }
-  });
-
-  // Register new user with invitation
-  app.post('/api/auth/register', async (req, res) => {
-    try {
-      // Validate request body
-      const validatedData = registrationSchema.parse(req.body);
-      
-      const result = await authService.registerUser({
-        email: validatedData.email,
-        password: validatedData.password,
-        firstName: validatedData.firstName,
-        lastName: validatedData.lastName,
-        companyName: validatedData.companyName,
-        phone: validatedData.phone,
-        netsuiteCustomerId: req.body.netsuiteCustomerId, // From invitation
-        invitationToken: validatedData.token,
-      });
-
-      res.json({
-        success: true,
-        user: {
-          id: result.user.id,
-          email: result.user.email,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
-          companyName: result.user.companyName,
-        },
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      });
-    } catch (error) {
-      console.error('Registration error:', error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: 'Validation error', 
-          errors: error.errors 
-        });
-      }
-      res.status(400).json({ 
-        message: error instanceof Error ? error.message : 'Registration failed' 
-      });
-    }
-  });
-
-  // Login
-  app.post('/api/auth/login', async (req, res) => {
-    try {
-      const validatedData = loginSchema.parse(req.body);
-      const ipAddress = getClientIp(req);
-      
-      const result = await authService.authenticateUser(
-        validatedData.email,
-        validatedData.password,
-        ipAddress
-      );
-
-      if (!result) {
-        return res.status(401).json({ message: 'Invalid email or password' });
-      }
-
-      res.json({
-        success: true,
-        user: {
-          id: result.user.id,
-          email: result.user.email,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
-          companyName: result.user.companyName,
-          netsuiteCustomerId: result.user.netsuiteCustomerId,
-        },
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: 'Validation error', 
-          errors: error.errors 
-        });
-      }
-      res.status(400).json({ 
-        message: error instanceof Error ? error.message : 'Login failed' 
-      });
-    }
-  });
-
-  // Refresh token
-  app.post('/api/auth/refresh', async (req, res) => {
-    try {
-      const { refreshToken } = req.body;
-      
-      if (!refreshToken) {
-        return res.status(400).json({ message: 'Refresh token required' });
-      }
-
-      const result = await authService.refreshAccessToken(refreshToken);
-      
-      res.json({
-        success: true,
-        accessToken: result.accessToken,
-        user: {
-          id: result.user.id,
-          email: result.user.email,
-          firstName: result.user.firstName,
-          lastName: result.user.lastName,
-          companyName: result.user.companyName,
-        },
-      });
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      res.status(401).json({ 
-        message: error instanceof Error ? error.message : 'Failed to refresh token' 
-      });
-    }
-  });
-
-  // Logout
-  app.post('/api/auth/logout', async (req, res) => {
-    try {
-      const { refreshToken } = req.body;
-      
-      if (refreshToken) {
-        await authService.logout(refreshToken);
-      }
-      
-      res.json({ success: true, message: 'Logged out successfully' });
-    } catch (error) {
-      console.error('Logout error:', error);
-      res.json({ success: true, message: 'Logged out' });
-    }
-  });
-
-  // Get current user
-  app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
-    try {
-      const user = await storage.getUserById(req.user.id);
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      res.json({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        companyName: user.companyName,
-        netsuiteCustomerId: user.netsuiteCustomerId,
-        emailVerified: user.emailVerified,
-        lastLogin: user.lastLogin,
-      });
-    } catch (error) {
-      console.error('Get user error:', error);
-      res.status(500).json({ message: 'Failed to get user data' });
-    }
-  });
-
-  // Create invitation (admin endpoint - you may want to add admin authentication)
-  app.post('/api/admin/invitations', async (req, res) => {
-    try {
-      // TODO: Add admin authentication middleware
-      const { netsuiteCustomerId, email, companyName, firstName, lastName } = req.body;
-      
-      if (!netsuiteCustomerId || !email) {
-        return res.status(400).json({ 
-          message: 'NetSuite Customer ID and email are required' 
-        });
-      }
-
-      const result = await authService.createInvitation({
-        netsuiteCustomerId,
-        email,
-        companyName,
-        firstName,
-        lastName,
-        createdBy: 'admin', // TODO: Get from authenticated admin user
-      });
-
-      const invitationUrl = `${process.env.APP_URL || 'http://localhost:5000'}/register?token=${result.token}`;
-
-      res.json({
-        success: true,
-        token: result.token,
-        invitationUrl,
-        expiresAt: result.expiresAt,
-      });
-    } catch (error) {
-      console.error('Create invitation error:', error);
-      res.status(500).json({ 
-        message: error instanceof Error ? error.message : 'Failed to create invitation' 
-      });
-    }
   });
 
   // NetSuite Test Endpoint - Simple connection test

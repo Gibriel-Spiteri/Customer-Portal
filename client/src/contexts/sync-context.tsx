@@ -24,7 +24,7 @@ interface SyncContextType {
 const SyncContext = createContext<SyncContextType | undefined>(undefined);
 
 export function SyncProvider({ children }: { children: ReactNode }) {
-  const { user, accessToken } = useAuth();
+  const { user, token } = useAuth();
   const [syncData, setSyncData] = useState<SyncData>({
     liveSyncActive: false,
     connectedClients: 0,
@@ -53,7 +53,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         }));
       }
     },
-    enabled: !!user && !!accessToken,
+    enabled: !!user && !!token,
   });
 
   useEffect(() => {
@@ -67,21 +67,21 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [isConnected, user, sendMessage]);
 
   useEffect(() => {
-    if (user && accessToken) {
+    if (user && token) {
       refreshSyncStatus();
       // Refresh sync status every 30 seconds
       const interval = setInterval(refreshSyncStatus, 30000);
       return () => clearInterval(interval);
     }
-  }, [user, accessToken]);
+  }, [user, token]);
 
   const refreshSyncStatus = async () => {
-    if (!accessToken) return;
+    if (!token) return;
 
     try {
       const response = await fetch('/api/sync/status', {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -99,12 +99,12 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   };
 
   const triggerLiveSync = async (entityType: 'orders' | 'payments') => {
-    if (!accessToken) throw new Error('Not authenticated');
+    if (!token) throw new Error('Not authenticated');
 
     const response = await fetch(`/api/sync/live/${entityType}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${token}`,
       },
     });
 
