@@ -666,17 +666,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create reset token
       const resetToken = await storage.createPasswordResetToken(user.id);
       
-      // In production, you would send an email here
-      // For now, we'll return the token in development mode
+      // Generate reset URL
       const resetUrl = `${process.env.APP_URL || 'http://localhost:5000'}/reset-password?token=${resetToken.token}`;
       
       console.log('Password reset URL:', resetUrl);
       
+      // Send email
+      const { sendEmail, generatePasswordResetEmail } = await import('./services/email');
+      const emailParams = generatePasswordResetEmail(resetUrl, email);
+      const emailSent = await sendEmail(emailParams);
+      
+      if (emailSent) {
+        console.log(`Password reset email sent to ${email}`);
+      } else {
+        console.log(`Failed to send password reset email to ${email} - SendGrid may not be configured`);
+      }
+      
       // In development, return the URL for testing
       if (process.env.NODE_ENV === 'development') {
         return res.json({ 
-          message: 'Password reset link generated',
-          resetUrl // Only in development
+          message: emailSent 
+            ? 'Password reset email sent successfully' 
+            : 'Password reset link generated (email not sent - SendGrid not configured)',
+          resetUrl, // Only in development
+          emailSent
         });
       }
       
@@ -829,6 +842,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true
       });
 
+      // Send welcome email
+      const { sendEmail, generateWelcomeEmail } = await import('./services/email');
+      const emailParams = generateWelcomeEmail(userData.email, userData.netsuiteCustomerId);
+      const emailSent = await sendEmail(emailParams);
+      
+      if (emailSent) {
+        console.log(`Welcome email sent to ${userData.email}`);
+      } else {
+        console.log(`Failed to send welcome email to ${userData.email} - SendGrid may not be configured`);
+      }
+
       const token = jwt.sign(
         { 
           id: user.id, 
@@ -849,6 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           companyName: user.companyName,
           netsuiteCustomerId: user.netsuiteCustomerId
         },
+        emailSent // Include email status in development
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
