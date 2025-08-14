@@ -113,12 +113,11 @@ Preferred communication style: Simple, everyday language.
   - Baloga (441667) - Purple button
   - CRD (154783) - Indigo button
 
-### Enhanced Login System (Aug 13, 2025)
-- **Multi-Tab Login Interface**: Four authentication methods in a single page
-  - Customer Login: Standard email/password authentication
-  - Enterprise Login: NetSuite OIDC authentication
-  - SSO: NetSuite Customer Center SAML authentication
-  - Demo Mode: Quick access to test accounts
+### Enhanced Login System (Aug 14, 2025)
+- **Simplified Login Interface**: Streamlined email/password authentication
+  - Customer Login: Standard email/password authentication only
+  - Removed Enterprise, SSO, and Demo tabs for cleaner interface
+  - Direct links to password reset and account creation
 - **NetSuite OIDC Integration (NEW)**: 
   - OpenID Connect provider discovered: https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration
   - Authorization endpoint: https://1212804.app.netsuite.com/app/login/oauth2/authorize.nl
