@@ -12,6 +12,7 @@ import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import Dashboard from "@/pages/dashboard";
+import HomeRedirect from "@/pages/home-redirect";
 import Orders from "@/pages/orders";
 import OrderDetails from "@/pages/order-details";
 import Estimates from "@/pages/estimates";
@@ -36,7 +37,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/auth/netsuite/callback" component={OAuthCallback} />
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={HomeRedirect} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:id" component={OrderDetails} />
