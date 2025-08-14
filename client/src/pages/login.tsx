@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -164,12 +164,12 @@ export default function Login() {
             </form>
             
             <div className="flex justify-between items-center mt-4">
-              <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+              <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
                 Forgot Password?
-              </a>
-              <a href="/create-account" className="text-sm text-blue-600 hover:underline">
+              </Link>
+              <Link href="/create-account" className="text-sm text-blue-600 hover:underline">
                 Create Account
-              </a>
+              </Link>
             </div>
             
             <div className="text-xs text-center text-gray-500 mt-4">

@@ -80,9 +80,9 @@ export default function ForgotPassword() {
                   <AlertDescription>
                     <strong>Development Mode:</strong> Reset URL:
                     <br />
-                    <a href={resetUrl} className="text-blue-600 underline break-all">
+                    <Link href={resetUrl.replace('http://localhost:5000', '')} className="text-blue-600 underline break-all">
                       {resetUrl}
-                    </a>
+                    </Link>
                   </AlertDescription>
                 </Alert>
               )}
