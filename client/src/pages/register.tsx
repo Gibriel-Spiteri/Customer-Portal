@@ -56,7 +56,9 @@ export default function Register() {
       
       // Store token and redirect to dashboard
       localStorage.setItem('auth_token', responseData.token);
-      setLocation('/');
+      
+      // Force a page reload to ensure auth context picks up the new token
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
