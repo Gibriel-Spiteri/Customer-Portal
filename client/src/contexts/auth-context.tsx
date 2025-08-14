@@ -42,9 +42,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isLoading && !user && !token && !window.location.pathname.includes('/login')) {
-      console.log('AuthProvider: Redirecting to login - isLoading:', isLoading, 'user:', user, 'token:', token, 'pathname:', window.location.pathname);
+    // Public routes that don't require authentication
+    const publicRoutes = ['/login', '/register', '/create-account', '/forgot-password', '/reset-password'];
+    const currentPath = window.location.pathname;
+    
+    // Check if current path is a public route
+    const isPublicRoute = publicRoutes.some(route => currentPath.includes(route));
+    
+    // Redirect to login if not authenticated and not on a public route
+    if (!isLoading && !user && !token && !isPublicRoute) {
+      console.log('AuthProvider: Redirecting to login - isLoading:', isLoading, 'user:', user, 'token:', token, 'pathname:', currentPath);
       setLocation('/login');
     }
   }, [user, isLoading, token, setLocation]);
