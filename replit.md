@@ -101,7 +101,14 @@ Preferred communication style: Simple, everyday language.
 - **Request logging** with duration tracking for API calls
 - **WebSocket connection management** with automatic reconnection
 
-## Recent Features (Aug 12, 2025)
+## Recent Features (Aug 14, 2025)
+
+### Header Logo Update
+- **Replaced Text with Logo**: Changed "Customer Portal" text to company logo
+- **Logo URL**: Uses NetSuite hosted company logo image
+- **Responsive Design**: Logo scales appropriately on all device sizes
+
+## Previous Features (Aug 12, 2025)
 
 ### Consumers Cash (CRD Rebates)
 - **New Page**: `/consumers-cash` displays CRD rebate records from NetSuite

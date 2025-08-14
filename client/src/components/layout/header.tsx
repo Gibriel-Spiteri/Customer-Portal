@@ -43,7 +43,11 @@ export function Header() {
             </Sheet>
             
             <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold netsuite-blue">Customer Portal</h1>
+              <img 
+                src="https://1212804.app.netsuite.com/core/media/media.nl?id=9641134&c=1212804&h=mTEBmvmdDKM4h0mgbLpG789NURbPi4V1b2DrTREho5ho_PnP"
+                alt="Company Logo"
+                className="h-10 w-auto"
+              />
             </div>
           </div>
           
