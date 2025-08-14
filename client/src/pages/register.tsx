@@ -68,116 +68,127 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>
-            Register for your customer portal account
+      <Card className="w-full max-w-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl">Create Account</CardTitle>
+          <CardDescription className="text-sm">
+            Register for your customer portal
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <CardContent className="pt-0">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+              <Alert variant="destructive" className="py-2">
+                <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             )}
             
-            <div className="space-y-2">
-              <Label htmlFor="netsuiteCustomerId">Customer ID</Label>
-              <Input
-                id="netsuiteCustomerId"
-                {...register('netsuiteCustomerId')}
-                placeholder="Your NetSuite Customer ID"
-                disabled={!!customerId}
-              />
-              {errors.netsuiteCustomerId && (
-                <p className="text-sm text-red-500">{errors.netsuiteCustomerId.message}</p>
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="netsuiteCustomerId" className="text-sm">Customer ID</Label>
+                <Input
+                  id="netsuiteCustomerId"
+                  {...register('netsuiteCustomerId')}
+                  placeholder="NetSuite ID"
+                  disabled={!!customerId}
+                  className="h-9 text-sm"
+                />
+                {errors.netsuiteCustomerId && (
+                  <p className="text-xs text-red-500">{errors.netsuiteCustomerId.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="companyName" className="text-sm">Company (Optional)</Label>
+                <Input
+                  id="companyName"
+                  {...register('companyName')}
+                  placeholder="Company Name"
+                  autoComplete="organization"
+                  className="h-9 text-sm"
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm">Email Address</Label>
               <Input
                 id="email"
                 type="email"
                 {...register('email')}
                 placeholder="you@example.com"
                 autoComplete="email"
+                className="h-9 text-sm"
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+                <p className="text-xs text-red-500">{errors.email.message}</p>
               )}
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                {...register('password')}
-                placeholder="At least 8 characters"
-                autoComplete="new-password"
-              />
-              {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="password" className="text-sm">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register('password')}
+                  placeholder="8+ characters"
+                  autoComplete="new-password"
+                  className="h-9 text-sm"
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="confirmPassword" className="text-sm">Confirm</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...register('confirmPassword')}
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                  className="h-9 text-sm"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>
+                )}
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...register('confirmPassword')}
-                placeholder="Re-enter your password"
-                autoComplete="new-password"
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name (Optional)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="firstName" className="text-sm">First Name</Label>
                 <Input
                   id="firstName"
                   {...register('firstName')}
-                  placeholder="John"
+                  placeholder="John (Optional)"
                   autoComplete="given-name"
+                  className="h-9 text-sm"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name (Optional)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="lastName" className="text-sm">Last Name</Label>
                 <Input
                   id="lastName"
                   {...register('lastName')}
-                  placeholder="Doe"
+                  placeholder="Doe (Optional)"
                   autoComplete="family-name"
+                  className="h-9 text-sm"
                 />
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name (Optional)</Label>
-              <Input
-                id="companyName"
-                {...register('companyName')}
-                placeholder="Your Company"
-                autoComplete="organization"
-              />
             </div>
             
             <Button
               type="submit"
-              className="w-full"
+              className="w-full h-9 text-sm mt-4"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                   Creating Account...
                 </>
               ) : (
@@ -186,12 +197,9 @@ export default function Register() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2">
-          <Link href="/login" className="text-sm text-muted-foreground hover:text-primary text-center">
+        <CardFooter className="pt-3 pb-4">
+          <Link href="/login" className="text-sm text-muted-foreground hover:text-primary text-center w-full">
             Already have an account? Sign in
-          </Link>
-          <Link href="/create-account" className="text-sm text-muted-foreground hover:text-primary text-center">
-            Learn about account benefits
           </Link>
         </CardFooter>
       </Card>
