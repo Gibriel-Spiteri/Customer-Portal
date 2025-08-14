@@ -85,11 +85,11 @@ export default function Register() {
             
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="netsuiteCustomerId" className="text-sm">Customer ID</Label>
+                <Label htmlFor="netsuiteCustomerId" className="text-sm">Customer Number</Label>
                 <Input
                   id="netsuiteCustomerId"
                   {...register('netsuiteCustomerId')}
-                  placeholder="NetSuite ID"
+                  placeholder="e.g. CUST-001"
                   disabled={!!customerId}
                   className="h-9 text-sm"
                 />

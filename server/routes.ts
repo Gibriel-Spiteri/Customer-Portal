@@ -378,6 +378,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Verify customer number endpoint
+  app.post('/api/auth/verify-customer', async (req, res) => {
+    try {
+      const { customerNumber } = req.body;
+      
+      if (!customerNumber) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Customer number is required' 
+        });
+      }
+      
+      console.log(`Verifying customer number: ${customerNumber}`);
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const customer = await m2m.searchCustomerByEntityId(customerNumber);
+      
+      if (!customer) {
+        return res.json({ 
+          success: false, 
+          message: 'Customer number not found' 
+        });
+      }
+      
+      // Check if customer is inactive
+      if (customer.isinactive === 'T') {
+        return res.json({ 
+          success: false, 
+          message: 'Customer account is inactive' 
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        customer: {
+          customerNumber: customer.customernumber,
+          companyName: customer.companyname,
+          email: customer.email,
+          firstName: customer.firstname,
+          lastName: customer.lastname
+        }
+      });
+    } catch (error) {
+      console.error('Customer verification error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to verify customer number' 
+      });
+    }
+  });
+  
   // Custom login endpoint for direct NetSuite authentication
   app.post('/api/auth/custom-login', async (req, res) => {
     try {
@@ -832,20 +884,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'An account with this email already exists' });
       }
       
-      // Check if NetSuite customer ID is already in use
-      const existingCustomer = await storage.getUserByNetSuiteCustomerId(userData.netsuiteCustomerId);
-      if (existingCustomer) {
-        return res.status(400).json({ message: 'This customer ID is already registered' });
+      // Search for customer in NetSuite using entityid (customer number)
+      console.log(`Searching for customer with entityid: ${userData.netsuiteCustomerId}`);
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const customer = await m2m.searchCustomerByEntityId(userData.netsuiteCustomerId);
+      
+      if (!customer) {
+        return res.status(400).json({ 
+          message: 'Customer number not found in NetSuite. Please verify your customer number and try again.' 
+        });
       }
       
-      // Create user (password will be hashed in storage layer)
+      // Check if customer is inactive
+      if (customer.isinactive === 'T') {
+        return res.status(400).json({ 
+          message: 'This customer account is inactive. Please contact support for assistance.' 
+        });
+      }
+      
+      const internalId = customer.internalid;
+      console.log(`Found customer: ${customer.customernumber} (Internal ID: ${internalId})`);
+      
+      // Check if NetSuite internal ID is already in use
+      const existingCustomer = await storage.getUserByNetSuiteCustomerId(internalId);
+      if (existingCustomer) {
+        return res.status(400).json({ message: 'This customer is already registered' });
+      }
+      
+      // Create user with internal ID (password will be hashed in storage layer)
       const user = await storage.createUser({
         email: userData.email,
         password: userData.password,
-        netsuiteCustomerId: userData.netsuiteCustomerId,
-        firstName: userData.firstName || null,
-        lastName: userData.lastName || null,
-        companyName: userData.companyName || null,
+        netsuiteCustomerId: internalId, // Store internal ID, not entityid
+        firstName: userData.firstName || customer.firstname || null,
+        lastName: userData.lastName || customer.lastname || null,
+        companyName: userData.companyName || customer.companyname || null,
         isActive: true
       });
 
@@ -853,7 +928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { netsuiteEmailService } = await import('./services/netsuite-email');
       const emailSent = await netsuiteEmailService.sendWelcomeEmail(
         userData.email, 
-        userData.netsuiteCustomerId
+        internalId // Use internal ID for email service
       );
       
       if (emailSent) {
@@ -866,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { 
           id: user.id, 
           email: user.email,
-          netsuiteCustomerId: user.netsuiteCustomerId
+          netsuiteCustomerId: internalId
         },
         JWT_SECRET,
         { expiresIn: '24h' }
@@ -880,7 +955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: user.firstName,
           lastName: user.lastName,
           companyName: user.companyName,
-          netsuiteCustomerId: user.netsuiteCustomerId
+          netsuiteCustomerId: internalId
         },
         emailSent // Include email status in development
       });

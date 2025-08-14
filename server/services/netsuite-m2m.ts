@@ -240,6 +240,37 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Search for a customer by entityid (customer number)
+   */
+  async searchCustomerByEntityId(entityId: string): Promise<any | null> {
+    const query = `
+      SELECT 
+        customer.id AS internalId,
+        customer.entityid AS customerNumber,
+        customer.companyname AS companyName,
+        customer.email,
+        customer.firstname AS firstName,
+        customer.lastname AS lastName,
+        customer.isinactive AS isInactive
+      FROM 
+        customer
+      WHERE 
+        UPPER(customer.entityid) = UPPER('${entityId.replace(/'/g, "''")}')
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, 1, 0);
+    
+    if (result.items.length > 0) {
+      const customer = result.items[0];
+      console.log(`NetSuite M2M: Found customer with entityid ${entityId}: Internal ID ${customer.internalid}`);
+      return customer;
+    }
+    
+    console.log(`NetSuite M2M: No customer found with entityid: ${entityId}`);
+    return null;
+  }
+
+  /**
    * Fetch estimates for a specific customer
    */
   async getCustomerEstimates(customerId: string, limit: number = 20): Promise<any[]> {
