@@ -16,12 +16,13 @@ export class NetSuiteEmailService {
     // NetSuite account ID from environment
     const accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
     
-    // RESTlet deployment ID and script ID (you'll need to update these after deploying the RESTlet)
-    const scriptId = process.env.NETSUITE_EMAIL_SCRIPT_ID || 'customscript_email_service';
-    const deploymentId = process.env.NETSUITE_EMAIL_DEPLOY_ID || 'customdeploy_email_service';
+    // RESTlet deployment ID and script ID - actual deployed values
+    const scriptId = process.env.NETSUITE_EMAIL_SCRIPT_ID || 'customscript_portal_password_reset';
+    const deploymentId = process.env.NETSUITE_EMAIL_DEPLOY_ID || 'customdeploy_portal_password_reset';
     
+    // Use the direct RESTlet URL provided by NetSuite
     this.baseUrl = `https://${accountId}.suitetalk.api.netsuite.com`;
-    this.restletUrl = `${this.baseUrl}/services/rest/record/v1/script/${scriptId}/deployment/${deploymentId}`;
+    this.restletUrl = process.env.NETSUITE_EMAIL_RESTLET_URL || 'https://1212804.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=4393&deploy=1';
   }
 
   /**
@@ -43,18 +44,20 @@ export class NetSuiteEmailService {
       const { NetSuiteM2M } = await import('./netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Make request to RESTlet
-      const response = await m2m.makeRequest(
-        this.restletUrl,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(params)
-        }
-      );
+      // Get OAuth access token for the request
+      const accessToken = await m2m.getAccessToken();
+      
+      // Make request to RESTlet using the direct URL
+      const response = await fetch(this.restletUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+          'Prefer': 'transient'
+        },
+        body: JSON.stringify(params)
+      });
 
       const result = await response.json();
       

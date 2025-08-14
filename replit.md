@@ -141,6 +141,10 @@ Preferred communication style: Simple, everyday language.
 - **Neon Database** - Serverless PostgreSQL hosting
 - **NetSuite OAuth 2.0 SSO** - Single Sign-On authentication for NetSuite customers
 - **NetSuite REST API** - ERP system integration for customer data
+- **NetSuite Email RESTlet** - Email service for password resets and welcome messages
+  - Script ID: customscript_portal_password_reset
+  - Deployment ID: customdeploy_portal_password_reset
+  - URL: https://1212804.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=4393&deploy=1
 - **Replit hosting platform** - Development and deployment environment
 
 ### Key Libraries and Frameworks
