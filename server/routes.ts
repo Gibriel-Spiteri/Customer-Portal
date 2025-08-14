@@ -666,8 +666,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create reset token
       const resetToken = await storage.createPasswordResetToken(user.id);
       
-      // Generate reset URL
-      const resetUrl = `${process.env.APP_URL || 'http://localhost:5000'}/reset-password?token=${resetToken.token}`;
+      // Generate reset URL - use the Replit app URL in production
+      const baseUrl = process.env.APP_URL || 
+                      (process.env.REPL_SLUG && process.env.REPL_OWNER 
+                        ? `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`
+                        : 'http://localhost:5000');
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken.token}`;
       
       console.log('Password reset URL:', resetUrl);
       

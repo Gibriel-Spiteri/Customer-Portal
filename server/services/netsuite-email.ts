@@ -90,9 +90,12 @@ export class NetSuiteEmailService {
    * Send welcome email
    */
   async sendWelcomeEmail(email: string, customerId: string): Promise<boolean> {
-    const loginUrl = process.env.NODE_ENV === 'production' 
-      ? process.env.APP_URL + '/login'
-      : 'http://localhost:5000/login';
+    // Use the Replit app URL in production
+    const baseUrl = process.env.APP_URL || 
+                    (process.env.REPL_SLUG && process.env.REPL_OWNER 
+                      ? `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`
+                      : 'http://localhost:5000');
+    const loginUrl = `${baseUrl}/login`;
 
     return this.sendEmail({
       type: 'welcome',
