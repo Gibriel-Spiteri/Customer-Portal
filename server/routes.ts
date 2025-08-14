@@ -671,15 +671,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Password reset URL:', resetUrl);
       
-      // Send email
-      const { sendEmail, generatePasswordResetEmail } = await import('./services/email');
-      const emailParams = generatePasswordResetEmail(resetUrl, email);
-      const emailSent = await sendEmail(emailParams);
+      // Send email via NetSuite RESTlet
+      const { netsuiteEmailService } = await import('./services/netsuite-email');
+      const emailSent = await netsuiteEmailService.sendPasswordResetEmail(
+        email, 
+        resetUrl, 
+        user.netsuiteCustomerId || undefined
+      );
       
       if (emailSent) {
-        console.log(`Password reset email sent to ${email}`);
+        console.log(`Password reset email sent to ${email} via NetSuite`);
       } else {
-        console.log(`Failed to send password reset email to ${email} - SendGrid may not be configured`);
+        console.log(`Failed to send password reset email to ${email} - NetSuite email service may not be configured`);
       }
       
       // In development, return the URL for testing
@@ -842,15 +845,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true
       });
 
-      // Send welcome email
-      const { sendEmail, generateWelcomeEmail } = await import('./services/email');
-      const emailParams = generateWelcomeEmail(userData.email, userData.netsuiteCustomerId);
-      const emailSent = await sendEmail(emailParams);
+      // Send welcome email via NetSuite RESTlet
+      const { netsuiteEmailService } = await import('./services/netsuite-email');
+      const emailSent = await netsuiteEmailService.sendWelcomeEmail(
+        userData.email, 
+        userData.netsuiteCustomerId
+      );
       
       if (emailSent) {
-        console.log(`Welcome email sent to ${userData.email}`);
+        console.log(`Welcome email sent to ${userData.email} via NetSuite`);
       } else {
-        console.log(`Failed to send welcome email to ${userData.email} - SendGrid may not be configured`);
+        console.log(`Failed to send welcome email to ${userData.email} - NetSuite email service may not be configured`);
       }
 
       const token = jwt.sign(
