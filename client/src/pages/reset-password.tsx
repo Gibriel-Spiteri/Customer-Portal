@@ -58,12 +58,9 @@ export default function ResetPassword() {
     setError(null);
     
     try {
-      await apiRequest('/api/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({
-          token,
-          newPassword: data.newPassword,
-        }),
+      await apiRequest('POST', '/api/auth/reset-password', {
+        token,
+        newPassword: data.newPassword,
       });
       
       setSuccess(true);

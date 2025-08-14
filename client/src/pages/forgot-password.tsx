@@ -38,16 +38,14 @@ export default function ForgotPassword() {
     setResetUrl(null);
     
     try {
-      const response = await apiRequest('/api/auth/request-password-reset', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/auth/request-password-reset', data);
+      const responseData = await response.json();
       
       setSuccess(true);
       
       // In development, show the reset URL
-      if (response.resetUrl) {
-        setResetUrl(response.resetUrl);
+      if (responseData.resetUrl) {
+        setResetUrl(responseData.resetUrl);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to request password reset');
