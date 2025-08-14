@@ -51,13 +51,11 @@ export default function Register() {
     setError(null);
     
     try {
-      const response = await apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/auth/register', data);
+      const responseData = await response.json();
       
       // Store token and redirect to dashboard
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('auth_token', responseData.token);
       setLocation('/');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
