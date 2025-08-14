@@ -70,9 +70,11 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Customer Portal
-          </h2>
+          <img 
+            src="https://1212804.app.netsuite.com/core/media/media.nl?id=9641134&c=1212804&h=mTEBmvmdDKM4h0mgbLpG789NURbPi4V1b2DrTREho5ho_PnP"
+            alt="Company Logo"
+            className="h-12 w-auto mx-auto mb-6"
+          />
           <p className="mt-2 text-sm text-gray-600">
             Sign in to your account to access your orders, invoices, and more
           </p>

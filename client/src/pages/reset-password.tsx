@@ -80,6 +80,13 @@ export default function ResetPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
+          <div className="flex justify-center mb-4">
+            <img 
+              src="https://1212804.app.netsuite.com/core/media/media.nl?id=9641134&c=1212804&h=mTEBmvmdDKM4h0mgbLpG789NURbPi4V1b2DrTREho5ho_PnP"
+              alt="Company Logo"
+              className="h-10 w-auto"
+            />
+          </div>
           <CardTitle className="text-2xl">Reset Password</CardTitle>
           <CardDescription>
             Enter your new password below
