@@ -1598,8 +1598,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
         summary: {
           totalAvailable: Math.max(0, totalAvailable).toFixed(2),
-          totalExpired: Math.abs(totalExpired).toFixed(2),
-          totalRedeemed: Math.abs(totalRedeemed).toFixed(2),
+          totalExpired: Math.abs(totalExpired).toFixed(2),  // Convert negative to positive for display
+          totalRedeemed: Math.abs(totalRedeemed).toFixed(2), // Convert negative to positive for display
           totalRebates: rebates.length
         }
       });
