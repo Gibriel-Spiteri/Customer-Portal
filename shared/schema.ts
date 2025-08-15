@@ -73,9 +73,6 @@ export const registrationSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   netsuiteCustomerId: z.string().min(1, 'Customer Number is required'),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  companyName: z.string().optional(),
 });
 
 // Change password schema

@@ -16,9 +16,6 @@ const registrationSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
   netsuiteCustomerId: z.string().min(1, 'Customer ID is required'),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  companyName: z.string().optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -90,31 +87,18 @@ export default function Register() {
               </Alert>
             )}
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="netsuiteCustomerId" className="text-sm">Customer Number</Label>
-                <Input
-                  id="netsuiteCustomerId"
-                  {...register('netsuiteCustomerId')}
-                  placeholder="e.g. CUST-001"
-                  disabled={!!customerId}
-                  className="h-9 text-sm"
-                />
-                {errors.netsuiteCustomerId && (
-                  <p className="text-xs text-red-500">{errors.netsuiteCustomerId.message}</p>
-                )}
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="companyName" className="text-sm">Company (Optional)</Label>
-                <Input
-                  id="companyName"
-                  {...register('companyName')}
-                  placeholder="Company Name"
-                  autoComplete="organization"
-                  className="h-9 text-sm"
-                />
-              </div>
+            <div className="space-y-1">
+              <Label htmlFor="netsuiteCustomerId" className="text-sm">Customer Number</Label>
+              <Input
+                id="netsuiteCustomerId"
+                {...register('netsuiteCustomerId')}
+                placeholder="Enter your customer number"
+                disabled={!!customerId}
+                className="h-9 text-sm"
+              />
+              {errors.netsuiteCustomerId && (
+                <p className="text-xs text-red-500">{errors.netsuiteCustomerId.message}</p>
+              )}
             </div>
             
             <div className="space-y-1">
@@ -161,30 +145,6 @@ export default function Register() {
                 {errors.confirmPassword && (
                   <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>
                 )}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="firstName" className="text-sm">First Name</Label>
-                <Input
-                  id="firstName"
-                  {...register('firstName')}
-                  placeholder="John (Optional)"
-                  autoComplete="given-name"
-                  className="h-9 text-sm"
-                />
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="lastName" className="text-sm">Last Name</Label>
-                <Input
-                  id="lastName"
-                  {...register('lastName')}
-                  placeholder="Doe (Optional)"
-                  autoComplete="family-name"
-                  className="h-9 text-sm"
-                />
               </div>
             </div>
             

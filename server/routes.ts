@@ -914,13 +914,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create user with internal ID (password will be hashed in storage layer)
+      // Pull firstName, lastName, and companyName from NetSuite customer data
       const user = await storage.createUser({
         email: userData.email,
         password: userData.password,
         netsuiteCustomerId: internalId, // Store internal ID, not entityid
-        firstName: userData.firstName || customer.firstname || null,
-        lastName: userData.lastName || customer.lastname || null,
-        companyName: userData.companyName || customer.companyname || null,
+        firstName: customer.firstname || null,
+        lastName: customer.lastname || null,
+        companyName: customer.companyname || null,
         isActive: true
       });
 
