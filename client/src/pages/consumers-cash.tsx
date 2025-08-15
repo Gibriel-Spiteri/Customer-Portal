@@ -1,11 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation } from 'wouter';
+import { useAuth } from '@/contexts/auth-context';
+import { useSync } from '@/contexts/sync-context';
+import { MobileLayout } from '@/components/layout/mobile-layout';
+import { DataBadge } from '@/components/data-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { 
+  Coins,
   DollarSign, 
   Calendar, 
   ShoppingCart, 
@@ -15,8 +21,13 @@ import {
   CheckCircle,
   XCircle,
   ChevronLeft,
-  Coins
+  RefreshCw,
+  Award,
+  Gift,
+  Wallet
 } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useLocation } from 'wouter';
 
 interface CRDRebate {
   id: string;
@@ -43,86 +54,38 @@ interface CRDRebatesResponse {
   };
 }
 
-export function ConsumersCashPage() {
+export default function ConsumersCash() {
+  const { user, token } = useAuth();
+  const { triggerLiveSync } = useSync();
+  const { toast } = useToast();
   const [location, setLocation] = useLocation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const { data, isLoading, error } = useQuery<CRDRebatesResponse>({
+  const { data, isLoading, error, refetch } = useQuery<CRDRebatesResponse>({
     queryKey: ['/api/crd-rebates'],
+    enabled: !!token,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <Button 
-            onClick={() => setLocation('/dashboard')}
-            variant="ghost" 
-            size="sm"
-            className="mb-4"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
-          </Button>
-          
-          <div className="flex items-center gap-3 mb-2">
-            <Coins className="h-8 w-8 text-green-600" />
-            <h1 className="text-3xl font-bold">Consumers Cash</h1>
-          </div>
-          <p className="text-gray-600">Your CRD rebate rewards and history</p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-20" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-24" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading Rebate History...</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Button 
-          onClick={() => setLocation('/dashboard')}
-          variant="ghost" 
-          size="sm"
-          className="mb-4"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </Button>
-        
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load Consumers Cash data. Please try again later.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await triggerLiveSync('orders');
+      await refetch();
+      toast({
+        title: "Data Refreshed",
+        description: "Your Consumers Cash information has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Unable to refresh data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -172,28 +135,65 @@ export function ConsumersCashPage() {
     }
   };
 
+  if (!user) {
+    return <div>Please log in to view your Consumers Cash</div>;
+  }
+
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Button 
-          onClick={() => setLocation('/dashboard')}
-          variant="ghost" 
-          size="sm"
-          className="mb-4"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </Button>
-        
-        <div className="flex items-center gap-3 mb-2">
-          <Coins className="h-8 w-8 text-green-600" />
-          <h1 className="text-3xl font-bold">Consumers Cash</h1>
+    <MobileLayout>
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Consumers Cash</h1>
+            <p className="mt-1 text-gray-600">
+              Your CRD rebate rewards and transaction history
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <DataBadge freshness="live" />
+            <Button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              variant="outline"
+              size="sm"
+            >
+              {isRefreshing ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
+          </div>
         </div>
-        <p className="text-gray-600">Your CRD rebate rewards and history</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
+      {error ? (
+        <Card className="mb-6 border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Failed to load Consumers Cash data. Please try refreshing the page.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <Skeleton className="h-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
@@ -334,6 +334,8 @@ export function ConsumersCashPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </>
+      )}
+    </MobileLayout>
   );
 }
