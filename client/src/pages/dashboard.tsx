@@ -167,9 +167,12 @@ export default function Dashboard() {
       {/* Welcome Section */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user.firstName}
+          Welcome back{user.firstName ? `, ${user.firstName}` : ''}
         </h1>
         <p className="mt-1 text-gray-600">
+          {user.companyName ? (
+            <span className="font-medium">{user.companyName} - </span>
+          ) : null}
           Here's what's happening with your account today.
         </p>
         {/* Debugging info - to be removed later */}

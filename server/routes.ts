@@ -662,6 +662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName || '',
         companyName: user.companyName || '',
         netsuiteCustomerId: user.netsuiteCustomerId,
+        isNetSuiteUser: !!user.netsuiteCustomerId, // Flag if user has NetSuite ID
       });
     } catch (error) {
       console.error('Profile fetch error:', error);

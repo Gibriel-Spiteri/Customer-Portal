@@ -16,8 +16,14 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 export function Header() {
   const { user, logout } = useAuth();
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const getInitials = (firstName: string, lastName: string, email?: string) => {
+    const first = firstName?.charAt(0) || '';
+    const last = lastName?.charAt(0) || '';
+    if (first || last) {
+      return (first + last).toUpperCase();
+    }
+    // Fallback to email initial if no name
+    return email?.charAt(0)?.toUpperCase() || 'U';
   };
 
   return (
@@ -62,18 +68,28 @@ export function Header() {
                   <Button variant="ghost" className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-netsuite-blue text-white text-sm">
-                        {getInitials(user.firstName, user.lastName)}
+                        {getInitials(user.firstName, user.lastName, user.email)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden md:block font-medium">
-                      {user.firstName} {user.lastName}
+                      {user.firstName || user.lastName ? (
+                        `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                      ) : (
+                        user.email
+                      )}
                     </span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
+                    <p className="text-sm font-medium">
+                      {user.firstName || user.lastName ? (
+                        `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                      ) : (
+                        user.email
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                     {user.companyName && (
                       <p className="text-xs text-gray-500">{user.companyName}</p>
