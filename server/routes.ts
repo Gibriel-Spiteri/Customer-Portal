@@ -1544,18 +1544,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rebatesResponse = await netsuiteM2M.executeSuiteQL(query);
       const rebates = rebatesResponse.items || [];
       
-      // Calculate summary statistics
-      const totalAvailable = rebates
-        .filter((r: any) => r.reversed !== 'T' && !r.applyingTxnId && (!r.expirationDate || new Date(r.expirationDate) > new Date()))
-        .reduce((sum: number, r: any) => sum + Math.abs(parseFloat(r.amount) || 0), 0);
+      // Calculate summary statistics based on type field
+      // Type values: 1=EARNED, 2=REDEEMED, 3=EXPIRED, 4=RETURN, 5=ACCOMMODATION
       
-      const totalExpired = rebates
-        .filter((r: any) => r.reversed !== 'T' && !r.applyingTxnId && r.expirationDate && new Date(r.expirationDate) <= new Date())
-        .reduce((sum: number, r: any) => sum + Math.abs(parseFloat(r.amount) || 0), 0);
+      // Calculate total earned (positive amounts added to balance)
+      const totalEarned = rebates
+        .filter((r: any) => r.typeId === '1' && r.reversed !== 'T')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
+      // Calculate total redeemed (negative amounts that were used)
       const totalRedeemed = rebates
-        .filter((r: any) => r.reversed !== 'T' && r.applyingTxnId)
-        .reduce((sum: number, r: any) => sum + Math.abs(parseFloat(r.amount) || 0), 0);
+        .filter((r: any) => r.typeId === '2' && r.reversed !== 'T')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      // Calculate total expired (negative amounts that expired)
+      const totalExpired = rebates
+        .filter((r: any) => r.typeId === '3' && r.reversed !== 'T')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      // Calculate returns (negative amounts that reduce balance)
+      const totalReturns = rebates
+        .filter((r: any) => r.typeId === '4' && r.reversed !== 'T')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      // Calculate accommodations (could be positive or negative)
+      const totalAccommodations = rebates
+        .filter((r: any) => r.typeId === '5' && r.reversed !== 'T')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      // Available balance = Sum of all non-reversed transactions
+      // Redeemed and Expired are already negative in the database
+      const totalAvailable = totalEarned + totalRedeemed + totalExpired + totalReturns + totalAccommodations;
       
       res.json({
         rebates: rebates.map((rebate: any) => ({
@@ -1571,14 +1590,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           earnedPercent: rebate.earnedPercent,
           salesOrderRebateRate: rebate.salesOrderRebateRate,
           status: rebate.reversed === 'T' ? 'Reversed' : 
-                  rebate.applyingTxnId ? 'Redeemed' :
-                  (rebate.expirationDate && new Date(rebate.expirationDate) <= new Date()) ? 'Expired' : 
+                  rebate.typeId === '2' ? 'Redeemed' :
+                  rebate.typeId === '3' ? 'Expired' :
+                  rebate.typeId === '4' ? 'Return' :
+                  rebate.typeId === '5' ? 'Accommodation' :
                   'Available'
         })),
         summary: {
-          totalAvailable: totalAvailable.toFixed(2),
-          totalExpired: totalExpired.toFixed(2),
-          totalRedeemed: totalRedeemed.toFixed(2),
+          totalAvailable: Math.max(0, totalAvailable).toFixed(2),
+          totalExpired: Math.abs(totalExpired).toFixed(2),
+          totalRedeemed: Math.abs(totalRedeemed).toFixed(2),
           totalRebates: rebates.length
         }
       });
