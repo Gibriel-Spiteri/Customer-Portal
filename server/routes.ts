@@ -926,18 +926,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true
       });
 
-      // Send welcome email via NetSuite RESTlet
-      const { netsuiteEmailService } = await import('./services/netsuite-email');
-      const emailSent = await netsuiteEmailService.sendWelcomeEmail(
-        userData.email, 
-        internalId // Use internal ID for email service
-      );
+      // Welcome email sending is disabled
+      // const { netsuiteEmailService } = await import('./services/netsuite-email');
+      // const emailSent = await netsuiteEmailService.sendWelcomeEmail(
+      //   userData.email, 
+      //   internalId // Use internal ID for email service
+      // );
       
-      if (emailSent) {
-        console.log(`Welcome email sent to ${userData.email} via NetSuite`);
-      } else {
-        console.log(`Failed to send welcome email to ${userData.email} - NetSuite email service may not be configured`);
-      }
+      // if (emailSent) {
+      //   console.log(`Welcome email sent to ${userData.email} via NetSuite`);
+      // } else {
+      //   console.log(`Failed to send welcome email to ${userData.email} - NetSuite email service may not be configured`);
+      // }
+      const emailSent = false; // Welcome emails are disabled
 
       const token = jwt.sign(
         { 
