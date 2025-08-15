@@ -1546,42 +1546,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log sample data to understand the structure
       if (rebates.length > 0) {
+        console.log('Sample rebate data - All fields:', rebates[0]);
         console.log('Sample rebate data:', {
           typeId: rebates[0].typeId,
           typeIdType: typeof rebates[0].typeId,
           reversed: rebates[0].reversed,
           amount: rebates[0].amount,
-          sampleTypes: rebates.slice(0, 5).map((r: any) => ({ typeId: r.typeId, amount: r.amount }))
+          sampleTypes: rebates.slice(0, 5).map((r: any) => ({ 
+            typeId: r.typeId, 
+            amount: r.amount,
+            allFields: Object.keys(r) 
+          }))
         });
       }
       
-      // Calculate summary statistics based on type field
-      // Type values: 1=EARNED, 2=REDEEMED, 3=EXPIRED, 4=RETURN, 5=ACCOMMODATION
+      // Calculate summary statistics based on logic since type field is not available
+      // Use amount sign and other fields to determine the category
       
-      // Calculate total earned (positive amounts added to balance)
+      // Calculate total earned (positive amounts without applying transaction)
       const totalEarned = rebates
-        .filter((r: any) => (r.typeId === '1' || r.typeId === 1) && r.reversed !== 'T')
+        .filter((r: any) => parseFloat(r.amount) > 0 && r.reversed !== 'T' && !r.applyingTxnId)
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
-      // Calculate total redeemed (negative amounts that were used)
+      // Calculate total redeemed (negative amounts with applying transaction)
       const totalRedeemed = rebates
-        .filter((r: any) => (r.typeId === '2' || r.typeId === 2) && r.reversed !== 'T')
+        .filter((r: any) => parseFloat(r.amount) < 0 && r.reversed !== 'T' && r.applyingTxnId)
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
-      // Calculate total expired (negative amounts that expired)
+      // Calculate total expired (negative amounts with expiration date in the past, no applying transaction)
       const totalExpired = rebates
-        .filter((r: any) => (r.typeId === '3' || r.typeId === 3) && r.reversed !== 'T')
+        .filter((r: any) => parseFloat(r.amount) < 0 && r.reversed !== 'T' && !r.applyingTxnId && 
+                r.expirationDate && new Date(r.expirationDate) <= new Date())
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
-      // Calculate returns (negative amounts that reduce balance)
+      // Calculate returns (for now, include other negative amounts not categorized above)
       const totalReturns = rebates
-        .filter((r: any) => (r.typeId === '4' || r.typeId === 4) && r.reversed !== 'T')
+        .filter((r: any) => parseFloat(r.amount) < 0 && r.reversed !== 'T' && !r.applyingTxnId && 
+                (!r.expirationDate || new Date(r.expirationDate) > new Date()))
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
-      // Calculate accommodations (could be positive or negative)
-      const totalAccommodations = rebates
-        .filter((r: any) => (r.typeId === '5' || r.typeId === 5) && r.reversed !== 'T')
-        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      // Calculate accommodations (not used for now)
+      const totalAccommodations = 0;
       
       // Log the totals for debugging
       console.log('Rebate totals:', {
@@ -1592,11 +1597,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAccommodations,
         totalAvailable: totalEarned + totalRedeemed + totalExpired + totalReturns + totalAccommodations,
         counts: {
-          earned: rebates.filter((r: any) => (r.typeId === '1' || r.typeId === 1)).length,
-          redeemed: rebates.filter((r: any) => (r.typeId === '2' || r.typeId === 2)).length,
-          expired: rebates.filter((r: any) => (r.typeId === '3' || r.typeId === 3)).length,
-          returns: rebates.filter((r: any) => (r.typeId === '4' || r.typeId === 4)).length,
-          accommodations: rebates.filter((r: any) => (r.typeId === '5' || r.typeId === 5)).length
+          earned: rebates.filter((r: any) => parseFloat(r.amount) > 0 && r.reversed !== 'T').length,
+          redeemed: rebates.filter((r: any) => parseFloat(r.amount) < 0 && r.reversed !== 'T' && r.applyingTxnId).length,
+          expired: rebates.filter((r: any) => parseFloat(r.amount) < 0 && r.reversed !== 'T' && !r.applyingTxnId && r.expirationDate && new Date(r.expirationDate) <= new Date()).length,
+          returns: rebates.filter((r: any) => parseFloat(r.amount) < 0 && r.reversed !== 'T' && !r.applyingTxnId && (!r.expirationDate || new Date(r.expirationDate) > new Date())).length,
+          accommodations: 0
         }
       });
       
@@ -1618,10 +1623,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           earnedPercent: rebate.earnedPercent,
           salesOrderRebateRate: rebate.salesOrderRebateRate,
           status: rebate.reversed === 'T' ? 'Reversed' : 
-                  rebate.typeId === '2' ? 'Redeemed' :
-                  rebate.typeId === '3' ? 'Expired' :
-                  rebate.typeId === '4' ? 'Return' :
-                  rebate.typeId === '5' ? 'Accommodation' :
+                  (rebate.applyingTxnId && parseFloat(rebate.amount) < 0) ? 'Redeemed' :
+                  (rebate.expirationDate && new Date(rebate.expirationDate) <= new Date() && parseFloat(rebate.amount) < 0) ? 'Expired' :
+                  parseFloat(rebate.amount) < 0 ? 'Return' :
                   'Available'
         })),
         summary: {
