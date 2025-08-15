@@ -43,6 +43,16 @@ interface SupportTicket {
   updatedAt: string;
   caseNumber?: string;
   category?: string;
+  messages?: CaseMessage[];
+}
+
+interface CaseMessage {
+  id: string;
+  subject: string;
+  content: string;
+  author: string;
+  date: string;
+  type: 'system' | 'user';
 }
 
 const ticketSchema = z.object({
@@ -58,6 +68,8 @@ export default function Support() {
   const { toast } = useToast();
   const [showNewTicketForm, setShowNewTicketForm] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
     queryKey: ['/api/support/tickets'],
@@ -382,7 +394,29 @@ export default function Support() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setSelectedTicket(ticket)}
+                              onClick={async () => {
+                                setSelectedTicket(ticket);
+                                setLoadingMessages(true);
+                                setCaseMessages([]);
+                                
+                                // Fetch messages for this case
+                                try {
+                                  const response = await fetch(`/api/support/tickets/${ticket.id}/messages`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`,
+                                    },
+                                  });
+                                  
+                                  if (response.ok) {
+                                    const messages = await response.json();
+                                    setCaseMessages(messages);
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to fetch case messages:', error);
+                                } finally {
+                                  setLoadingMessages(false);
+                                }
+                              }}
                             >
                               View Details
                             </Button>
@@ -534,6 +568,52 @@ export default function Support() {
                         )}
                       </div>
 
+                      {/* Messages Section */}
+                      {(caseMessages.length > 0 || loadingMessages) && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">Case Messages</h4>
+                          <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto space-y-3">
+                            {loadingMessages ? (
+                              <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                <span className="ml-2 text-sm text-gray-500">Loading messages...</span>
+                              </div>
+                            ) : caseMessages.length > 0 ? (
+                              caseMessages.map((message) => (
+                                <div key={message.id} className="bg-white rounded-lg p-3 shadow-sm">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center">
+                                      <MessageSquare className="h-4 w-4 mr-2 text-gray-400" />
+                                      <span className="text-sm font-medium text-gray-700">
+                                        {message.subject}
+                                      </span>
+                                    </div>
+                                    <Badge variant={message.type === 'system' ? 'outline' : 'default'} className="text-xs">
+                                      {message.type === 'system' ? 'System' : 'User'}
+                                    </Badge>
+                                  </div>
+                                  <div 
+                                    className="text-sm text-gray-600 mb-2"
+                                    dangerouslySetInnerHTML={{ 
+                                      __html: message.content.replace(/<[^>]*>/g, '').substring(0, 200) + 
+                                              (message.content.length > 200 ? '...' : '')
+                                    }}
+                                  />
+                                  <div className="flex items-center justify-between text-xs text-gray-500">
+                                    <span>From: {message.author}</span>
+                                    <span>{new Date(message.date).toLocaleDateString()}</span>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500 text-center py-2">
+                                No messages found for this case
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Actions */}
                       <div className="flex justify-between items-center pt-4 border-t">
                         <div className="text-sm text-gray-500">
@@ -541,7 +621,10 @@ export default function Support() {
                         </div>
                         <Button 
                           variant="outline"
-                          onClick={() => setSelectedTicket(null)}
+                          onClick={() => {
+                            setSelectedTicket(null);
+                            setCaseMessages([]);
+                          }}
                         >
                           Close
                         </Button>

@@ -535,6 +535,35 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Fetch messages for a specific support case
+   */
+  async getCaseMessages(caseId: string): Promise<any[]> {
+    const query = `
+      SELECT 
+        message.id,
+        message.subject,
+        message.message,
+        message.author,
+        message.messagedate,
+        BUILTIN.DF(message.author) AS authorname
+      FROM 
+        message
+      WHERE 
+        message.activity = ${caseId}
+      ORDER BY 
+        message.messagedate DESC
+    `.trim();
+
+    try {
+      const result = await this.executeSuiteQL(query, 50, 0);
+      return result.items;
+    } catch (error) {
+      console.error('Error fetching case messages:', error);
+      return [];
+    }
+  }
+
+  /**
    * Fetch customer support cases
    */
   async getCustomerCases(customerId: string, customerEmail?: string, limit = 30): Promise<any[]> {

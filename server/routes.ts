@@ -1410,6 +1410,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/support/tickets/:caseId/messages', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const { caseId } = req.params;
+      
+      // Check if NetSuite M2M is configured
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.json([]);
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Fetch messages for the specific case
+      const messages = await m2m.getCaseMessages(caseId);
+      
+      // Transform messages to frontend format
+      const transformedMessages = messages.map((msg: any) => ({
+        id: msg.id,
+        subject: msg.subject || 'No subject',
+        content: msg.message || '',
+        author: msg.authorname || 'System',
+        date: msg.messagedate || new Date().toISOString(),
+        type: msg.author === '-5' ? 'system' : 'user'
+      }));
+      
+      res.json(transformedMessages);
+    } catch (error) {
+      console.error('Case messages error:', error);
+      res.status(500).json({ message: 'Failed to fetch case messages' });
+    }
+  });
+
   app.get('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       // Check if NetSuite M2M is configured and user has customer ID
@@ -1456,7 +1488,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: caseItem.createddate || new Date().toISOString(),
         updatedAt: caseItem.lastmodifieddate || caseItem.createddate || new Date().toISOString(),
         caseNumber: caseItem.casenumber,
-        category: caseItem.category
+        category: caseItem.category,
+        messages: [] // Will be populated if we can fetch messages separately
       });
       
       // Only fetch cases linked to the customer record directly
