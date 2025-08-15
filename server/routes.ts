@@ -1122,19 +1122,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform NetSuite data to match frontend format
       const transformOrder = (item: any) => ({
         id: item.id,
-        orderNumber: item.ordernumber || item.orderNumber || item.tranid,
+        orderNumber: item.ordernumber || item.tranid,
         status: mapStatus(item.status),
-        total: item.total || '0.00',
-        orderDate: item.orderdate || item.orderDate || item.trandate,
-        shipDate: item.shipdate || item.shipDate,
-        shipMethod: item.shipmethod || item.shipMethod,
+        totalAmount: item.total || '0.00', // NetSuite returns lowercase 'total'
+        currency: 'USD',
+        orderDate: item.orderdate || item.trandate,
+        shipDate: item.shipdate,
+        shipMethod: item.shipmethod,
+        deliveryDate: null,
+        trackingNumber: null,
+        shippingAddress: null,
         memo: item.memo || '',
-        customerName: item.customername || item.customerName,
+        customerName: item.customername,
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
       });
       
       const orders = await m2m.getCustomerOrders(req.user.netsuiteCustomerId, limit);
+      
+
+      
       const transformed = orders.map(transformOrder);
       res.json(transformed);
     } catch (error: any) {
@@ -1319,14 +1326,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform NetSuite data to match frontend format
       const transformEstimate = (item: any) => ({
         id: item.id,
-        estimateNumber: item.documentnumber || item.documentNumber || item.tranid,
+        estimateNumber: item.documentnumber || item.tranid,
         status: mapStatus(item.status),
-        amount: item.total || item.amount || '0.00',
+        amount: item.total || '0.00', // NetSuite returns lowercase 'total'
         currency: item.currency || 'USD',
         estimateDate: item.date || item.trandate || item.createddate,
-        expiryDate: item.expirationdate || item.expirationDate || item.duedate,
+        expiryDate: item.expirationdate || item.duedate,
         description: item.memo || '',
-        customerName: item.customername || item.customerName,
+        customerName: item.customername,
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
       });
@@ -1334,11 +1341,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If user has NetSuite customer ID, fetch their estimates
       if (req.user.netsuiteCustomerId) {
         const estimates = await m2m.getCustomerEstimates(req.user.netsuiteCustomerId, limit);
+        
+
+        
         const transformed = estimates.map(transformEstimate);
         res.json(transformed);
       } else {
         // For testing/demo, fetch all estimates
         const result = await m2m.getAllEstimates(limit, offset);
+        
+
+        
         const transformed = result.items.map(transformEstimate);
         res.json(transformed);
       }
