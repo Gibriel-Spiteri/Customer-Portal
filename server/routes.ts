@@ -1412,8 +1412,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const tickets = await storage.getUserSupportTickets(req.user.id);
-      res.json(tickets);
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning empty tickets');
+        return res.json([]);
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Map NetSuite case status to frontend format
+      const mapStatus = (status: string, statusText: string): string => {
+        // NetSuite status codes: 1=Not Started, 2=In Progress, 3=Escalated, 4=Re-Opened, 5=Closed
+        const statusMap: Record<string, string> = {
+          '1': 'open',
+          '2': 'in_progress', 
+          '3': 'in_progress',
+          '4': 'open',
+          '5': 'closed'
+        };
+        return statusMap[status] || 'open';
+      };
+      
+      // Map NetSuite priority to frontend format
+      const mapPriority = (priority: string, priorityText: string): string => {
+        // NetSuite priority codes: 1=Low, 2=Medium, 3=High
+        const priorityMap: Record<string, string> = {
+          '1': 'low',
+          '2': 'medium',
+          '3': 'high'
+        };
+        return priorityMap[priority] || 'medium';
+      };
+      
+      // Transform NetSuite case data to match frontend format
+      const transformCase = (caseItem: any) => ({
+        id: caseItem.id,
+        subject: caseItem.title || `Case #${caseItem.casenumber}`,
+        description: caseItem.quicknote || caseItem.profile || '',
+        priority: mapPriority(caseItem.priority, caseItem.prioritytext),
+        status: mapStatus(caseItem.status, caseItem.statustext),
+        assignedTo: null, // NetSuite doesn't expose assigned rep in this query
+        createdAt: caseItem.createddate || new Date().toISOString(),
+        updatedAt: caseItem.lastmodifieddate || caseItem.createddate || new Date().toISOString(),
+        caseNumber: caseItem.casenumber,
+        category: caseItem.category,
+        subcategory: caseItem.subcategory,
+        stage: caseItem.stage
+      });
+      
+      console.log('Fetching support cases for customer:', req.user.netsuiteCustomerId);
+      const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, 20);
+      console.log(`Found ${cases.length} support cases from NetSuite`);
+      
+      const transformed = cases.map(transformCase);
+      res.json(transformed);
     } catch (error) {
       console.error('Support tickets error:', error);
       res.status(500).json({ message: 'Failed to fetch support tickets' });
@@ -1422,17 +1475,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const ticketData = insertSupportTicketSchema.parse({
-        ...req.body,
-        userId: req.user.id,
+      // For now, we'll return a message that ticket creation should be done in NetSuite
+      // In a real implementation, this would create a case in NetSuite via API
+      res.status(201).json({ 
+        message: 'Please contact our support team directly to create a new support case.',
+        email: 'support@consumersmail.com',
+        phone: '1-800-SUPPORT'
       });
-      
-      const ticket = await storage.createSupportTicket(ticketData);
-      res.status(201).json(ticket);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Validation error', errors: error.errors });
-      }
       console.error('Create support ticket error:', error);
       res.status(500).json({ message: 'Failed to create support ticket' });
     }
