@@ -982,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const m2m = new NetSuiteM2M();
       
       // Fetch all data in parallel for efficiency
-      const [account, orders, invoices, payments] = await Promise.all([
+      const [account, orders, invoices, payments, estimates, cases] = await Promise.all([
         m2m.getCustomerAccount(req.user.netsuiteCustomerId).catch(err => {
           console.error('Failed to fetch account:', err);
           return null;
@@ -997,6 +997,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }),
         m2m.getCustomerPayments(req.user.netsuiteCustomerId, 5).catch(err => {
           console.error('Failed to fetch payments:', err);
+          return [];
+        }),
+        m2m.getCustomerEstimates(req.user.netsuiteCustomerId, 5).catch(err => {
+          console.error('Failed to fetch estimates:', err);
+          return [];
+        }),
+        m2m.getCustomerCases(req.user.netsuiteCustomerId, 5).catch(err => {
+          console.error('Failed to fetch cases:', err);
           return [];
         })
       ]);
@@ -1047,6 +1055,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: invoice.total || '0.00',
           balanceDue: invoice.balancedue || invoice.amountremaining || '0.00',
           dueDate: invoice.duedate
+        })),
+        recentEstimates: estimates.slice(0, 5).map((estimate: any) => ({
+          id: estimate.id,
+          estimateNumber: estimate.documentnumber || estimate.tranid,
+          status: estimate.status,
+          amount: estimate.total || '0.00',
+          estimateDate: estimate.date || estimate.trandate,
+          expiryDate: estimate.expirationdate || estimate.duedate,
+          customerName: estimate.customername
+        })),
+        recentCases: cases.slice(0, 5).map((supportCase: any) => ({
+          id: supportCase.id,
+          caseNumber: supportCase.casenumber,
+          subject: supportCase.title || supportCase.subject,
+          status: supportCase.status,
+          priority: supportCase.priority,
+          createdDate: supportCase.createddate,
+          lastModified: supportCase.lastmodifieddate
         })),
         pendingOrdersCount,
         monthlyTotal,

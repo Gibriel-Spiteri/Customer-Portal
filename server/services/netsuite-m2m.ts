@@ -533,6 +533,38 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Fetch customer support cases
+   */
+  async getCustomerCases(customerId: string, limit = 10): Promise<any[]> {
+    const query = `
+      SELECT 
+        supportcase.id,
+        supportcase.casenumber,
+        supportcase.title,
+        supportcase.status,
+        supportcase.priority,
+        supportcase.createddate,
+        supportcase.lastmodifieddate,
+        supportcase.stage,
+        supportcase.category,
+        supportcase.subcategory,
+        supportcase.profile,
+        supportcase.quicknote,
+        BUILTIN.DF(supportcase.status) AS statustext,
+        BUILTIN.DF(supportcase.priority) AS prioritytext
+      FROM 
+        supportcase
+      WHERE 
+        supportcase.company = ${customerId}
+      ORDER BY 
+        supportcase.createddate DESC
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, limit, 0);
+    return result.items;
+  }
+
+  /**
    * Test connection and configuration
    */
   async testConnection(): Promise<{ success: boolean; message: string; details?: any }> {
