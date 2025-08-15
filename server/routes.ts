@@ -1173,29 +1173,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if NetSuite M2M is configured and user has customer ID
       if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
-        console.log('NetSuite M2M not configured or no customer ID, returning database payments');
-        const payments = await storage.getUserPayments(req.user.id, limit);
-        return res.json(payments);
+        console.log('NetSuite M2M not configured or no customer ID, returning empty payments');
+        return res.json([]);
       }
       
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
       // Transform NetSuite data to match frontend format
-      const transformPayment = (item: any) => ({
-        id: item.id,
-        paymentNumber: item.paymentnumber || item.paymentNumber || item.tranid,
-        amount: item.amount || item.total || '0.00',
-        paymentDate: item.paymentdate || item.paymentDate || item.trandate,
-        status: 'processed',
-        method: item.paymentmethod || 'Credit Card',
-        memo: item.memo || '',
-        customerName: item.customername || item.customerName,
-        dataFreshness: 'live' as const,
-        lastSyncAt: new Date().toISOString()
-      });
+      const transformPayment = (item: any) => {
+        // Parse the amount - NetSuite may return it as a string
+        const amount = parseFloat(item.amount || item.total || '0').toFixed(2);
+        
+        // Determine payment method based on common patterns
+        let paymentMethod = 'bank_transfer';
+        if (item.memo && item.memo.toLowerCase().includes('check')) {
+          paymentMethod = 'check';
+        } else if (item.memo && item.memo.toLowerCase().includes('card')) {
+          paymentMethod = 'credit_card';
+        } else if (item.memo && item.memo.toLowerCase().includes('cash')) {
+          paymentMethod = 'cash';
+        }
+        
+        return {
+          id: item.id,
+          paymentNumber: item.paymentNumber || item.tranid || `PMT-${item.id}`,
+          amount: amount,
+          paymentDate: item.paymentDate || item.trandate || item.createddate,
+          paymentMethod: paymentMethod,
+          referenceNumber: item.tranid || null,
+          status: 'processed', // All payments in NetSuite are processed
+          currency: 'USD',
+          memo: item.memo || '',
+          customerName: item.customerName || item.customername,
+          dataFreshness: 'live' as const,
+          lastSyncAt: new Date().toISOString()
+        };
+      };
       
+      console.log('Fetching payments for customer:', req.user.netsuiteCustomerId);
       const payments = await m2m.getCustomerPayments(req.user.netsuiteCustomerId, limit);
+      console.log(`Found ${payments.length} payments from NetSuite`);
+      
       const transformed = payments.map(transformPayment);
       res.json(transformed);
     } catch (error: any) {
