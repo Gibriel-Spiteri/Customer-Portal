@@ -1459,10 +1459,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: caseItem.category
       });
       
-      // Get user email from the session user
-      const userEmail = req.user.email || 'jbalogajr@consumersmail.com';
-      console.log('Fetching support cases for customer:', req.user.netsuiteCustomerId, 'email:', userEmail);
-      const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, userEmail, 30);
+      // Only fetch cases linked to the customer record directly
+      console.log('Fetching support cases for customer ID:', req.user.netsuiteCustomerId);
+      const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, null, 30);
       console.log(`Found ${cases.length} support cases from NetSuite`);
       
       const transformed = cases.map(transformCase);
