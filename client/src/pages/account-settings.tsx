@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useEffect } from "react";
 import { 
   User, 
   Mail, 
@@ -60,12 +61,24 @@ export default function AccountSettings() {
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
-      email: user?.email || "",
-      companyName: user?.companyName || "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      companyName: "",
     },
   });
+
+  // Update form values when profile data loads from the API
+  useEffect(() => {
+    if (profile) {
+      form.reset({
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        email: profile.email || "",
+        companyName: profile.companyName || "",
+      });
+    }
+  }, [profile, form]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
