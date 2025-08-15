@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +23,11 @@ import {
   CheckCircle,
   AlertCircle,
   Plus,
-  Loader2
+  Loader2,
+  X,
+  Calendar,
+  User,
+  Tag
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -52,6 +57,7 @@ export default function Support() {
   const { user, token } = useAuth();
   const { toast } = useToast();
   const [showNewTicketForm, setShowNewTicketForm] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
     queryKey: ['/api/support/tickets'],
@@ -373,7 +379,11 @@ export default function Support() {
                                 <span className="ml-4">Assigned to: {ticket.assignedTo}</span>
                               )}
                             </div>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setSelectedTicket(ticket)}
+                            >
                               View Details
                             </Button>
                           </div>
@@ -444,6 +454,102 @@ export default function Support() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Ticket Details Modal */}
+              <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center justify-between">
+                      <span>Case Details</span>
+                      {selectedTicket?.caseNumber && (
+                        <Badge variant="outline" className="text-sm">
+                          Case #{selectedTicket.caseNumber}
+                        </Badge>
+                      )}
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  {selectedTicket && (
+                    <div className="space-y-6">
+                      {/* Subject and Status */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          {selectedTicket.subject}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={getStatusColor(selectedTicket.status)}>
+                            {getStatusIcon(selectedTicket.status)}
+                            <span className="ml-1 capitalize">
+                              {selectedTicket.status.replace('_', ' ')}
+                            </span>
+                          </Badge>
+                          <Badge className={getPriorityColor(selectedTicket.priority)}>
+                            {selectedTicket.priority.toUpperCase()} Priority
+                          </Badge>
+                          {selectedTicket.category && (
+                            <Badge variant="outline">
+                              <Tag className="h-3 w-3 mr-1" />
+                              {selectedTicket.category}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="text-gray-600 whitespace-pre-wrap">
+                            {selectedTicket.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                          <div>
+                            <span className="font-medium">Created:</span>
+                            <span className="ml-2">{formatDate(selectedTicket.createdAt)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="h-4 w-4 mr-2 text-gray-400" />
+                          <div>
+                            <span className="font-medium">Last Updated:</span>
+                            <span className="ml-2">{formatDate(selectedTicket.updatedAt)}</span>
+                          </div>
+                        </div>
+
+                        {selectedTicket.assignedTo && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <User className="h-4 w-4 mr-2 text-gray-400" />
+                            <div>
+                              <span className="font-medium">Assigned To:</span>
+                              <span className="ml-2">{selectedTicket.assignedTo}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-between items-center pt-4 border-t">
+                        <div className="text-sm text-gray-500">
+                          For updates on this case, please contact our support team.
+                        </div>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setSelectedTicket(null)}
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
     </MobileLayout>
   );
 }
