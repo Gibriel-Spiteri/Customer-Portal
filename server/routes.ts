@@ -1612,16 +1612,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         rebates: rebates.map((rebate: any) => ({
           id: rebate.id,
-          date: rebate.rebateDate,
+          date: rebate.rebatedate,
           amount: rebate.amount,
-          type: rebate.typeId,
+          type: rebate.typeid,
           reversed: rebate.reversed === 'T',
-          salesOrder: rebate.salesOrderId,
-          expirationDate: rebate.expirationDate,
-          applyingTransaction: rebate.applyingTxnId,
-          category: rebate.categoryId,
-          earnedPercent: rebate.earnedPercent,
-          salesOrderRebateRate: rebate.salesOrderRebateRate,
+          salesOrder: rebate.salesorderid,
+          expirationDate: rebate.expirationdate,
+          applyingTransaction: rebate.applyingtxnid,
+          category: rebate.categoryid,
+          earnedPercent: rebate.earnedpercent,
+          salesOrderRebateRate: rebate.salesorderrebaterate,
           status: rebate.typeid === '1' ? 'Earned' :
                   rebate.typeid === '2' ? 'Redeemed' :
                   rebate.typeid === '3' ? 'Expired' :
