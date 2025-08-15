@@ -36,6 +36,7 @@ interface SupportTicket {
   id: string;
   subject: string;
   description: string;
+  detail?: string;
   priority: string;
   status: string;
   assignedTo: string | null;
@@ -508,7 +509,7 @@ export default function Support() {
                       {/* Subject and Status */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                          {selectedTicket.subject}
+                          Subject: {selectedTicket.subject}
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           <Badge className={getStatusColor(selectedTicket.status)}>
@@ -528,6 +529,18 @@ export default function Support() {
                           )}
                         </div>
                       </div>
+
+                      {/* Detail */}
+                      {selectedTicket.detail && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Detail</h4>
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-gray-600 whitespace-pre-wrap">
+                              {selectedTicket.detail}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Description */}
                       <div>

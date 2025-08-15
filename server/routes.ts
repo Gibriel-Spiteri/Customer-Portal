@@ -1482,6 +1482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: caseItem.id,
         subject: caseItem.title || `Case #${caseItem.casenumber}`,
         description: caseItem.email ? `Case from: ${caseItem.email}` : 'Support case',
+        detail: caseItem.custevent_xprdetail || '',
         priority: mapPriority(caseItem.priority, caseItem.prioritytext),
         status: mapStatus(caseItem.status, caseItem.statustext),
         assignedTo: null, // NetSuite doesn't expose assigned rep in this query
