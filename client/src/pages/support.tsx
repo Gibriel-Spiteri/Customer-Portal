@@ -36,6 +36,8 @@ interface SupportTicket {
   assignedTo: string | null;
   createdAt: string;
   updatedAt: string;
+  caseNumber?: string;
+  category?: string;
 }
 
 const ticketSchema = z.object({
@@ -363,7 +365,10 @@ export default function Support() {
                           </p>
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div>
-                              <span>Created: {formatDate(ticket.createdAt)}</span>
+                              {ticket.caseNumber && (
+                                <span className="font-medium text-gray-700">Case #{ticket.caseNumber}</span>
+                              )}
+                              <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {formatDate(ticket.createdAt)}</span>
                               {ticket.assignedTo && (
                                 <span className="ml-4">Assigned to: {ticket.assignedTo}</span>
                               )}
