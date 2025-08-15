@@ -21,11 +21,6 @@ const navigation = [
     icon: ShoppingCart,
   },
   {
-    name: 'Invoices',
-    href: '/invoices',
-    icon: FileText,
-  },
-  {
     name: 'Payments',
     href: '/payments',
     icon: CreditCard,

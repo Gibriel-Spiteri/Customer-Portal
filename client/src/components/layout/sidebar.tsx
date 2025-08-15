@@ -36,11 +36,6 @@ const navigation: NavigationItem[] = [
     icon: Calculator,
   },
   {
-    name: 'Invoices',
-    href: '/invoices',
-    icon: FileText,
-  },
-  {
     name: 'Payments',
     href: '/payments',
     icon: CreditCard,
