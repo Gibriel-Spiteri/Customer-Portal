@@ -41,13 +41,12 @@ export function ChangePassword() {
     setError(null);
     
     try {
-      await apiRequest('/api/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
+      const response = await apiRequest('POST', '/api/auth/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
       });
+      
+      await response.json(); // Consume the response
       
       toast({
         title: "Success",
