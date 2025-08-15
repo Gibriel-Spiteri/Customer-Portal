@@ -1449,20 +1449,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transformCase = (caseItem: any) => ({
         id: caseItem.id,
         subject: caseItem.title || `Case #${caseItem.casenumber}`,
-        description: caseItem.quicknote || caseItem.profile || '',
+        description: caseItem.email ? `Case from: ${caseItem.email}` : 'Support case',
         priority: mapPriority(caseItem.priority, caseItem.prioritytext),
         status: mapStatus(caseItem.status, caseItem.statustext),
         assignedTo: null, // NetSuite doesn't expose assigned rep in this query
         createdAt: caseItem.createddate || new Date().toISOString(),
         updatedAt: caseItem.lastmodifieddate || caseItem.createddate || new Date().toISOString(),
         caseNumber: caseItem.casenumber,
-        category: caseItem.category,
-        subcategory: caseItem.subcategory,
-        stage: caseItem.stage
+        category: caseItem.category
       });
       
-      console.log('Fetching support cases for customer:', req.user.netsuiteCustomerId);
-      const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, 20);
+      // Get user email from the session user
+      const userEmail = req.user.email || 'jbalogajr@consumersmail.com';
+      console.log('Fetching support cases for customer:', req.user.netsuiteCustomerId, 'email:', userEmail);
+      const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, userEmail, 30);
       console.log(`Found ${cases.length} support cases from NetSuite`);
       
       const transformed = cases.map(transformCase);

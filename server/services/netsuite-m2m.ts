@@ -537,7 +537,17 @@ export class NetSuiteM2M {
   /**
    * Fetch customer support cases
    */
-  async getCustomerCases(customerId: string, limit = 10): Promise<any[]> {
+  async getCustomerCases(customerId: string, customerEmail?: string, limit = 30): Promise<any[]> {
+    // Build WHERE clause to search by company ID or email
+    let whereClause = `supportcase.company = ${customerId}`;
+    
+    // If we have a customer email, also search for cases linked to that email
+    if (customerEmail) {
+      // Escape single quotes in email if any
+      const escapedEmail = customerEmail.replace(/'/g, "''");
+      whereClause = `(supportcase.company = ${customerId} OR supportcase.email = '${escapedEmail}' OR supportcase.email LIKE '%baloga%')`;
+    }
+    
     const query = `
       SELECT 
         supportcase.id,
@@ -547,17 +557,14 @@ export class NetSuiteM2M {
         supportcase.priority,
         supportcase.createddate,
         supportcase.lastmodifieddate,
-        supportcase.stage,
         supportcase.category,
-        supportcase.subcategory,
-        supportcase.profile,
-        supportcase.quicknote,
+        supportcase.email,
         BUILTIN.DF(supportcase.status) AS statustext,
         BUILTIN.DF(supportcase.priority) AS prioritytext
       FROM 
         supportcase
       WHERE 
-        supportcase.company = ${customerId}
+        ${whereClause}
       ORDER BY 
         supportcase.createddate DESC
     `.trim();
