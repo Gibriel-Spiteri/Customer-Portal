@@ -538,7 +538,7 @@ export class NetSuiteM2M {
    * Fetch customer support cases
    */
   async getCustomerCases(customerId: string, customerEmail?: string, limit = 30): Promise<any[]> {
-    // Only search by company ID - direct customer record link
+    // Search by custom field custevent_svcsjpr_customer that links cases to customers
     const query = `
       SELECT 
         supportcase.id,
@@ -550,12 +550,13 @@ export class NetSuiteM2M {
         supportcase.lastmodifieddate,
         supportcase.category,
         supportcase.email,
+        supportcase.custevent_svcsjpr_customer,
         BUILTIN.DF(supportcase.status) AS statustext,
         BUILTIN.DF(supportcase.priority) AS prioritytext
       FROM 
         supportcase
       WHERE 
-        supportcase.company = ${customerId}
+        supportcase.custevent_svcsjpr_customer = ${customerId}
       ORDER BY 
         supportcase.createddate DESC
     `.trim();
