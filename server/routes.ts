@@ -1546,16 +1546,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate summary statistics
       const totalAvailable = rebates
-        .filter((r: any) => !r.reversed && (!r.expirationDate || new Date(r.expirationDate) > new Date()))
-        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+        .filter((r: any) => r.reversed !== 'T' && !r.applyingTxnId && (!r.expirationDate || new Date(r.expirationDate) > new Date()))
+        .reduce((sum: number, r: any) => sum + Math.abs(parseFloat(r.amount) || 0), 0);
       
       const totalExpired = rebates
-        .filter((r: any) => !r.reversed && r.expirationDate && new Date(r.expirationDate) <= new Date())
-        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+        .filter((r: any) => r.reversed !== 'T' && !r.applyingTxnId && r.expirationDate && new Date(r.expirationDate) <= new Date())
+        .reduce((sum: number, r: any) => sum + Math.abs(parseFloat(r.amount) || 0), 0);
       
       const totalRedeemed = rebates
-        .filter((r: any) => r.applyingTxnId)
-        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+        .filter((r: any) => r.reversed !== 'T' && r.applyingTxnId)
+        .reduce((sum: number, r: any) => sum + Math.abs(parseFloat(r.amount) || 0), 0);
       
       res.json({
         rebates: rebates.map((rebate: any) => ({
