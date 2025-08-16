@@ -426,23 +426,8 @@ export default function Orders() {
                         </>
                       )}
 
-                      {/* Order Notes */}
-                      <Separator />
-                      <div className="space-y-3">
-                        <h3 className="text-lg font-semibold flex items-center">
-                          <FileText className="h-5 w-5 mr-2" />
-                          Order Information
-                        </h3>
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <p className="text-sm text-blue-800">
-                            This order is being synchronized with NetSuite for real-time updates. 
-                            Any changes in NetSuite will be reflected here automatically.
-                          </p>
-                        </div>
-                      </div>
-
                       {/* Action Buttons */}
-                      <div className="flex justify-end space-x-3 pt-4 border-t">
+                      <div className="flex justify-end space-x-3 pt-4">
                         <Button 
                           variant="outline" 
                           onClick={() => setSelectedOrder(null)}
