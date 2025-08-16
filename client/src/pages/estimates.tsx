@@ -243,21 +243,21 @@ export default function Estimates() {
                       </p>
                     </div>
                   ) : (
-                    <Table>
+                    <Table className="table-auto">
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[100px]">Date</TableHead>
-                          <TableHead>Estimate #</TableHead>
-                          <TableHead className="min-w-[200px]">Job ID</TableHead>
+                          <TableHead className="whitespace-nowrap">Date</TableHead>
+                          <TableHead className="whitespace-nowrap">Estimate #</TableHead>
+                          <TableHead>Job ID</TableHead>
                           <TableHead>End User</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead className="text-right">View Details</TableHead>
+                          <TableHead className="whitespace-nowrap">Amount</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">View Details</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {estimates.map((estimate) => (
                           <TableRow key={estimate.id}>
-                            <TableCell className="w-[100px]">
+                            <TableCell className="whitespace-nowrap">
                               <div className="flex items-center space-x-2">
                                 <span>{formatDate(estimate.estimateDate)}</span>
                                 <DataBadge 
@@ -266,19 +266,19 @@ export default function Estimates() {
                                 />
                               </div>
                             </TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-medium whitespace-nowrap">
                               {estimate.estimateNumber}
                             </TableCell>
-                            <TableCell className="min-w-[200px]">
+                            <TableCell>
                               {estimate.memo || '-'}
                             </TableCell>
                             <TableCell>
                               {estimate.tagFor || '-'}
                             </TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-medium whitespace-nowrap">
                               {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right whitespace-nowrap">
                               <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
