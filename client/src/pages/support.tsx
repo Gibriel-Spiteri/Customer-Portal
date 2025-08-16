@@ -398,9 +398,17 @@ export default function Support() {
                               </span>
                             </Badge>
                           </div>
-                          <p className="text-gray-600 mb-3 line-clamp-2">
+                          <p className="text-gray-600 mb-2 line-clamp-2">
                             {ticket.description}
                           </p>
+                          {ticket.detail && (
+                            <div className="bg-gray-50 rounded p-2 mb-3">
+                              <p className="text-sm text-gray-700 line-clamp-2">
+                                <span className="font-medium">Detail: </span>
+                                {ticket.detail}
+                              </p>
+                            </div>
+                          )}
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div>
                               {ticket.caseNumber && (
