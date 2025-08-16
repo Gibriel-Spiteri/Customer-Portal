@@ -540,35 +540,37 @@ export default function Support() {
                   <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                       <span>Case Details</span>
-                      {selectedTicket?.caseNumber && (
-                        <Badge variant="outline" className="text-sm">
-                          Case #{selectedTicket.caseNumber}
-                        </Badge>
-                      )}
-                    </DialogTitle>
-                  </DialogHeader>
-                  
-                  {selectedTicket && (
-                    <div className="space-y-6">
-                      {/* Subject and Status */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                          Subject: {selectedTicket.subject}
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        {selectedTicket && (
                           <Badge className={getStatusColor(selectedTicket.status)}>
                             {getStatusIcon(selectedTicket.status)}
                             <span className="ml-1 capitalize">
                               {selectedTicket.status.replace('_', ' ')}
                             </span>
                           </Badge>
-                          {selectedTicket.category && (
-                            <Badge variant="outline">
-                              <Tag className="h-3 w-3 mr-1" />
-                              {selectedTicket.category}
-                            </Badge>
-                          )}
-                        </div>
+                        )}
+                        {selectedTicket?.caseNumber && (
+                          <Badge variant="outline" className="text-sm">
+                            Case #{selectedTicket.caseNumber}
+                          </Badge>
+                        )}
+                      </div>
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  {selectedTicket && (
+                    <div className="space-y-6">
+                      {/* Subject and Category */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          Subject: {selectedTicket.subject}
+                        </h3>
+                        {selectedTicket.category && (
+                          <Badge variant="outline">
+                            <Tag className="h-3 w-3 mr-1" />
+                            {selectedTicket.category}
+                          </Badge>
+                        )}
                       </div>
 
                       {/* Detail */}
