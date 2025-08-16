@@ -165,7 +165,7 @@ export default function Dashboard() {
   return (
     <MobileLayout>
       {/* Welcome Section */}
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900">
           Welcome back{user.firstName ? `, ${user.firstName}` : ''}
         </h1>
@@ -191,6 +191,95 @@ export default function Dashboard() {
           <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
         </div>
       )}
+
+      {/* Quick Access Summary Tiles */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {/* Sales Orders Card */}
+        <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+          <CardContent className="p-4">
+            <Link href="/orders">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <ShoppingCart className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Sales Orders</h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-16 mx-auto" />
+                    ) : (
+                      `${dashboardData?.recentOrders?.length || 0} orders`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Estimates Card */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="p-4">
+            <Link href="/estimates">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <CalculatorIcon className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Estimates</h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-16 mx-auto" />
+                    ) : (
+                      `${dashboardData?.recentEstimates?.length || 0} quotes`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Consumers Cash Card */}
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-4">
+            <Link href="/consumers-cash">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-3 bg-green-100 rounded-full">
+                  <Coins className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Consumers Cash</h3>
+                  <p className="text-xs text-gray-600 mt-1">View rewards</p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Support Cases Card */}
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+          <CardContent className="p-4">
+            <Link href="/support">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="p-3 bg-purple-100 rounded-full">
+                  <HeadphonesIcon className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Support Cases</h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-16 mx-auto" />
+                    ) : (
+                      `${dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -323,322 +412,7 @@ export default function Dashboard() {
                 </Card>
               </div>
 
-      {/* Quick Access Section */}
-      <div className="mb-6 space-y-4">
-        {/* Consumers Cash Card */}
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <Coins className="h-8 w-8 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Consumers Cash</h3>
-                  <p className="text-sm text-gray-600">View your CRD rebate rewards</p>
-                </div>
-              </div>
-              <Link href="/consumers-cash">
-                <Button className="bg-green-600 hover:bg-green-700 text-white">
-                  View Rewards
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Quick Access Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Estimates Card */}
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <CalculatorIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900">Estimates</h3>
-                    <p className="text-xs text-gray-600">
-                      {dashboardData?.recentEstimates?.length || 0} active quotes
-                    </p>
-                  </div>
-                </div>
-                <Link href="/estimates">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                    View
-                    <ArrowRight className="ml-1 h-3 w-3" />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Support Cases Card */}
-          <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-full">
-                    <HeadphonesIcon className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900">Support Cases</h3>
-                    <p className="text-xs text-gray-600">
-                      {dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open cases
-                    </p>
-                  </div>
-                </div>
-                <Link href="/support">
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-                    View
-                    <ArrowRight className="ml-1 h-3 w-3" />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* NetSuite Estimates Section */}
-      {(dashboardData?.recentEstimates && dashboardData.recentEstimates.length > 0) || (estimatesData && estimatesData.length > 0) ? (
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Estimates</CardTitle>
-              <div className="flex items-center space-x-2">
-                <DataBadge freshness="live" />
-                <Link href="/estimates">
-                  <Button variant="ghost" size="sm">
-                    View all
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading || estimatesLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex justify-between items-center">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-24" />
-                    </div>
-                    <div className="text-right space-y-2">
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-5 w-16" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {(dashboardData?.recentEstimates || estimatesData || []).slice(0, 5).map((estimate: any) => (
-                  <div key={estimate.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {estimate.estimateNumber || estimate.documentNumber}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {estimate.customerName}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatDate(estimate.estimateDate || estimate.date)} • Expires {formatDate(estimate.expiryDate || estimate.expirationDate)}
-                      </p>
-                      {estimate.description && (
-                        <p className="text-xs text-gray-600 mt-1 truncate max-w-xs">
-                          {estimate.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {formatCurrency(estimate.amount || estimate.total, estimate.currency)}
-                      </p>
-                      <Badge className={getStatusColor(estimate.status?.toLowerCase() || 'open')}>
-                        {estimate.status || 'Open'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* Support Cases Section */}
-      {dashboardData?.recentCases && dashboardData.recentCases.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Support Cases</CardTitle>
-              <div className="flex items-center space-x-2">
-                <DataBadge freshness="live" />
-                <Link href="/support">
-                  <Button variant="ghost" size="sm">
-                    View all
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {dashboardData.recentCases.map((supportCase) => (
-                <div key={supportCase.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-gray-900">
-                        Case #{supportCase.caseNumber}
-                      </p>
-                      <Badge className={getPriorityColor(supportCase.priority)}>
-                        {supportCase.priority}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-700 mt-1">
-                      {supportCase.subject}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Created: {formatDate(supportCase.createdDate)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <Badge className={getStatusColor(supportCase.status?.toLowerCase())}>
-                      {supportCase.status}
-                    </Badge>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Updated: {formatDate(supportCase.lastModified)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Recent Orders */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Recent Orders</CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <DataBadge freshness="live" />
-                        <Link href="/orders">
-                          <Button variant="ghost" size="sm">
-                            View all
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-4">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="flex justify-between items-center">
-                            <div className="space-y-2">
-                              <Skeleton className="h-4 w-32" />
-                              <Skeleton className="h-3 w-24" />
-                            </div>
-                            <div className="text-right space-y-2">
-                              <Skeleton className="h-4 w-20" />
-                              <Skeleton className="h-5 w-16" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : dashboardData?.recentOrders?.length ? (
-                      <div className="space-y-4">
-                        {dashboardData.recentOrders.slice(0, 5).map((order) => (
-                          <div key={order.id} className="flex justify-between items-center">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {order.orderNumber}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Order Date: {formatDate(order.orderDate)}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">
-                                {formatCurrency(order.totalAmount, order.currency)}
-                              </p>
-                              <Badge className={getStatusColor(order.status)}>
-                                {order.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No recent orders</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Recent Payments */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Payment Activity</CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <DataBadge freshness="live" />
-                        <Link href="/payments">
-                          <Button variant="ghost" size="sm">
-                            View all
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-4">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="flex justify-between items-center">
-                            <div className="space-y-2">
-                              <Skeleton className="h-4 w-32" />
-                              <Skeleton className="h-3 w-24" />
-                            </div>
-                            <div className="text-right">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : dashboardData?.recentPayments?.length ? (
-                      <div className="space-y-4">
-                        {dashboardData.recentPayments.slice(0, 5).map((payment) => (
-                          <div key={payment.id} className="flex justify-between items-center">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                Payment {payment.paymentNumber}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {formatDate(payment.paymentDate)} • {payment.paymentMethod}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-success">
-                                +{formatCurrency(payment.amount, payment.currency)}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No recent payments</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
 
 
 
