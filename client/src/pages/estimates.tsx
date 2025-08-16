@@ -18,14 +18,6 @@ import {
   DollarSign
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { OAuthAuthorize } from "@/components/oauth-authorize";
 import { queryClient } from "@/lib/queryClient";
 
@@ -213,89 +205,114 @@ export default function Estimates() {
                 </Card>
               </div>
 
-              {/* Estimates Table */}
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>All Estimates</CardTitle>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Export
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <div className="space-y-3">
-                      {[...Array(5)].map((_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
-                      ))}
-                    </div>
-                  ) : error ? (
-                    <div className="text-center py-8 text-red-600">
-                      Failed to load estimates. Please try again.
-                    </div>
-                  ) : estimates.length === 0 ? (
-                    <div className="text-center py-8">
+              {/* Estimates List */}
+              <div className="space-y-4">
+                {isLoading ? (
+                  // Loading Skeletons
+                  [...Array(5)].map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="space-y-2">
+                            <Skeleton className="h-5 w-32" />
+                            <Skeleton className="h-4 w-24" />
+                          </div>
+                          <div className="space-y-2">
+                            <Skeleton className="h-5 w-20" />
+                            <Skeleton className="h-6 w-16" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-full" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : error ? (
+                  <Card className="border-red-200 bg-red-50">
+                    <CardContent className="text-center py-8">
+                      <div className="text-red-800">
+                        Failed to load estimates. Please try again.
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : estimates.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-8">
                       <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                       <p className="text-gray-500">No estimates found</p>
                       <p className="text-sm text-gray-400 mt-1">
                         Your estimates will appear here once created in NetSuite
                       </p>
-                    </div>
-                  ) : (
-                    <Table className="table-auto">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="whitespace-nowrap">Date</TableHead>
-                          <TableHead className="whitespace-nowrap">Estimate #</TableHead>
-                          <TableHead>Job ID</TableHead>
-                          <TableHead>End User</TableHead>
-                          <TableHead className="whitespace-nowrap">Amount</TableHead>
-                          <TableHead className="text-right whitespace-nowrap">View Details</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {estimates.map((estimate) => (
-                          <TableRow key={estimate.id}>
-                            <TableCell className="whitespace-nowrap">
-                              <div className="flex items-center space-x-2">
-                                <span>{formatDate(estimate.estimateDate)}</span>
-                                <DataBadge 
-                                  freshness={estimate.dataFreshness || 'live'} 
-                                  lastSync={estimate.lastSyncAt || new Date().toISOString()} 
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium whitespace-nowrap">
+                    </CardContent>
+                  </Card>
+                ) : (
+                  estimates.map((estimate) => (
+                    <Card key={estimate.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
                               {estimate.estimateNumber}
-                            </TableCell>
-                            <TableCell>
-                              {estimate.memo || '-'}
-                            </TableCell>
-                            <TableCell>
-                              {estimate.tagFor || '-'}
-                            </TableCell>
-                            <TableCell className="font-medium whitespace-nowrap">
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Estimate Date: {formatDate(estimate.estimateDate)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-semibold text-gray-900">
                               {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
-                            </TableCell>
-                            <TableCell className="text-right whitespace-nowrap">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setLocation(`/estimates/${estimate.id}`)}
-                                title="View estimate details"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
+                            </p>
+                            <div className="flex items-center space-x-2 mt-1 justify-end">
+                              <Badge variant="secondary" className={getStatusColor(estimate.status)}>
+                                {estimate.status.charAt(0).toUpperCase() + estimate.status.slice(1)}
+                              </Badge>
+                              <DataBadge 
+                                freshness={estimate.dataFreshness || 'live'} 
+                                lastSync={estimate.lastSyncAt || new Date().toISOString()} 
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-500">Job ID:</span>
+                            <p className="text-gray-900">{estimate.memo || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-500">End User:</span>
+                            <p className="text-gray-900">{estimate.tagFor || '-'}</p>
+                          </div>
+                          <div className="flex justify-end items-end">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setLocation(`/estimates/${estimate.id}`)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+
+                        {estimate.expiryDate && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center text-sm">
+                              <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                              <span className="text-gray-600">
+                                Expires: {formatDate(estimate.expiryDate)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
 
               {/* Data Synchronization Status */}
               <div className="mt-6">
