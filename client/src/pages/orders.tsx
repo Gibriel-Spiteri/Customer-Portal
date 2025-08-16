@@ -25,9 +25,21 @@ import {
   MapPin,
   CreditCard,
   FileText,
-  Calendar
+  Calendar,
+  ShoppingCart
 } from "lucide-react";
 import { useState } from "react";
+import { queryClient } from "@/lib/queryClient";
+
+interface OrderItem {
+  id: string;
+  lineNumber: number;
+  itemName: string;
+  quantity: number;
+  rate: string;
+  amount: string;
+  description: string;
+}
 
 interface Order {
   id: string;
@@ -37,9 +49,13 @@ interface Order {
   shipDate: string | null;
   deliveryDate: string | null;
   totalAmount: string;
+  subtotal?: string;
+  tax?: string;
+  shipping?: string;
   currency: string;
   shippingAddress: any;
   trackingNumber: string | null;
+  items?: OrderItem[];
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
 }
@@ -52,6 +68,7 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
 
   const { data: orders, isLoading, error, refetch } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
@@ -273,7 +290,30 @@ export default function Orders() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => setSelectedOrder(order)}
+                              onClick={async () => {
+                                setLoadingOrderDetails(true);
+                                try {
+                                  // Fetch order details with items
+                                  const response = await fetch(`/api/orders/${order.id}`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`
+                                    }
+                                  });
+                                  if (response.ok) {
+                                    const orderWithDetails = await response.json();
+                                    setSelectedOrder(orderWithDetails);
+                                  } else {
+                                    // Fall back to basic order info if details fail
+                                    setSelectedOrder(order);
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to fetch order details:', error);
+                                  // Fall back to basic order info
+                                  setSelectedOrder(order);
+                                } finally {
+                                  setLoadingOrderDetails(false);
+                                }
+                              }}
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
@@ -336,7 +376,7 @@ export default function Orders() {
 
               {/* Order Details Modal */}
               <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                       <span>Order Details</span>
@@ -398,6 +438,65 @@ export default function Orders() {
                           )}
                         </div>
                       </div>
+
+                      {/* Order Items */}
+                      {selectedOrder.items && selectedOrder.items.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold flex items-center">
+                              <ShoppingCart className="h-5 w-5 mr-2" />
+                              Order Items
+                            </h3>
+                            <div className="space-y-2">
+                              {selectedOrder.items.map((item, index) => (
+                                <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-gray-900">{item.itemName}</h4>
+                                      {item.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right ml-4">
+                                      <p className="font-semibold">{formatCurrency(item.amount)}</p>
+                                      <p className="text-sm text-gray-600">
+                                        {item.quantity} × {formatCurrency(item.rate)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              
+                              {/* Order Totals */}
+                              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                                {selectedOrder.subtotal && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Subtotal</span>
+                                    <span>{formatCurrency(selectedOrder.subtotal)}</span>
+                                  </div>
+                                )}
+                                {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Tax</span>
+                                    <span>{formatCurrency(selectedOrder.tax)}</span>
+                                  </div>
+                                )}
+                                {selectedOrder.shipping && parseFloat(selectedOrder.shipping) > 0 && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Shipping</span>
+                                    <span>{formatCurrency(selectedOrder.shipping)}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-base font-semibold pt-2 border-t">
+                                  <span>Total</span>
+                                  <span>{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
 
                       {/* Shipping Address */}
                       {selectedOrder.shippingAddress && (

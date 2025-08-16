@@ -1156,14 +1156,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/orders/:id', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const order = await storage.getOrder(req.params.id);
-      if (!order || order.userId !== req.user.id) {
-        return res.status(404).json({ message: 'Order not found' });
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        const order = await storage.getOrder(req.params.id);
+        if (!order || order.userId !== req.user.id) {
+          return res.status(404).json({ message: 'Order not found' });
+        }
+        return res.json(order);
       }
-      res.json(order);
-    } catch (error) {
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Map NetSuite status codes to friendly names
+      const mapStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+          'A': 'pending',
+          'B': 'pending approval',
+          'C': 'cancelled',
+          'D': 'partially fulfilled',
+          'E': 'pending billing',
+          'F': 'pending fulfillment',
+          'G': 'fully billed',
+          'H': 'closed',
+        };
+        return statusMap[status] || status.toLowerCase();
+      };
+      
+      // Fetch order details with line items from NetSuite
+      const orderDetails = await m2m.getOrderDetails(req.params.id);
+      
+      // Transform the response to match frontend expectations
+      const transformed = {
+        id: orderDetails.id,
+        orderNumber: orderDetails.ordernumber || orderDetails.tranid,
+        status: mapStatus(orderDetails.status),
+        orderDate: orderDetails.orderdate || orderDetails.trandate,
+        shipDate: orderDetails.shipdate,
+        deliveryDate: null,
+        totalAmount: orderDetails.total || '0.00',
+        subtotal: orderDetails.subtotal || '0.00',
+        tax: orderDetails.tax || '0.00',
+        shipping: orderDetails.shipping || '0.00',
+        currency: 'USD',
+        shippingAddress: orderDetails.shippingaddress,
+        billingAddress: orderDetails.billingaddress,
+        trackingNumber: null,
+        memo: orderDetails.memo,
+        customerName: orderDetails.customername,
+        items: orderDetails.lineItems ? orderDetails.lineItems.map((item: any) => ({
+          id: item.lineid,
+          lineNumber: item.linenumber,
+          itemName: item.itemname,
+          quantity: item.quantity || 0,
+          rate: item.rate || '0.00',
+          amount: item.amount || '0.00',
+          description: item.description || ''
+        })) : [],
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      };
+      
+      res.json(transformed);
+    } catch (error: any) {
       console.error('Order detail error:', error);
-      res.status(500).json({ message: 'Failed to fetch order' });
+      res.status(500).json({ message: 'Failed to fetch order details' });
     }
   });
 

@@ -430,6 +430,75 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Fetch order details including line items
+   */
+  async getOrderDetails(orderId: string): Promise<any> {
+    // Main order query
+    const mainQuery = `
+      SELECT 
+        transaction.id,
+        transaction.tranid AS orderNumber,
+        transaction.trandate AS orderDate,
+        transaction.status,
+        transaction.total,
+        transaction.subtotal,
+        transaction.taxtotal AS tax,
+        transaction.shippingcost AS shipping,
+        transaction.memo,
+        BUILTIN.DF(transaction.entity) AS customerName,
+        transaction.entity AS customerId,
+        transaction.shipdate,
+        transaction.shipmethod,
+        transaction.createddate,
+        transaction.lastmodifieddate,
+        transaction.shipaddress AS shippingAddress,
+        transaction.billaddress AS billingAddress
+      FROM 
+        transaction
+      WHERE 
+        transaction.type = 'SalesOrd'
+        AND transaction.id = ${orderId}
+        AND transaction.mainline = 'T'
+    `.trim();
+
+    // Line items query
+    const linesQuery = `
+      SELECT 
+        transactionline.id AS lineId,
+        transactionline.line AS lineNumber,
+        BUILTIN.DF(transactionline.item) AS itemName,
+        transactionline.item AS itemId,
+        transactionline.quantity,
+        transactionline.rate,
+        transactionline.amount,
+        transactionline.description,
+        transactionline.isclosed AS isClosed
+      FROM 
+        transactionline
+      WHERE 
+        transactionline.transaction = ${orderId}
+        AND transactionline.mainline = 'F'
+        AND transactionline.item IS NOT NULL
+      ORDER BY 
+        transactionline.line
+    `.trim();
+
+    const [mainResult, linesResult] = await Promise.all([
+      this.executeSuiteQL(mainQuery, 1, 0),
+      this.executeSuiteQL(linesQuery, 100, 0)
+    ]);
+
+    if (mainResult.items.length === 0) {
+      throw new Error(`Order ${orderId} not found`);
+    }
+
+    return {
+      ...mainResult.items[0],
+      lineItems: linesResult.items
+    };
+  }
+
+  /**
    * Fetch customer invoices
    */
   async getCustomerInvoices(customerId: string, limit: number = 20): Promise<any[]> {
