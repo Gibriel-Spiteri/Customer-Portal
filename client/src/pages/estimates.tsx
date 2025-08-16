@@ -45,6 +45,8 @@ interface Estimate {
   estimateDate: string;
   expiryDate: string;
   description?: string;
+  memo?: string;
+  tagFor?: string;
   items?: EstimateItem[];
   dataFreshness?: 'live' | 'cached';
   customerName?: string;
@@ -244,24 +246,17 @@ export default function Estimates() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Estimate #</TableHead>
-                          <TableHead>Customer</TableHead>
                           <TableHead>Date</TableHead>
-                          <TableHead>Expires</TableHead>
+                          <TableHead>Estimate #</TableHead>
+                          <TableHead>Memo</TableHead>
+                          <TableHead>Tag For</TableHead>
                           <TableHead>Amount</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead className="text-right">Details</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {estimates.map((estimate) => (
                           <TableRow key={estimate.id}>
-                            <TableCell className="font-medium">
-                              {estimate.estimateNumber}
-                            </TableCell>
-                            <TableCell>
-                              {estimate.customerName || estimate.description || 'N/A'}
-                            </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">
                                 <span>{formatDate(estimate.estimateDate)}</span>
@@ -271,14 +266,17 @@ export default function Estimates() {
                                 />
                               </div>
                             </TableCell>
-                            <TableCell>{formatDate(estimate.expiryDate)}</TableCell>
                             <TableCell className="font-medium">
-                              {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
+                              {estimate.estimateNumber}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="secondary" className={getStatusColor(estimate.status)}>
-                                {estimate.status.charAt(0).toUpperCase() + estimate.status.slice(1)}
-                              </Badge>
+                              {estimate.memo || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {estimate.tagFor || '-'}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button variant="ghost" size="sm">
