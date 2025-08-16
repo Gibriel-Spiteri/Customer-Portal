@@ -210,6 +210,19 @@ export default function AccountSettings() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {/* NetSuite Customer Number */}
+                    {user?.isNetSuiteUser && user?.netsuiteCustomerId && (
+                      <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-900">NetSuite Customer Number</p>
+                            <p className="text-lg font-mono font-semibold text-blue-700">#{user.netsuiteCustomerId}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">

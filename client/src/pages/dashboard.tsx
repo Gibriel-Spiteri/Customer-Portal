@@ -174,12 +174,6 @@ export default function Dashboard() {
           ) : null}
           Here's what's happening with your account today.
         </p>
-        {/* Debugging info - to be removed later */}
-        {user.isNetSuiteUser && user.netsuiteCustomerId && (
-          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs font-mono">
-            <span className="text-blue-600 font-semibold">NetSuite:</span> Customer # {user.netsuiteCustomerId}
-          </div>
-        )}
       </div>
 
 
