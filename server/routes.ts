@@ -1470,7 +1470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transformCase = (caseItem: any) => ({
         id: caseItem.id,
         subject: caseItem.title || `Case #${caseItem.casenumber}`,
-        description: caseItem.email ? `Case from: ${caseItem.email}` : 'Support case',
+        description: caseItem.email ? `Created by: ${caseItem.email}` : 'Support case',
         detail: caseItem.custevent_xprdetail || '',
         status: mapStatus(caseItem.status, caseItem.statustext),
         assignedTo: null, // NetSuite doesn't expose assigned rep in this query
