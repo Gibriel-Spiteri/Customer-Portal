@@ -1749,12 +1749,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (rebates.length > 0) {
         console.log('Sample rebate data - All fields:', rebates[0]);
         console.log('Sample rebate data:', {
-          typeId: rebates[0].typeId,
-          typeIdType: typeof rebates[0].typeId,
+          typeid: rebates[0].typeid,
+          typeidType: typeof rebates[0].typeid,
           reversed: rebates[0].reversed,
           amount: rebates[0].amount,
           sampleTypes: rebates.slice(0, 5).map((r: any) => ({ 
-            typeId: r.typeId, 
+            typeid: r.typeid, 
             amount: r.amount,
             allFields: Object.keys(r) 
           }))

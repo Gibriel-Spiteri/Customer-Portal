@@ -41,7 +41,7 @@ interface CRDRebate {
   category: string | null;
   earnedPercent: string | null;
   salesOrderRebateRate: string | null;
-  status: 'Available' | 'Redeemed' | 'Expired' | 'Reversed';
+  status: 'Earned' | 'Redeemed' | 'Expired' | 'Return' | 'Accommodation' | 'Unknown';
 }
 
 interface CRDRebatesResponse {
@@ -107,29 +107,33 @@ export default function ConsumersCash() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Available':
+      case 'Earned':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'Redeemed':
         return <DollarSign className="h-4 w-4 text-blue-600" />;
       case 'Expired':
         return <Clock className="h-4 w-4 text-gray-400" />;
-      case 'Reversed':
+      case 'Return':
         return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'Accommodation':
+        return <Gift className="h-4 w-4 text-purple-600" />;
       default:
-        return null;
+        return <AlertCircle className="h-4 w-4 text-gray-400" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Available':
+      case 'Earned':
         return 'bg-green-100 text-green-800';
       case 'Redeemed':
         return 'bg-blue-100 text-blue-800';
       case 'Expired':
         return 'bg-gray-100 text-gray-800';
-      case 'Reversed':
+      case 'Return':
         return 'bg-red-100 text-red-800';
+      case 'Accommodation':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -299,7 +303,7 @@ export default function ConsumersCash() {
                       
                       {rebate.expirationDate && (
                         <div className="text-sm">
-                          {rebate.status === 'Available' ? (
+                          {rebate.status === 'Earned' ? (
                             <span className="text-orange-600 flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               Expires: {formatDate(rebate.expirationDate)}
