@@ -193,22 +193,22 @@ export default function Dashboard() {
       )}
 
       {/* Quick Access Summary Tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Sales Orders Card */}
-        <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
-          <CardContent className="p-4">
+        <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
             <Link href="/orders">
-              <div className="flex flex-col items-center text-center space-y-2">
+              <div className="flex items-center gap-4">
                 <div className="p-3 bg-orange-100 rounded-full">
-                  <ShoppingCart className="h-6 w-6 text-orange-600" />
+                  <ShoppingCart className="h-7 w-7 text-orange-600" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Sales Orders</h3>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <h3 className="text-base font-semibold text-gray-900">Sales Orders</h3>
+                  <p className="text-sm text-gray-600">
                     {isLoading ? (
-                      <Skeleton className="h-4 w-16 mx-auto" />
+                      <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.recentOrders?.length || 0} orders`
+                      `${dashboardData?.recentOrders?.length || 0} active orders`
                     )}
                   </p>
                 </div>
@@ -218,20 +218,20 @@ export default function Dashboard() {
         </Card>
 
         {/* Estimates Card */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-4">
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
             <Link href="/estimates">
-              <div className="flex flex-col items-center text-center space-y-2">
+              <div className="flex items-center gap-4">
                 <div className="p-3 bg-blue-100 rounded-full">
-                  <CalculatorIcon className="h-6 w-6 text-blue-600" />
+                  <CalculatorIcon className="h-7 w-7 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Estimates</h3>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <h3 className="text-base font-semibold text-gray-900">Estimates</h3>
+                  <p className="text-sm text-gray-600">
                     {isLoading ? (
-                      <Skeleton className="h-4 w-16 mx-auto" />
+                      <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.recentEstimates?.length || 0} quotes`
+                      `${dashboardData?.recentEstimates?.length || 0} active quotes`
                     )}
                   </p>
                 </div>
@@ -241,16 +241,16 @@ export default function Dashboard() {
         </Card>
 
         {/* Consumers Cash Card */}
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-          <CardContent className="p-4">
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
             <Link href="/consumers-cash">
-              <div className="flex flex-col items-center text-center space-y-2">
+              <div className="flex items-center gap-4">
                 <div className="p-3 bg-green-100 rounded-full">
-                  <Coins className="h-6 w-6 text-green-600" />
+                  <Coins className="h-7 w-7 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Consumers Cash</h3>
-                  <p className="text-xs text-gray-600 mt-1">View rewards</p>
+                  <h3 className="text-base font-semibold text-gray-900">Consumers Cash</h3>
+                  <p className="text-sm text-gray-600">View CRD rebate rewards</p>
                 </div>
               </div>
             </Link>
@@ -258,20 +258,20 @@ export default function Dashboard() {
         </Card>
 
         {/* Support Cases Card */}
-        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-          <CardContent className="p-4">
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
             <Link href="/support">
-              <div className="flex flex-col items-center text-center space-y-2">
+              <div className="flex items-center gap-4">
                 <div className="p-3 bg-purple-100 rounded-full">
-                  <HeadphonesIcon className="h-6 w-6 text-purple-600" />
+                  <HeadphonesIcon className="h-7 w-7 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Support Cases</h3>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <h3 className="text-base font-semibold text-gray-900">Support Cases</h3>
+                  <p className="text-sm text-gray-600">
                     {isLoading ? (
-                      <Skeleton className="h-4 w-16 mx-auto" />
+                      <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open`
+                      `${dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open cases`
                     )}
                   </p>
                 </div>
@@ -281,136 +281,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {/* Account Balance */}
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <CreditCard className="h-8 w-8 netsuite-blue" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            Account Balance
-                          </dt>
-                          <dd className="flex items-center space-x-2">
-                            {isLoading ? (
-                              <Skeleton className="h-6 w-24" />
-                            ) : (
-                              <>
-                                <span className="text-lg font-medium text-gray-900">
-                                  {dashboardData?.account ? 
-                                    formatCurrency(dashboardData.account.balance, dashboardData.account.currency) :
-                                    '$0.00'
-                                  }
-                                </span>
-                                {dashboardData?.account && (
-                                  <DataBadge 
-                                    freshness={dashboardData.account.dataFreshness}
-                                    lastSync={dashboardData.account.lastSyncAt}
-                                  />
-                                )}
-                              </>
-                            )}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
 
-                {/* Pending Orders */}
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <ShoppingCart className="h-8 w-8 text-warning" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            Pending Orders
-                          </dt>
-                          <dd className="flex items-center space-x-2">
-                            {isLoading ? (
-                              <Skeleton className="h-6 w-16" />
-                            ) : (
-                              <>
-                                <span className="text-lg font-medium text-gray-900">
-                                  {dashboardData?.pendingOrdersCount || 0}
-                                </span>
-                                <DataBadge freshness="live" />
-                              </>
-                            )}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Outstanding Invoices */}
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <FileText className="h-8 w-8 text-success" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            Outstanding Invoices
-                          </dt>
-                          <dd className="flex items-center space-x-2">
-                            {isLoading ? (
-                              <Skeleton className="h-6 w-24" />
-                            ) : (
-                              <>
-                                <span className="text-lg font-medium text-gray-900">
-                                  {dashboardData?.outstandingInvoices?.length || 0}
-                                </span>
-                                <DataBadge freshness="cached" />
-                              </>
-                            )}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Monthly Total */}
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <TrendingUp className="h-8 w-8 netsuite-light" />
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            This Month
-                          </dt>
-                          <dd className="flex items-center space-x-2">
-                            {isLoading ? (
-                              <Skeleton className="h-6 w-24" />
-                            ) : (
-                              <>
-                                <span className="text-lg font-medium text-gray-900">
-                                  {formatCurrency(dashboardData?.monthlyTotal || '0')}
-                                </span>
-                                <DataBadge freshness="cached" />
-                              </>
-                            )}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
 
 
 
