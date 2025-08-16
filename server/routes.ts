@@ -1466,24 +1466,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return statusMap[status] || 'open';
       };
       
-      // Map NetSuite priority to frontend format
-      const mapPriority = (priority: string, priorityText: string): string => {
-        // NetSuite priority codes: 1=Low, 2=Medium, 3=High
-        const priorityMap: Record<string, string> = {
-          '1': 'low',
-          '2': 'medium',
-          '3': 'high'
-        };
-        return priorityMap[priority] || 'medium';
-      };
-      
       // Transform NetSuite case data to match frontend format
       const transformCase = (caseItem: any) => ({
         id: caseItem.id,
         subject: caseItem.title || `Case #${caseItem.casenumber}`,
         description: caseItem.email ? `Case from: ${caseItem.email}` : 'Support case',
         detail: caseItem.custevent_xprdetail || '',
-        priority: mapPriority(caseItem.priority, caseItem.prioritytext),
         status: mapStatus(caseItem.status, caseItem.statustext),
         assignedTo: null, // NetSuite doesn't expose assigned rep in this query
         createdAt: caseItem.createddate || new Date().toISOString(),

@@ -37,7 +37,6 @@ interface SupportTicket {
   subject: string;
   description: string;
   detail?: string;
-  priority: string;
   status: string;
   assignedTo: string | null;
   createdAt: string;
@@ -59,7 +58,6 @@ interface CaseMessage {
 const ticketSchema = z.object({
   subject: z.string().min(5, "Subject must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
 });
 
 type TicketFormData = z.infer<typeof ticketSchema>;
@@ -82,7 +80,6 @@ export default function Support() {
     defaultValues: {
       subject: "",
       description: "",
-      priority: "medium",
     },
   });
 
@@ -146,15 +143,7 @@ export default function Support() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const getPriorityColor = (priority: string) => {
-    const colors: Record<string, string> = {
-      low: 'bg-gray-100 text-gray-800',
-      medium: 'bg-blue-100 text-blue-800',
-      high: 'bg-orange-100 text-orange-800',
-      urgent: 'bg-red-100 text-red-800',
-    };
-    return colors[priority] || 'bg-gray-100 text-gray-800';
-  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -260,28 +249,7 @@ export default function Support() {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="priority">Priority</Label>
-                        <Select 
-                          value={form.watch("priority")} 
-                          onValueChange={(value) => form.setValue("priority", value as any)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {form.formState.errors.priority && (
-                          <p className="text-sm text-red-600">
-                            {form.formState.errors.priority.message}
-                          </p>
-                        )}
-                      </div>
+
 
                       <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
@@ -367,17 +335,12 @@ export default function Support() {
                             <h3 className="text-lg font-semibold text-gray-900">
                               {ticket.subject}
                             </h3>
-                            <div className="flex items-center space-x-2">
-                              <Badge className={getPriorityColor(ticket.priority)}>
-                                {ticket.priority.toUpperCase()}
-                              </Badge>
-                              <Badge className={getStatusColor(ticket.status)}>
-                                {getStatusIcon(ticket.status)}
-                                <span className="ml-1 capitalize">
-                                  {ticket.status.replace('_', ' ')}
-                                </span>
-                              </Badge>
-                            </div>
+                            <Badge className={getStatusColor(ticket.status)}>
+                              {getStatusIcon(ticket.status)}
+                              <span className="ml-1 capitalize">
+                                {ticket.status.replace('_', ' ')}
+                              </span>
+                            </Badge>
                           </div>
                           <p className="text-gray-600 mb-3 line-clamp-2">
                             {ticket.description}
@@ -517,9 +480,6 @@ export default function Support() {
                             <span className="ml-1 capitalize">
                               {selectedTicket.status.replace('_', ' ')}
                             </span>
-                          </Badge>
-                          <Badge className={getPriorityColor(selectedTicket.priority)}>
-                            {selectedTicket.priority.toUpperCase()} Priority
                           </Badge>
                           {selectedTicket.category && (
                             <Badge variant="outline">

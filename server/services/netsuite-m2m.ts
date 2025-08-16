@@ -575,7 +575,6 @@ export class NetSuiteM2M {
         supportcase.casenumber,
         supportcase.title,
         supportcase.status,
-        supportcase.priority,
         supportcase.createddate,
         supportcase.lastmodifieddate,
         supportcase.category,
@@ -583,8 +582,7 @@ export class NetSuiteM2M {
         supportcase.custevent_xprdetail,
         supportcase.custevent_svcsjpr_customer,
         supportcase.custevent_jprtype,
-        BUILTIN.DF(supportcase.status) AS statustext,
-        BUILTIN.DF(supportcase.priority) AS prioritytext
+        BUILTIN.DF(supportcase.status) AS statustext
       FROM 
         supportcase
       WHERE 
