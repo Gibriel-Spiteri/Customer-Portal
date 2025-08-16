@@ -292,6 +292,7 @@ export class NetSuiteM2M {
       WHERE 
         transaction.type = 'Estimate'
         AND transaction.entity = ${customerId}
+        AND transaction.status = 'A'
       ORDER BY 
         transaction.trandate DESC
     `.trim();
@@ -321,6 +322,7 @@ export class NetSuiteM2M {
         transaction
       WHERE 
         transaction.type = 'Estimate'
+        AND transaction.status = 'A'
       ORDER BY 
         transaction.trandate DESC
     `.trim();
