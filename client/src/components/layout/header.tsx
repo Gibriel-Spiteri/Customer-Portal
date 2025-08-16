@@ -1,5 +1,4 @@
 import { useAuth } from "@/contexts/auth-context";
-import { SyncStatus } from "@/components/sync-status";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -58,9 +57,6 @@ export function Header() {
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Sync Status */}
-            <SyncStatus />
-            
             {/* User Menu */}
             {user && (
               <DropdownMenu>

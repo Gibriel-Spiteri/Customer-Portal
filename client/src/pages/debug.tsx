@@ -4,7 +4,8 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Bug, User, Database } from "lucide-react";
+import { RefreshCw, Bug, User, Database, Wifi, WifiOff } from "lucide-react";
+import { SyncStatus } from "@/components/sync-status";
 
 export default function Debug() {
   const { user, token } = useAuth();
@@ -53,6 +54,24 @@ export default function Debug() {
             </Button>
           </div>
         </div>
+
+        {/* Connection Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wifi className="h-5 w-5" />
+              Connection Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Real-time connection to NetSuite</p>
+                <SyncStatus />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Auth Context User Data */}
         <Card>
