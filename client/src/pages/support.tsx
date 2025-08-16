@@ -398,9 +398,7 @@ export default function Support() {
                               </span>
                             </Badge>
                           </div>
-                          <p className="text-gray-600 mb-2 line-clamp-2">
-                            {ticket.description}
-                          </p>
+
                           {ticket.detail && (
                             <div className="bg-gray-50 rounded p-2 mb-3">
                               <p className="text-sm text-gray-700 line-clamp-2">
@@ -585,15 +583,7 @@ export default function Support() {
                         </div>
                       )}
 
-                      {/* Description */}
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <p className="text-gray-600 whitespace-pre-wrap">
-                            {selectedTicket.description}
-                          </p>
-                        </div>
-                      </div>
+
 
                       {/* Metadata */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
