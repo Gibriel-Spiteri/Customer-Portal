@@ -1706,6 +1706,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CRD Rebates CSV download endpoint
+  app.get('/api/crd-rebates/download', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const customerId = req.user.netsuiteCustomerId;
+      
+      if (!customerId) {
+        return res.status(400).json({ message: 'No NetSuite customer ID found' });
+      }
+
+      console.log(`Downloading CRD rebates CSV for customer ${customerId}`);
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const netsuiteM2M = new NetSuiteM2M();
+      
+      // SuiteQL query to fetch CRD rebate records
+      const query = `
+        SELECT 
+          customrecord_crdrebate.id,
+          customrecord_crdrebate.custrecord_crdrebate_date AS rebateDate,
+          customrecord_crdrebate.custrecord_crdrebate_amount AS amount,
+          customrecord_crdrebate.custrecord_crdrebate_type AS typeId,
+          customrecord_crdrebate.custrecord_crdrebate_reversed AS reversed,
+          customrecord_crdrebate.custrecord_crdrebate_salesorder AS salesOrderId,
+          customrecord_crdrebate.custrecord_crdrebate_expiration_date AS expirationDate,
+          customrecord_crdrebate.custrecord_crdrebate_applyingtxn AS applyingTxnId,
+          customrecord_crdrebate.custrecord_crdrebate_category AS categoryId,
+          customrecord_crdrebate.custrecord_crdrebate_earnedpercent AS earnedPercent,
+          customrecord_crdrebate.custrecord_crdrebate_sorebaterate AS salesOrderRebateRate
+        FROM 
+          customrecord_crdrebate
+        WHERE 
+          customrecord_crdrebate.custrecord_crdrebate_customer = ${customerId}
+        ORDER BY 
+          customrecord_crdrebate.custrecord_crdrebate_date DESC
+      `;
+      
+      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query);
+      const rebates = rebatesResponse.items || [];
+      
+      // Create CSV content
+      const csvHeaders = [
+        'ID',
+        'Date',
+        'Amount',
+        'Status',
+        'Reversed',
+        'Sales Order',
+        'Expiration Date',
+        'Applying Transaction',
+        'Category',
+        'Earned Percent',
+        'Sales Order Rebate Rate'
+      ];
+      
+      const csvRows = rebates.map((rebate: any) => {
+        const status = rebate.typeid === 1 || rebate.typeid === '1' ? 'Earned' :
+                      rebate.typeid === 2 || rebate.typeid === '2' ? 'Redeemed' :
+                      rebate.typeid === 3 || rebate.typeid === '3' ? 'Expired' :
+                      rebate.typeid === 4 || rebate.typeid === '4' ? 'Return' :
+                      rebate.typeid === 5 || rebate.typeid === '5' ? 'Accommodation' :
+                      'Unknown';
+        
+        return [
+          rebate.id || '',
+          rebate.rebatedate || '',
+          rebate.amount || '0',
+          status,
+          rebate.reversed === 'T' ? 'Yes' : 'No',
+          rebate.salesorderid || '',
+          rebate.expirationdate || '',
+          rebate.applyingtxnid || '',
+          rebate.categoryid || '',
+          rebate.earnedpercent || '',
+          rebate.salesorderrebaterate || ''
+        ];
+      });
+      
+      // Convert to CSV format
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => {
+          // Escape quotes and wrap in quotes if contains comma or quotes
+          const cellStr = String(cell);
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+          }
+          return cellStr;
+        }).join(','))
+      ].join('\n');
+      
+      // Set headers for CSV download
+      const fileName = `consumers_cash_${new Date().toISOString().split('T')[0]}.csv`;
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(csvContent);
+      
+    } catch (error) {
+      console.error('Error downloading CRD rebates CSV:', error);
+      res.status(500).json({ error: 'Failed to download CRD rebates CSV' });
+    }
+  });
+
   // CRD Rebate (Consumers Cash) endpoint
   app.get('/api/crd-rebates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {

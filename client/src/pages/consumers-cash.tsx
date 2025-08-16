@@ -24,7 +24,8 @@ import {
   RefreshCw,
   Award,
   Gift,
-  Wallet
+  Wallet,
+  Download
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
@@ -84,6 +85,41 @@ export default function ConsumersCash() {
       });
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    try {
+      const response = await fetch('/api/crd-rebates/download', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `consumers_cash_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Complete",
+        description: "Your Consumers Cash data has been downloaded.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Unable to download CSV file. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -156,6 +192,15 @@ export default function ConsumersCash() {
           </div>
           <div className="flex items-center space-x-3">
             <DataBadge freshness="live" />
+            <Button
+              onClick={handleDownloadCSV}
+              variant="outline"
+              size="sm"
+              disabled={isLoading || !data?.rebates?.length}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download CSV
+            </Button>
             <Button
               onClick={handleRefresh}
               disabled={isRefreshing}
