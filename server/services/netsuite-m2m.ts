@@ -336,7 +336,7 @@ export class NetSuiteM2M {
    * Fetch estimate details including line items
    */
   async getEstimateDetails(estimateId: string): Promise<any> {
-    // Main estimate query
+    // Main estimate query - simplified without mainline filter
     const mainQuery = `
       SELECT 
         transaction.id,
@@ -349,6 +349,7 @@ export class NetSuiteM2M {
         transaction.taxtotal AS tax,
         transaction.shippingcost AS shipping,
         transaction.memo,
+        transaction.custbody_tagfor AS tagfor,
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
         BUILTIN.DF(transaction.location) AS location,
@@ -363,28 +364,26 @@ export class NetSuiteM2M {
       WHERE 
         transaction.type = 'Estimate'
         AND transaction.id = ${estimateId}
-        AND transaction.mainline = 'T'
     `.trim();
 
-    // Line items query
+    // Line items query - using linesequencenumber instead of line
     const linesQuery = `
       SELECT 
         transactionline.id AS lineId,
-        transactionline.line AS lineNumber,
+        transactionline.linesequencenumber AS lineNumber,
         BUILTIN.DF(transactionline.item) AS itemName,
         transactionline.item AS itemId,
         transactionline.quantity,
         transactionline.rate,
         transactionline.amount,
-        transactionline.description,
-        transactionline.isclosed AS isClosed
+        transactionline.description
       FROM 
         transactionline
       WHERE 
         transactionline.transaction = ${estimateId}
-        AND transactionline.mainline = 'F'
+        AND transactionline.item IS NOT NULL
       ORDER BY 
-        transactionline.line
+        transactionline.linesequencenumber
     `.trim();
 
     const [mainResult, linesResult] = await Promise.all([
@@ -398,7 +397,7 @@ export class NetSuiteM2M {
 
     return {
       ...mainResult.items[0],
-      lineItems: linesResult.items
+      items: linesResult.items
     };
   }
 
