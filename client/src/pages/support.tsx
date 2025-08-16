@@ -321,33 +321,41 @@ export default function Support() {
                     
                     {/* Status Filter */}
                     {tickets && tickets.length > 0 && (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <span className="text-sm font-medium text-gray-600">Filter by status:</span>
-                        <div className="flex flex-wrap gap-2">
+                        <Select
+                          value={statusFilter}
+                          onValueChange={setStatusFilter}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              All Cases ({tickets.length})
+                            </SelectItem>
+                            {getUniqueStatuses().map(status => {
+                              const count = tickets.filter(t => t.status === status).length;
+                              return (
+                                <SelectItem key={status} value={status}>
+                                  <span className="capitalize">{status.replace('_', ' ')}</span>
+                                  <span className="ml-2 text-gray-500">({count})</span>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        {statusFilter !== 'all' && (
                           <Button
-                            variant={statusFilter === 'all' ? 'default' : 'outline'}
+                            variant="ghost"
                             size="sm"
                             onClick={() => setStatusFilter('all')}
-                            className={statusFilter === 'all' ? 'bg-netsuite-blue hover:bg-netsuite-light' : ''}
+                            className="text-gray-500 hover:text-gray-700"
                           >
-                            All ({tickets.length})
+                            <X className="h-4 w-4 mr-1" />
+                            Clear
                           </Button>
-                          {getUniqueStatuses().map(status => {
-                            const count = tickets.filter(t => t.status === status).length;
-                            return (
-                              <Button
-                                key={status}
-                                variant={statusFilter === status ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setStatusFilter(status)}
-                                className={statusFilter === status ? 'bg-netsuite-blue hover:bg-netsuite-light' : ''}
-                              >
-                                <span className="capitalize">{status.replace('_', ' ')}</span>
-                                <span className="ml-1">({count})</span>
-                              </Button>
-                            );
-                          })}
-                        </div>
+                        )}
                       </div>
                     )}
                   </div>
