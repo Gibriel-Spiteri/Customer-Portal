@@ -400,9 +400,9 @@ export default function Support() {
                           </div>
 
                           {ticket.detail && (
-                            <div className="bg-gray-50 rounded p-2 mb-3">
-                              <p className="text-sm text-gray-700 line-clamp-2">
-                                <span className="font-medium">Detail: </span>
+                            <div className="bg-gray-50 rounded p-3 mb-3">
+                              <p className="text-base text-gray-700 line-clamp-2">
+                                <span className="font-semibold">Detail: </span>
                                 {ticket.detail}
                               </p>
                             </div>
