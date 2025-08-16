@@ -37,7 +37,7 @@ const navigation: NavigationItem[] = [
   },
   {
     name: 'Consumers Cash',
-    href: '/loyalty',
+    href: '/consumers-cash',
     icon: Star,
   },
   {
