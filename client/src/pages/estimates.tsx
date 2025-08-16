@@ -246,18 +246,18 @@ export default function Estimates() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Date</TableHead>
+                          <TableHead className="w-[100px]">Date</TableHead>
                           <TableHead>Estimate #</TableHead>
-                          <TableHead>Memo</TableHead>
-                          <TableHead>Tag For</TableHead>
+                          <TableHead className="min-w-[200px]">Job ID</TableHead>
+                          <TableHead>End User</TableHead>
                           <TableHead>Amount</TableHead>
-                          <TableHead className="text-right">Details</TableHead>
+                          <TableHead className="text-right">View Details</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {estimates.map((estimate) => (
                           <TableRow key={estimate.id}>
-                            <TableCell>
+                            <TableCell className="w-[100px]">
                               <div className="flex items-center space-x-2">
                                 <span>{formatDate(estimate.estimateDate)}</span>
                                 <DataBadge 
@@ -269,7 +269,7 @@ export default function Estimates() {
                             <TableCell className="font-medium">
                               {estimate.estimateNumber}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="min-w-[200px]">
                               {estimate.memo || '-'}
                             </TableCell>
                             <TableCell>
