@@ -119,7 +119,7 @@ export default function Estimates() {
                   </p>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <SyncStatusDetail />
+                  {/* SyncStatusDetail moved to bottom */}
                 </div>
               </div>
 
@@ -288,6 +288,11 @@ export default function Estimates() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Data Synchronization Status */}
+              <div className="mt-6">
+                <SyncStatusDetail />
+              </div>
             </div>
           </div>
         </main>
