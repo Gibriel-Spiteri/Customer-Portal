@@ -1392,7 +1392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map NetSuite status codes to friendly names
       const mapStatus = (status: string): string => {
         const statusMap: Record<string, string> = {
-          'A': 'accepted',
+          'A': 'open',      // NetSuite displays 'A' as "OPEN"
           'B': 'sent',
           'C': 'closed',
           'E': 'expired',
