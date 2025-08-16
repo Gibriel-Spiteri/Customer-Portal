@@ -26,6 +26,7 @@ interface DashboardData {
     currency: string;
     dataFreshness: 'live' | 'cached';
     lastSyncAt: string;
+    crdRebateBalance?: string;
   } | null;
   recentOrders: Array<{
     id: string;
@@ -77,6 +78,11 @@ interface DashboardData {
   }>;
   pendingOrdersCount: number;
   monthlyTotal: string;
+  totalCounts?: {
+    activeOrders: number;
+    activeEstimates: number;
+    openCases: number;
+  };
 }
 
 interface EstimateData {
@@ -201,7 +207,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.recentOrders?.length || 0} active orders`
+                      `${dashboardData?.totalCounts?.activeOrders || dashboardData?.recentOrders?.length || 0} active orders`
                     )}
                   </p>
                 </div>
@@ -224,7 +230,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.recentEstimates?.length || 0} active quotes`
+                      `${dashboardData?.totalCounts?.activeEstimates || dashboardData?.recentEstimates?.length || 0} active quotes`
                     )}
                   </p>
                 </div>
@@ -272,7 +278,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open cases`
+                      `${dashboardData?.totalCounts?.openCases || dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open cases`
                     )}
                   </p>
                 </div>

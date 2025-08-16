@@ -985,7 +985,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const m2m = new NetSuiteM2M();
       
       // Fetch all data in parallel for efficiency
-      const [account, orders, invoices, payments, estimates, cases] = await Promise.all([
+      const [account, orders, invoices, payments, estimates, cases, allOrders, allEstimates, allCases] = await Promise.all([
         m2m.getCustomerAccount(req.user.netsuiteCustomerId).catch(err => {
           console.error('Failed to fetch account:', err);
           return null;
@@ -1009,11 +1009,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         m2m.getCustomerCases(req.user.netsuiteCustomerId, 5).catch(err => {
           console.error('Failed to fetch cases:', err);
           return [];
+        }),
+        // Fetch all orders to get accurate count
+        m2m.getCustomerOrders(req.user.netsuiteCustomerId, 100).catch(err => {
+          console.error('Failed to fetch all orders:', err);
+          return [];
+        }),
+        // Fetch all estimates to get accurate count
+        m2m.getCustomerEstimates(req.user.netsuiteCustomerId, 100).catch(err => {
+          console.error('Failed to fetch all estimates:', err);
+          return [];
+        }),
+        // Fetch all cases to get accurate count
+        m2m.getCustomerCases(req.user.netsuiteCustomerId, 100).catch(err => {
+          console.error('Failed to fetch all cases:', err);
+          return [];
         })
       ]);
       
-      // Calculate metrics
-      const pendingOrdersCount = orders.filter((order: any) => 
+      // Calculate metrics using all records for accurate counts
+      const activeOrdersCount = allOrders.filter((order: any) => 
+        ['A', 'B', 'D', 'E', 'F'].includes(order.status) // All non-closed, non-cancelled statuses
+      ).length;
+      
+      const activeEstimatesCount = allEstimates.filter((estimate: any) => 
+        estimate.status && !['Closed', 'Voided', 'Rejected'].includes(estimate.status)
+      ).length;
+      
+      const openCasesCount = allCases.filter((supportCase: any) => 
+        supportCase.status && supportCase.status.toLowerCase() !== 'closed'
+      ).length;
+      
+      const pendingOrdersCount = allOrders.filter((order: any) => 
         ['A', 'B', 'F'].includes(order.status) // Pending, Pending Approval, Pending Fulfillment
       ).length;
       
@@ -1081,6 +1108,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
         pendingOrdersCount,
         monthlyTotal,
+        // Add accurate counts for dashboard tiles
+        totalCounts: {
+          activeOrders: activeOrdersCount,
+          activeEstimates: activeEstimatesCount, 
+          openCases: openCasesCount
+        },
         metrics: {
           dataFreshness: 'live' as const,
           lastSyncAt: new Date().toISOString()
