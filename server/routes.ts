@@ -1466,21 +1466,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform the data to match frontend expectations
       const transformedEstimate = {
         id: estimate.id,
-        estimateNumber: estimate.documentNumber || estimate.tranid,
+        estimateNumber: estimate.documentnumber || estimate.tranid,
         status: estimate.status === 'A' ? 'open' : estimate.status?.toLowerCase(),
         total: estimate.total || '0',
-        subtotal: estimate.subtotal || '0',
+        subtotal: estimate.total || '0', // Use total as subtotal since subtotal not available
         tax: estimate.tax || '0',
-        shipping: estimate.shipping || '0',
+        shipping: '0', // Shipping not available in SuiteQL
         currency: estimate.currency || 'USD',
         estimateDate: estimate.date || estimate.trandate,
-        expiryDate: estimate.expirationDate || estimate.duedate,
+        expiryDate: estimate.expirationdate || estimate.duedate,
         memo: estimate.memo || '',
         tagFor: estimate.tagfor || '',
-        customerName: estimate.customerName,
+        customerName: estimate.customername,
         location: estimate.location,
-        shippingAddress: estimate.shippingAddress,
-        billingAddress: estimate.billingAddress,
+        shippingAddress: '', // Not available in SuiteQL
+        billingAddress: '', // Not available in SuiteQL
         items: estimate.items || []
       };
       

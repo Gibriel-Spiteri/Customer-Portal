@@ -336,7 +336,7 @@ export class NetSuiteM2M {
    * Fetch estimate details including line items
    */
   async getEstimateDetails(estimateId: string): Promise<any> {
-    // Main estimate query - simplified without mainline filter
+    // Main estimate query - only using available fields
     const mainQuery = `
       SELECT 
         transaction.id,
@@ -345,9 +345,7 @@ export class NetSuiteM2M {
         transaction.duedate AS expirationDate,
         transaction.status,
         transaction.total,
-        transaction.subtotal,
         transaction.taxtotal AS tax,
-        transaction.shippingcost AS shipping,
         transaction.memo,
         transaction.custbody_tagfor AS tagfor,
         BUILTIN.DF(transaction.entity) AS customerName,
@@ -356,9 +354,7 @@ export class NetSuiteM2M {
         BUILTIN.DF(transaction.currency) AS currency,
         transaction.exchangerate,
         transaction.createddate,
-        transaction.lastmodifieddate,
-        transaction.shipaddress AS shippingAddress,
-        transaction.billaddress AS billingAddress
+        transaction.lastmodifieddate
       FROM 
         transaction
       WHERE 
@@ -366,7 +362,7 @@ export class NetSuiteM2M {
         AND transaction.id = ${estimateId}
     `.trim();
 
-    // Line items query - using linesequencenumber instead of line
+    // Line items query - simplified to only available fields
     const linesQuery = `
       SELECT 
         transactionline.id AS lineId,
@@ -376,7 +372,7 @@ export class NetSuiteM2M {
         transactionline.quantity,
         transactionline.rate,
         transactionline.amount,
-        transactionline.description
+        transactionline.memo AS description
       FROM 
         transactionline
       WHERE 
