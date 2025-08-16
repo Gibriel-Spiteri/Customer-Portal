@@ -579,10 +579,12 @@ export class NetSuiteM2M {
         supportcase.lastmodifieddate,
         supportcase.category,
         supportcase.email,
+        supportcase.salesrep,
         supportcase.custevent_xprdetail,
         supportcase.custevent_svcsjpr_customer,
         supportcase.custevent_jprtype,
-        BUILTIN.DF(supportcase.status) AS statustext
+        BUILTIN.DF(supportcase.status) AS statustext,
+        BUILTIN.DF(supportcase.salesrep) AS salesrepname
       FROM 
         supportcase
       WHERE 

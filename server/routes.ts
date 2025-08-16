@@ -1467,19 +1467,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Transform NetSuite case data to match frontend format
-      const transformCase = (caseItem: any) => ({
-        id: caseItem.id,
-        subject: caseItem.title || `Case #${caseItem.casenumber}`,
-        description: caseItem.email ? `Created by: ${caseItem.email}` : 'Support case',
-        detail: caseItem.custevent_xprdetail || '',
-        status: mapStatus(caseItem.status, caseItem.statustext),
-        assignedTo: null, // NetSuite doesn't expose assigned rep in this query
-        createdAt: caseItem.createddate || new Date().toISOString(),
-        updatedAt: caseItem.lastmodifieddate || caseItem.createddate || new Date().toISOString(),
-        caseNumber: caseItem.casenumber,
-        category: caseItem.category,
-        messages: [] // Will be populated if we can fetch messages separately
-      });
+      const transformCase = (caseItem: any) => {
+        // Clean up salesrep name by removing any leading numbers and spaces
+        let salesRepName = caseItem.salesrepname || '';
+        if (salesRepName) {
+          // Remove any leading numbers, periods, hyphens, and spaces
+          salesRepName = salesRepName.replace(/^[\d\s\-\.]+/, '').trim();
+        }
+        
+        return {
+          id: caseItem.id,
+          subject: caseItem.title || `Case #${caseItem.casenumber}`,
+          description: salesRepName ? `Created by: ${salesRepName}` : 'Support case',
+          detail: caseItem.custevent_xprdetail || '',
+          status: mapStatus(caseItem.status, caseItem.statustext),
+          assignedTo: null, // NetSuite doesn't expose assigned rep in this query
+          createdAt: caseItem.createddate || new Date().toISOString(),
+          updatedAt: caseItem.lastmodifieddate || caseItem.createddate || new Date().toISOString(),
+          caseNumber: caseItem.casenumber,
+          category: caseItem.category,
+          messages: [] // Will be populated if we can fetch messages separately
+        };
+      };
       
       // Only fetch cases linked to the customer record directly
       console.log('Fetching support cases for customer ID:', req.user.netsuiteCustomerId);
