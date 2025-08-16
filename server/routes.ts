@@ -1471,9 +1471,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use company name if available, fallback to email
         let createdBy = caseItem.companyname || caseItem.email || 'Support case';
         
-        // Clean up company name by removing any leading numbers and formatting
-        if (createdBy) {
-          // Remove any leading numbers, periods, hyphens, and spaces
+        // If it's just a number like "1340", prepend "Customer"
+        if (createdBy && /^\d+$/.test(createdBy)) {
+          createdBy = `Customer ${createdBy}`;
+        } else if (createdBy && createdBy !== 'Support case') {
+          // Clean up company name by removing any leading numbers and formatting
           createdBy = createdBy.replace(/^[\d\s\-\.]+/, '').trim();
         }
         
