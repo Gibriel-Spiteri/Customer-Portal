@@ -27,7 +27,8 @@ import {
   X,
   Calendar,
   User,
-  Tag
+  Tag,
+  Filter
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -69,6 +70,7 @@ export default function Support() {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
     queryKey: ['/api/support/tickets'],
@@ -154,6 +156,18 @@ export default function Support() {
       minute: '2-digit',
     });
   };
+
+  // Get unique statuses from tickets
+  const getUniqueStatuses = () => {
+    if (!tickets) return [];
+    const statuses = new Set(tickets.map(ticket => ticket.status));
+    return Array.from(statuses).sort();
+  };
+
+  // Filter tickets based on selected status
+  const filteredTickets = tickets?.filter(ticket => 
+    statusFilter === 'all' || ticket.status === statusFilter
+  ) || [];
 
   if (!user) {
     return <div>Please log in to access support</div>;
@@ -297,11 +311,45 @@ export default function Support() {
               {/* Support Tickets */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Your Support Cases from NetSuite</CardTitle>
-                    <Badge variant="outline" className="text-xs">
-                      Synced from NetSuite
-                    </Badge>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Your Support Cases from NetSuite</CardTitle>
+                      <Badge variant="outline" className="text-xs">
+                        Synced from NetSuite
+                      </Badge>
+                    </div>
+                    
+                    {/* Status Filter */}
+                    {tickets && tickets.length > 0 && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-600">Filter by status:</span>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant={statusFilter === 'all' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setStatusFilter('all')}
+                            className={statusFilter === 'all' ? 'bg-netsuite-blue hover:bg-netsuite-light' : ''}
+                          >
+                            All ({tickets.length})
+                          </Button>
+                          {getUniqueStatuses().map(status => {
+                            const count = tickets.filter(t => t.status === status).length;
+                            return (
+                              <Button
+                                key={status}
+                                variant={statusFilter === status ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setStatusFilter(status)}
+                                className={statusFilter === status ? 'bg-netsuite-blue hover:bg-netsuite-light' : ''}
+                              >
+                                <span className="capitalize">{status.replace('_', ' ')}</span>
+                                <span className="ml-1">({count})</span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -327,9 +375,9 @@ export default function Support() {
                       <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Tickets</h3>
                       <p className="text-gray-600">Please try refreshing the page.</p>
                     </div>
-                  ) : tickets && tickets.length > 0 ? (
+                  ) : filteredTickets && filteredTickets.length > 0 ? (
                     <div className="space-y-4">
-                      {tickets.map((ticket) => (
+                      {filteredTickets.map((ticket) => (
                         <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
@@ -390,14 +438,31 @@ export default function Support() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <HelpCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Support Cases Found</h3>
-                      <p className="text-gray-600 mb-4">
-                        You don't have any open support cases in NetSuite.
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        To create a new support case, please contact our support team using the options above.
-                      </p>
+                      {tickets && tickets.length > 0 && filteredTickets.length === 0 ? (
+                        <>
+                          <Filter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Cases Found</h3>
+                          <p className="text-gray-600">No support cases match the selected status filter.</p>
+                          <Button
+                            onClick={() => setStatusFilter('all')}
+                            variant="outline"
+                            className="mt-4"
+                          >
+                            Clear Filter
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <HelpCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Support Cases Found</h3>
+                          <p className="text-gray-600 mb-4">
+                            You don't have any open support cases in NetSuite.
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            To create a new support case, please contact our support team using the options above.
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
                 </CardContent>
