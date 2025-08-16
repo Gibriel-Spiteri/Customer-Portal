@@ -1737,7 +1737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM 
           customrecord_crdrebate
         WHERE 
-          customrecord_crdrebate.custrecord_crdrebate_customer = '${customerId}'
+          customrecord_crdrebate.custrecord_crdrebate_customer = ${customerId}
         ORDER BY 
           customrecord_crdrebate.custrecord_crdrebate_date DESC
       `;
@@ -1766,27 +1766,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate total earned (type 1)
       const totalEarned = rebates
-        .filter((r: any) => r.typeid === '1')
+        .filter((r: any) => r.typeid === 1 || r.typeid === '1')
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
       // Calculate total redeemed (type 2)
       const totalRedeemed = rebates
-        .filter((r: any) => r.typeid === '2')
+        .filter((r: any) => r.typeid === 2 || r.typeid === '2')
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
       // Calculate total expired (type 3)
       const totalExpired = rebates
-        .filter((r: any) => r.typeid === '3')
+        .filter((r: any) => r.typeid === 3 || r.typeid === '3')
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
       // Calculate returns (type 4)
       const totalReturns = rebates
-        .filter((r: any) => r.typeid === '4')
+        .filter((r: any) => r.typeid === 4 || r.typeid === '4')
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
       // Calculate accommodations (type 5)
       const totalAccommodations = rebates
-        .filter((r: any) => r.typeid === '5')
+        .filter((r: any) => r.typeid === 5 || r.typeid === '5')
         .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
       
       // Log the totals for debugging
@@ -1798,11 +1798,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAccommodations,
         totalAvailable: totalEarned + totalRedeemed + totalExpired + totalReturns + totalAccommodations,
         counts: {
-          earned: rebates.filter((r: any) => r.typeid === '1').length,
-          redeemed: rebates.filter((r: any) => r.typeid === '2').length,
-          expired: rebates.filter((r: any) => r.typeid === '3').length,
-          returns: rebates.filter((r: any) => r.typeid === '4').length,
-          accommodations: rebates.filter((r: any) => r.typeid === '5').length
+          earned: rebates.filter((r: any) => r.typeid === 1 || r.typeid === '1').length,
+          redeemed: rebates.filter((r: any) => r.typeid === 2 || r.typeid === '2').length,
+          expired: rebates.filter((r: any) => r.typeid === 3 || r.typeid === '3').length,
+          returns: rebates.filter((r: any) => r.typeid === 4 || r.typeid === '4').length,
+          accommodations: rebates.filter((r: any) => r.typeid === 5 || r.typeid === '5').length
         }
       });
       
@@ -1823,11 +1823,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: rebate.categoryid,
           earnedPercent: rebate.earnedpercent,
           salesOrderRebateRate: rebate.salesorderrebaterate,
-          status: rebate.typeid === '1' ? 'Earned' :
-                  rebate.typeid === '2' ? 'Redeemed' :
-                  rebate.typeid === '3' ? 'Expired' :
-                  rebate.typeid === '4' ? 'Return' :
-                  rebate.typeid === '5' ? 'Accommodation' :
+          status: rebate.typeid === 1 || rebate.typeid === '1' ? 'Earned' :
+                  rebate.typeid === 2 || rebate.typeid === '2' ? 'Redeemed' :
+                  rebate.typeid === 3 || rebate.typeid === '3' ? 'Expired' :
+                  rebate.typeid === 4 || rebate.typeid === '4' ? 'Return' :
+                  rebate.typeid === 5 || rebate.typeid === '5' ? 'Accommodation' :
                   'Unknown'
         })),
         summary: {
