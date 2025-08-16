@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
   ShoppingCart, 
-  FileText, 
-  CreditCard, 
+  Calculator,
+  Star,
   Settings, 
-  HelpCircle 
+  HelpCircle,
+  Bug
 } from "lucide-react";
 
 const navigation = [
@@ -16,19 +17,24 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
+    name: 'Estimates',
+    href: '/estimates',
+    icon: Calculator,
+  },
+  {
     name: 'Sales Orders',
     href: '/orders',
     icon: ShoppingCart,
   },
   {
-    name: 'Payments',
-    href: '/payments',
-    icon: CreditCard,
+    name: 'Consumers Cash',
+    href: '/loyalty',
+    icon: Star,
   },
   {
-    name: 'Loyalty Program',
-    href: '/loyalty',
-    icon: Settings,
+    name: 'Support',
+    href: '/support',
+    icon: HelpCircle,
   },
   {
     name: 'Account Settings',
@@ -36,9 +42,9 @@ const navigation = [
     icon: Settings,
   },
   {
-    name: 'Support',
-    href: '/support',
-    icon: HelpCircle,
+    name: 'Debug Info',
+    href: '/debug',
+    icon: Bug,
   },
 ];
 
