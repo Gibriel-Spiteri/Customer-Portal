@@ -1468,17 +1468,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Transform NetSuite case data to match frontend format
       const transformCase = (caseItem: any) => {
-        // Clean up salesrep name by removing any leading numbers and spaces
-        let salesRepName = caseItem.salesrepname || '';
-        if (salesRepName) {
-          // Remove any leading numbers, periods, hyphens, and spaces
-          salesRepName = salesRepName.replace(/^[\d\s\-\.]+/, '').trim();
+        // Clean up email by extracting name part if it looks like "123 - John Smith"
+        let createdBy = caseItem.email || 'Support case';
+        if (createdBy && createdBy.includes(' - ')) {
+          // Extract the part after the dash and remove any leading numbers
+          const parts = createdBy.split(' - ');
+          if (parts.length > 1) {
+            createdBy = parts[1].trim();
+          }
         }
+        // Remove any leading numbers from the name
+        createdBy = createdBy.replace(/^[\d\s\-\.]+/, '').trim();
         
         return {
           id: caseItem.id,
           subject: caseItem.title || `Case #${caseItem.casenumber}`,
-          description: salesRepName ? `Created by: ${salesRepName}` : 'Support case',
+          description: createdBy ? `Created by: ${createdBy}` : 'Support case',
           detail: caseItem.custevent_xprdetail || '',
           status: mapStatus(caseItem.status, caseItem.statustext),
           assignedTo: null, // NetSuite doesn't expose assigned rep in this query
