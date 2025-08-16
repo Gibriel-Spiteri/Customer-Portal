@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Bug, User, Database, Wifi, WifiOff } from "lucide-react";
-import { SyncStatus } from "@/components/sync-status";
+import { SyncStatus, SyncStatusDetail } from "@/components/sync-status";
 
 export default function Debug() {
   const { user, token } = useAuth();
@@ -266,6 +266,16 @@ export default function Debug() {
             ) : (
               <p className="text-gray-500">No dashboard data available</p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Data Synchronization Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Synchronization Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SyncStatusDetail />
           </CardContent>
         </Card>
       </div>
