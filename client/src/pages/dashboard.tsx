@@ -249,7 +249,15 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900">Consumers Cash</h3>
-                  <p className="text-sm text-gray-600">View CRD rebate rewards</p>
+                  <p className="text-sm text-gray-600">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-20" />
+                    ) : dashboardData?.account?.crdRebateBalance ? (
+                      `Balance: ${formatCurrency(dashboardData.account.crdRebateBalance)}`
+                    ) : (
+                      'View CRD rebate rewards'
+                    )}
+                  </p>
                 </div>
               </div>
             </Link>

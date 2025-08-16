@@ -569,6 +569,7 @@ export class NetSuiteM2M {
         customer.email,
         customer.phone,
         BUILTIN.DF(customer.terms) AS paymentTerms,
+        customer.custentity_crd_rebate_balance AS crdRebateBalance,
         customer.datecreated,
         customer.lastmodifieddate
       FROM 

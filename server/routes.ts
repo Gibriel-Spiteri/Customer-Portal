@@ -1037,6 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         account: account ? {
           balance: account.balance || '0.00',
           creditLimit: account.creditlimit || '0.00',
+          crdRebateBalance: account.crdrebatebalance || '0.00',
           dataFreshness: 'live' as const
         } : null,
         recentOrders: orders.slice(0, 5).map((order: any) => ({
