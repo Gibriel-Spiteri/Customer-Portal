@@ -1463,7 +1463,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied to this estimate' });
       }
       
-      res.json(estimate);
+      // Transform the data to match frontend expectations
+      const transformedEstimate = {
+        id: estimate.id,
+        estimateNumber: estimate.documentNumber || estimate.tranid,
+        status: estimate.status === 'A' ? 'open' : estimate.status?.toLowerCase(),
+        total: estimate.total || '0',
+        subtotal: estimate.subtotal || '0',
+        tax: estimate.tax || '0',
+        shipping: estimate.shipping || '0',
+        currency: estimate.currency || 'USD',
+        estimateDate: estimate.date || estimate.trandate,
+        expiryDate: estimate.expirationDate || estimate.duedate,
+        memo: estimate.memo || '',
+        tagFor: estimate.tagfor || '',
+        customerName: estimate.customerName,
+        location: estimate.location,
+        shippingAddress: estimate.shippingAddress,
+        billingAddress: estimate.billingAddress,
+        items: estimate.items || []
+      };
+      
+      res.json(transformedEstimate);
     } catch (error: any) {
       console.error('Error fetching estimate details:', error);
       res.status(500).json({ message: 'Failed to fetch estimate details' });

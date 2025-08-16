@@ -16,6 +16,7 @@ import HomeRedirect from "@/pages/home-redirect";
 import Orders from "@/pages/orders";
 import OrderDetails from "@/pages/order-details";
 import Estimates from "@/pages/estimates";
+import EstimateDetails from "@/pages/estimate-details";
 import Invoices from "@/pages/invoices";
 import Payments from "@/pages/payments";
 import Loyalty from "@/pages/loyalty";
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/estimates" component={Estimates} />
+      <Route path="/estimates/:id" component={EstimateDetails} />
       <Route path="/invoices" component={Invoices} />
       <Route path="/payments" component={Payments} />
       <Route path="/loyalty" component={Loyalty} />

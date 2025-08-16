@@ -17,7 +17,7 @@ import {
   Calendar,
   DollarSign
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Table,
   TableBody,
@@ -57,6 +57,7 @@ interface Estimate {
 export default function Estimates() {
   const { user, token } = useAuth();
   const [showOAuthAuthorize, setShowOAuthAuthorize] = useState(false);
+  const [, setLocation] = useLocation();
 
   const { data: estimates = [], isLoading, error, refetch } = useQuery<Estimate[]>({
     queryKey: ['/api/estimates'],
@@ -279,7 +280,12 @@ export default function Estimates() {
                               {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
                             </TableCell>
                             <TableCell className="text-right whitespace-nowrap">
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setLocation(`/estimates/${estimate.id}`)}
+                                title="View estimate details"
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </TableCell>
