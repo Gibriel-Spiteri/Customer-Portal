@@ -1817,8 +1817,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rebate.expirationdate || '',
           rebate.applyingtxntranid || rebate.applyingtxnid || '',
           rebate.categoryid || '',
-          rebate.earnedpercent || '',
-          rebate.salesorderrebaterate || ''
+          rebate.earnedpercent ? (parseFloat(rebate.earnedpercent) * 100).toFixed(1) + '%' : '',
+          rebate.salesorderrebaterate ? (parseFloat(rebate.salesorderrebaterate) * 100).toFixed(1) + '%' : ''
         ];
       });
       
@@ -1968,8 +1968,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           expirationDate: rebate.expirationdate,
           applyingTransaction: rebate.applyingtxntranid || rebate.applyingtxnid,
           category: rebate.categoryid,
-          earnedPercent: rebate.earnedpercent,
-          salesOrderRebateRate: rebate.salesorderrebaterate,
+          earnedPercent: rebate.earnedpercent ? (parseFloat(rebate.earnedpercent) * 100).toFixed(1) : null,
+          salesOrderRebateRate: rebate.salesorderrebaterate ? (parseFloat(rebate.salesorderrebaterate) * 100).toFixed(1) : null,
           status: rebate.typeid === 1 || rebate.typeid === '1' ? 'Earned' :
                   rebate.typeid === 2 || rebate.typeid === '2' ? 'Redeemed' :
                   rebate.typeid === 3 || rebate.typeid === '3' ? 'Expired' :
