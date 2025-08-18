@@ -569,7 +569,8 @@ export class NetSuiteM2M {
         contact.phone,
         contact.mobilephone,
         contact.title,
-        contact.company
+        contact.company,
+        BUILTIN.DF(contact.id) AS displayname
       FROM 
         contact
       WHERE 
@@ -577,6 +578,7 @@ export class NetSuiteM2M {
     `.trim();
 
     const result = await this.executeSuiteQL(query, 100, 0);
+    console.log('NetSuite M2M: Raw contact data from NetSuite:', JSON.stringify(result.items, null, 2));
     return result.items || [];
   }
 

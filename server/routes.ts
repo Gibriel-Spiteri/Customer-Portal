@@ -1423,19 +1423,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contacts = await m2m.getCustomerContacts(req.user.netsuiteCustomerId);
       
       // Transform contacts to match frontend format
-      const transformedContacts = contacts.map((contact: any) => ({
-        id: contact.id,
-        firstName: contact.firstname,
-        lastName: contact.lastname,
-        fullName: `${contact.firstname || ''} ${contact.lastname || ''}`.trim(),
-        email: contact.email,
-        phone: contact.phone,
-        mobilePhone: contact.mobilephone,
-        title: contact.title,
-        isPrimary: false, // NetSuite doesn't have a primary flag in contact record
-        dataFreshness: 'live' as const,
-        lastSyncAt: new Date().toISOString()
-      }));
+      const transformedContacts = contacts.map((contact: any) => {
+        // Use displayname if available, otherwise try to build from first/last name or entityid
+        let fullName = contact.displayname || 
+                       `${contact.firstname || ''} ${contact.lastname || ''}`.trim() ||
+                       contact.entityid || 
+                       `Contact ${contact.id}`;
+        
+        return {
+          id: contact.id,
+          firstName: contact.firstname || '',
+          lastName: contact.lastname || '',
+          fullName: fullName,
+          email: contact.email || '',
+          phone: contact.phone || '',
+          mobilePhone: contact.mobilephone || '',
+          title: contact.title || '',
+          isPrimary: false, // NetSuite doesn't have a primary flag in contact record
+          dataFreshness: 'live' as const,
+          lastSyncAt: new Date().toISOString()
+        };
+      });
       
       res.json(transformedContacts);
     } catch (error: any) {
