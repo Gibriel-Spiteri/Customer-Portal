@@ -166,7 +166,7 @@ export default function Support() {
     '3': 'Escalated',
     '4': 'Re-Opened',
     '5': 'Closed',
-    '6': 'On Hold'
+    '6': 'On Hold (COR-CHECK PO)'
   };
 
   // Get unique statuses from tickets
@@ -345,7 +345,7 @@ export default function Support() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">
-                              All Open Cases ({tickets.length})
+                              All Cases ({tickets.length})
                             </SelectItem>
                             {getUniqueStatuses().map(status => {
                               const count = tickets.filter(t => t.status === status).length;

@@ -663,7 +663,6 @@ export class NetSuiteM2M {
         supportcase
       WHERE 
         supportcase.custevent_svcsjpr_customer = ${customerId}
-        AND supportcase.status IN (1, 2, 3, 4)
       ORDER BY 
         supportcase.createddate DESC
     `.trim();
