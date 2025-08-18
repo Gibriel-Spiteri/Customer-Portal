@@ -75,7 +75,7 @@ export default function Support() {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('open');
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
     queryKey: ['/api/support/tickets'],
@@ -185,7 +185,12 @@ export default function Support() {
 
   // Filter tickets based on selected status
   const filteredTickets = tickets?.filter(ticket => {
-    return statusFilter === 'all' || ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'open') {
+      // Show open cases: Not Started (1), In Progress (2), Escalated (3), Re-Opened (4)
+      return ['1', '2', '3', '4'].includes(ticket.status);
+    }
+    return ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
   }) || [];
 
   if (!user) {
@@ -351,6 +356,9 @@ export default function Support() {
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="open">
+                              All Open Cases ({tickets.filter(t => ['1', '2', '3', '4'].includes(t.status)).length})
+                            </SelectItem>
                             <SelectItem value="all">
                               All Cases ({tickets.length})
                             </SelectItem>
@@ -374,11 +382,11 @@ export default function Support() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
-                        {statusFilter !== 'all' && (
+                        {statusFilter !== 'open' && statusFilter !== 'all' && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setStatusFilter('all')}
+                            onClick={() => setStatusFilter('open')}
                             className="text-gray-500 hover:text-gray-700"
                           >
                             <X className="h-4 w-4 mr-1" />
