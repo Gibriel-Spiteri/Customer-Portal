@@ -1439,6 +1439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phone: contact.phone || '',
           mobilePhone: contact.mobilephone || '',
           title: contact.title || '',
+          role: contact.role || contact.contactrole || '',
           isPrimary: false, // NetSuite doesn't have a primary flag in contact record
           dataFreshness: 'live' as const,
           lastSyncAt: new Date().toISOString()

@@ -54,6 +54,7 @@ interface Contact {
   phone: string;
   mobilePhone?: string;
   title?: string;
+  role?: string;
   isPrimary: boolean;
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
@@ -379,7 +380,7 @@ export default function AccountSettings() {
                         {contacts.map((contact) => (
                           <div key={contact.id} className="p-4 border rounded-lg hover:bg-gray-50">
                             <div className="flex items-start justify-between">
-                              <div className="space-y-1">
+                              <div className="space-y-1 flex-1">
                                 <div className="flex items-center space-x-2">
                                   <h4 className="font-semibold text-gray-900">{contact.fullName}</h4>
                                   {contact.isPrimary && (
@@ -387,7 +388,14 @@ export default function AccountSettings() {
                                   )}
                                 </div>
                                 {contact.title && (
-                                  <p className="text-sm text-gray-600">{contact.title}</p>
+                                  <p className="text-sm text-gray-600">
+                                    <span className="font-medium">Title:</span> {contact.title}
+                                  </p>
+                                )}
+                                {contact.role && (
+                                  <p className="text-sm text-gray-600">
+                                    <span className="font-medium">Role:</span> {contact.role}
+                                  </p>
                                 )}
                                 <div className="flex flex-wrap gap-4 mt-2">
                                   {contact.email && (

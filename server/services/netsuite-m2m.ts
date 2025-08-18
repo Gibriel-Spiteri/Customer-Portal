@@ -570,7 +570,9 @@ export class NetSuiteM2M {
         contact.mobilephone,
         contact.title,
         contact.company,
-        BUILTIN.DF(contact.id) AS displayname
+        contact.contactrole,
+        BUILTIN.DF(contact.id) AS displayname,
+        BUILTIN.DF(contact.contactrole) AS role
       FROM 
         contact
       WHERE 
