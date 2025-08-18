@@ -323,7 +323,7 @@ export default function ConsumersCash() {
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">10%</div>
+            <div className="text-2xl font-bold">{data?.summary.customerRebateRate || '10'}%</div>
             <p className="text-xs text-muted-foreground">Active rate</p>
           </CardContent>
         </Card>

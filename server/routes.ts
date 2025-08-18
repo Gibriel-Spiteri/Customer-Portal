@@ -1907,6 +1907,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const netsuiteM2M = new NetSuiteM2M();
       
+      // First, fetch the customer's rebate rate
+      const customerQuery = `
+        SELECT 
+          custentity_crd_purchase_rebate_rate AS rebateRate
+        FROM 
+          customer
+        WHERE 
+          id = ${customerId}
+      `;
+      
+      const customerResponse = await netsuiteM2M.executeSuiteQL(customerQuery, 1);
+      const customerData = customerResponse.items?.[0];
+      const customerRebateRate = customerData?.rebaterate ? 
+        (parseFloat(customerData.rebaterate) * 100).toFixed(1) : '10';
+      
       // SuiteQL query to fetch all CRD rebate records with transaction IDs
       const query = `
         SELECT 
@@ -2027,7 +2042,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalAvailable: Math.max(0, totalAvailable).toFixed(2),
           totalExpired: Math.abs(totalExpired).toFixed(2),  // Convert negative to positive for display
           totalRedeemed: Math.abs(totalRedeemed).toFixed(2), // Convert negative to positive for display
-          totalRebates: rebates.length
+          totalRebates: rebates.length,
+          customerRebateRate: customerRebateRate
         }
       });
     } catch (error) {
