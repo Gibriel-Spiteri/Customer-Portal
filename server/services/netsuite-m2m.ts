@@ -637,7 +637,7 @@ export class NetSuiteM2M {
    */
   async getCustomerCases(customerId: string, customerEmail?: string, limit = 30): Promise<any[]> {
     // Search by custom field custevent_svcsjpr_customer that links cases to customers
-    // Also filter by custevent_jprtype = 1
+    // Filter by custevent_jprtype = 1 and exclude closed cases (status != 5)
     const query = `
       SELECT 
         supportcase.id,
@@ -652,13 +652,19 @@ export class NetSuiteM2M {
         supportcase.custevent_xprdetail,
         supportcase.custevent_svcsjpr_customer,
         supportcase.custevent_jprtype,
+        supportcase.custevent_svrcjpr_fudate AS followupdate,
+        supportcase.custevent_related_salesorder AS relatedsalesorder,
+        supportcase.assigned,
         BUILTIN.DF(supportcase.status) AS statustext,
-        BUILTIN.DF(supportcase.company) AS companyname
+        BUILTIN.DF(supportcase.company) AS companyname,
+        BUILTIN.DF(supportcase.custevent_related_salesorder) AS relatedsalesordernumber,
+        BUILTIN.DF(supportcase.assigned) AS assignedname
       FROM 
         supportcase
       WHERE 
         supportcase.custevent_svcsjpr_customer = ${customerId}
         AND supportcase.custevent_jprtype = 1
+        AND supportcase.status != 5
       ORDER BY 
         supportcase.createddate DESC
     `.trim();

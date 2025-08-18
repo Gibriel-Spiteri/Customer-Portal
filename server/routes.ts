@@ -1599,11 +1599,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: createdBy ? `Created by: ${createdBy}` : 'Support case',
           detail: caseItem.custevent_xprdetail || '',
           status: mapStatus(caseItem.status, caseItem.statustext),
-          assignedTo: null, // NetSuite doesn't expose assigned rep in this query
+          assignedTo: caseItem.assignedname || caseItem.assigned || null,
           createdAt: caseItem.createddate || new Date().toISOString(),
           updatedAt: caseItem.lastmodifieddate || caseItem.createddate || new Date().toISOString(),
           caseNumber: caseItem.casenumber,
           category: caseItem.category,
+          followUpDate: caseItem.followupdate || null,
+          relatedSalesOrder: caseItem.relatedsalesordernumber || caseItem.relatedsalesorder || null,
           messages: [] // Will be populated if we can fetch messages separately
         };
       };

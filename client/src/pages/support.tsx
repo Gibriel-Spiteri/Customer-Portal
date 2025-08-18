@@ -44,6 +44,8 @@ interface SupportTicket {
   updatedAt: string;
   caseNumber?: string;
   category?: string;
+  followUpDate?: string | null;
+  relatedSalesOrder?: string | null;
   messages?: CaseMessage[];
 }
 
@@ -415,6 +417,18 @@ export default function Support() {
                               <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {formatDate(ticket.createdAt)}</span>
                               {ticket.assignedTo && (
                                 <span className="ml-4">Assigned to: {ticket.assignedTo}</span>
+                              )}
+                              {ticket.followUpDate && (
+                                <span className="ml-4">
+                                  <Calendar className="inline h-3 w-3 mr-1" />
+                                  Follow up: {formatDate(ticket.followUpDate)}
+                                </span>
+                              )}
+                              {ticket.relatedSalesOrder && (
+                                <span className="ml-4">
+                                  <Tag className="inline h-3 w-3 mr-1" />
+                                  SO: {ticket.relatedSalesOrder}
+                                </span>
                               )}
                             </div>
                             <Button 
