@@ -178,7 +178,7 @@ export default function Support() {
 
   // Filter tickets based on selected status
   const filteredTickets = tickets?.filter(ticket => {
-    return statusFilter === 'all' || ticket.status === statusFilter;
+    return statusFilter === 'all' || ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
   }) || [];
 
   if (!user) {
@@ -347,16 +347,24 @@ export default function Support() {
                             <SelectItem value="all">
                               All Cases ({tickets.length})
                             </SelectItem>
-                            {getUniqueStatuses().map(status => {
-                              const count = tickets.filter(t => t.status === status).length;
-                              const statusName = statusNames[status] || status;
-                              return (
-                                <SelectItem key={status} value={status}>
-                                  <span>{statusName}</span>
-                                  <span className="ml-2 text-gray-500">({count})</span>
-                                </SelectItem>
-                              );
-                            })}
+                            <SelectItem value="1">
+                              Not Started ({tickets.filter(t => t.status === '1').length})
+                            </SelectItem>
+                            <SelectItem value="2">
+                              In Progress ({tickets.filter(t => t.status === '2').length})
+                            </SelectItem>
+                            <SelectItem value="3">
+                              Escalated ({tickets.filter(t => t.status === '3').length})
+                            </SelectItem>
+                            <SelectItem value="4">
+                              Re-Opened ({tickets.filter(t => t.status === '4').length})
+                            </SelectItem>
+                            <SelectItem value="5">
+                              Closed ({tickets.filter(t => t.status === '5').length})
+                            </SelectItem>
+                            <SelectItem value="6">
+                              On Hold (COR-CHECK PO) ({tickets.filter(t => t.status === '6').length})
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         {statusFilter !== 'all' && (
