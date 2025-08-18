@@ -1923,29 +1923,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (parseFloat(customerData.rebaterate) * 100).toFixed(1) : '10';
       
       // Fetch previous 12 months qualifying sales for rebate level
+      const today = new Date();
       const twelveMonthsAgo = new Date();
-      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-      const startDate = `${twelveMonthsAgo.getMonth() + 1}/${twelveMonthsAgo.getDate()}/${twelveMonthsAgo.getFullYear()}`;
-      const endDate = `${new Date().getMonth() + 1}/${new Date().getDate()}/${new Date().getFullYear()}`;
+      twelveMonthsAgo.setFullYear(today.getFullYear() - 1);
+      
+      // Format dates as MM/DD/YYYY
+      const startDate = `${(twelveMonthsAgo.getMonth() + 1).toString().padStart(2, '0')}/${twelveMonthsAgo.getDate().toString().padStart(2, '0')}/${twelveMonthsAgo.getFullYear()}`;
+      const endDate = `${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getDate().toString().padStart(2, '0')}/${today.getFullYear()}`;
+      
+      console.log('Date range for qualifying sales:', { startDate, endDate });
       
       const salesQuery = `
         SELECT 
-          SUM(transactionline.netamount) AS qualifyingSales
+          SUM(transaction.total) AS qualifyingSales
         FROM 
-          transactionline
-          INNER JOIN transaction ON transactionline.transaction = transaction.id
+          transaction
         WHERE 
           transaction.entity = ${customerId}
           AND transaction.type = 'SalesOrd'
           AND transaction.trandate >= '${startDate}'
           AND transaction.trandate <= '${endDate}'
-          AND transactionline.mainline = 'F'
-          AND transactionline.itemtype IN ('Inventory', 'NonInvtPart', 'Kit', 'Assembly')
       `;
       
+      console.log('Qualifying sales query:', salesQuery);
       const salesResponse = await netsuiteM2M.executeSuiteQL(salesQuery, 1);
+      console.log('Qualifying sales response:', salesResponse);
       const salesData = salesResponse.items?.[0];
-      const qualifyingSales = salesData?.qualifyingsales || '0';
+      // NetSuite returns field names in lowercase
+      const qualifyingSales = salesData?.qualifyingsales || salesData?.QUALIFYINGSALES || '0';
+      console.log('Qualifying sales amount:', qualifyingSales);
       
       // SuiteQL query to fetch all CRD rebate records with transaction IDs
       const query = `
