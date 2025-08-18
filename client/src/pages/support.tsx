@@ -31,7 +31,9 @@ import {
   Calendar,
   User,
   Tag,
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -76,6 +78,8 @@ export default function Support() {
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('open');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
     queryKey: ['/api/support/tickets'],
@@ -192,6 +196,17 @@ export default function Support() {
     }
     return ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
   }) || [];
+
+  // Reset to page 1 when filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  // Paginate the filtered tickets
+  const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
 
   if (!user) {
     return <div>Please log in to access support</div>;
@@ -421,8 +436,9 @@ export default function Support() {
                       <p className="text-gray-600">Please try refreshing the page.</p>
                     </div>
                   ) : filteredTickets && filteredTickets.length > 0 ? (
-                    <div className="space-y-4">
-                      {filteredTickets.map((ticket) => (
+                    <>
+                      <div className="space-y-4">
+                        {paginatedTickets.map((ticket) => (
                         <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
@@ -499,6 +515,65 @@ export default function Support() {
                         </div>
                       ))}
                     </div>
+                    
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                        <div className="text-sm text-gray-500">
+                          Showing {startIndex + 1} to {Math.min(endIndex, filteredTickets.length)} of {filteredTickets.length} cases
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            Previous
+                          </Button>
+                          
+                          {/* Page numbers */}
+                          <div className="flex space-x-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              let pageNum;
+                              if (totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                              } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = currentPage - 2 + i;
+                              }
+                              
+                              return (
+                                <Button
+                                  key={pageNum}
+                                  variant={currentPage === pageNum ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setCurrentPage(pageNum)}
+                                  className="w-8 h-8 p-0"
+                                >
+                                  {pageNum}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    </>
                   ) : (
                     <div className="text-center py-8">
                       {tickets && tickets.length > 0 && filteredTickets.length === 0 ? (
