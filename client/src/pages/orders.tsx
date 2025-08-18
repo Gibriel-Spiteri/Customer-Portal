@@ -272,91 +272,161 @@ export default function Orders() {
                 </div>
               </div>
 
-              {/* Tabs for different views */}
-              <Tabs value={activeView} onValueChange={setActiveView} className="mb-6">
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="ready-for-delivery" className="flex items-center gap-1">
-                    <Truck className="h-4 w-4" />
-                    <span className="hidden lg:inline">Ready</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.readyForDelivery}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="recent" className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span className="hidden sm:inline">Recent</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.recent}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="pending" className="flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Pending</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.pending}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="high-value" className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="hidden lg:inline">High Value</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.highValue}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="completed" className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Completed</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.completed}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="all" className="flex items-center gap-1">
-                    <Package className="h-4 w-4" />
-                    <span className="hidden sm:inline">All</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.all}
-                    </Badge>
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Filters and Search - applies to all tabs */}
-                <Card className="mt-4">
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="flex-1">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            placeholder="Search by order number..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
+              {/* Mobile-friendly view selector */}
+              <div className="mb-6 block sm:hidden">
+                <Select value={activeView} onValueChange={setActiveView}>
+                  <SelectTrigger className="w-full">
+                    <div className="flex items-center gap-2">
+                      {activeView === 'ready-for-delivery' && <Truck className="h-4 w-4" />}
+                      {activeView === 'recent' && <Calendar className="h-4 w-4" />}
+                      {activeView === 'pending' && <AlertCircle className="h-4 w-4" />}
+                      {activeView === 'high-value' && <DollarSign className="h-4 w-4" />}
+                      {activeView === 'completed' && <CheckCircle className="h-4 w-4" />}
+                      {activeView === 'all' && <Package className="h-4 w-4" />}
+                      <span>
+                        {activeView === 'ready-for-delivery' && `Ready for Delivery (${viewCounts.readyForDelivery})`}
+                        {activeView === 'recent' && `Recent Orders (${viewCounts.recent})`}
+                        {activeView === 'pending' && `Pending Orders (${viewCounts.pending})`}
+                        {activeView === 'high-value' && `High Value (${viewCounts.highValue})`}
+                        {activeView === 'completed' && `Completed (${viewCounts.completed})`}
+                        {activeView === 'all' && `All Orders (${viewCounts.all})`}
+                      </span>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ready-for-delivery">
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-4 w-4" />
+                        <span>Ready for Delivery</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.readyForDelivery}</Badge>
                       </div>
-                      <div className="sm:w-48">
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger>
-                            <Filter className="h-4 w-4 mr-2" />
-                            <SelectValue placeholder="Filter by status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="pending approval">Pending Approval</SelectItem>
-                            <SelectItem value="pending fulfillment">Pending Fulfillment</SelectItem>
-                            <SelectItem value="pending billing">Pending Billing</SelectItem>
-                            <SelectItem value="partially fulfilled">Partially Fulfilled</SelectItem>
-                            <SelectItem value="fully billed">Fully Billed</SelectItem>
-                            <SelectItem value="closed">Closed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    </SelectItem>
+                    <SelectItem value="recent">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>Recent Orders</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.recent}</Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="pending">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>Pending Orders</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.pending}</Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="high-value">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span>High Value</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.highValue}</Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Completed</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.completed}</Badge>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="all">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        <span>All Orders</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.all}</Badge>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Desktop tabs - hidden on mobile */}
+              <div className="hidden sm:block mb-6">
+                <Tabs value={activeView} onValueChange={setActiveView}>
+                  <TabsList className="w-full overflow-x-auto flex justify-start">
+                    <TabsTrigger value="ready-for-delivery" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <Truck className="h-4 w-4" />
+                      <span>Ready for Delivery</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.readyForDelivery}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="recent" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>Recent</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.recent}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="pending" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Pending</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.pending}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="high-value" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span>High Value</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.highValue}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="completed" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Completed</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.completed}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="all" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <Package className="h-4 w-4" />
+                      <span>All</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.all}
+                      </Badge>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {/* Filters and Search - applies to all views */}
+              <Card className="mb-6">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Search by order number..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </Tabs>
+                    <div className="sm:w-48">
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger>
+                          <Filter className="h-4 w-4 mr-2" />
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="pending approval">Pending Approval</SelectItem>
+                          <SelectItem value="pending fulfillment">Pending Fulfillment</SelectItem>
+                          <SelectItem value="pending billing">Pending Billing</SelectItem>
+                          <SelectItem value="partially fulfilled">Partially Fulfilled</SelectItem>
+                          <SelectItem value="fully billed">Fully Billed</SelectItem>
+                          <SelectItem value="closed">Closed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Error State */}
               {error && (
