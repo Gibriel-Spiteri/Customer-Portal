@@ -493,46 +493,6 @@ export default function AccountSettings() {
 
                 {/* Password Change */}
                 <ChangePassword />
-
-                {/* Data Sync Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Data Synchronization Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h3 className="font-medium text-blue-800 mb-2">NetSuite Integration Status</h3>
-                        <div className="text-sm text-blue-700 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span>Real-time Sync (Orders, Payments):</span>
-                            <span className="font-medium">Active</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span>Batch Sync (Customer Data, History):</span>
-                            <span className="font-medium">Every 10 minutes</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span>NetSuite Customer ID:</span>
-                            <span className="font-medium">{user.id}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between py-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900">Notification Preferences</h3>
-                          <p className="text-sm text-gray-500">
-                            Configure how you receive updates about your account
-                          </p>
-                        </div>
-                        <Button variant="outline">
-                          Configure
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </div>
           </div>
