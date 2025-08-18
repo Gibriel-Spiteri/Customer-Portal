@@ -439,7 +439,7 @@ export default function Support() {
                     <>
                       <div className="space-y-4">
                         {paginatedTickets.map((ticket) => (
-                        <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
                               {ticket.subject}
