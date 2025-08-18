@@ -73,7 +73,7 @@ export default function Orders() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
-  const [activeView, setActiveView] = useState("all");
+  const [activeView, setActiveView] = useState("ready-for-delivery");
 
   const { data: orders, isLoading, error, refetch } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
@@ -152,6 +152,15 @@ export default function Orders() {
     
     // Apply view-specific filtering
     switch (viewType) {
+      case 'ready-for-delivery':
+        // Show orders that are fulfilled and ready for delivery
+        viewFiltered = viewFiltered.filter(order => 
+          order.status === 'partially fulfilled' || 
+          order.status === 'pending billing' ||
+          (order.status === 'fully billed' && !order.deliveryDate)
+        );
+        break;
+        
       case 'recent':
         // Show orders from the last 30 days
         const thirtyDaysAgo = new Date();
@@ -169,18 +178,18 @@ export default function Orders() {
         );
         break;
       
+      case 'high-value':
+        // Show orders above $10,000
+        viewFiltered = viewFiltered.filter(order => 
+          parseFloat(order.totalAmount) >= 10000
+        );
+        break;
+        
       case 'completed':
         // Show completed orders
         viewFiltered = viewFiltered.filter(order => 
           order.status === 'closed' || 
           order.status === 'fully billed'
-        );
-        break;
-      
-      case 'high-value':
-        // Show orders above $10,000
-        viewFiltered = viewFiltered.filter(order => 
-          parseFloat(order.totalAmount) >= 10000
         );
         break;
       
@@ -206,23 +215,28 @@ export default function Orders() {
 
   // Get counts for each view
   const getViewCounts = () => {
-    if (!orders) return { all: 0, recent: 0, pending: 0, completed: 0, highValue: 0 };
+    if (!orders) return { readyForDelivery: 0, recent: 0, pending: 0, highValue: 0, completed: 0, all: 0 };
     
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     return {
-      all: orders.length,
+      readyForDelivery: orders.filter(order => 
+        order.status === 'partially fulfilled' || 
+        order.status === 'pending billing' ||
+        (order.status === 'fully billed' && !order.deliveryDate)
+      ).length,
       recent: orders.filter(order => new Date(order.orderDate) >= thirtyDaysAgo).length,
       pending: orders.filter(order => 
         order.status.toLowerCase().includes('pending') || 
         order.status === 'partially fulfilled'
       ).length,
+      highValue: orders.filter(order => parseFloat(order.totalAmount) >= 10000).length,
       completed: orders.filter(order => 
         order.status === 'closed' || 
         order.status === 'fully billed'
       ).length,
-      highValue: orders.filter(order => parseFloat(order.totalAmount) >= 10000).length
+      all: orders.length
     };
   };
   
@@ -260,12 +274,12 @@ export default function Orders() {
 
               {/* Tabs for different views */}
               <Tabs value={activeView} onValueChange={setActiveView} className="mb-6">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="all" className="flex items-center gap-1">
-                    <Package className="h-4 w-4" />
-                    <span className="hidden sm:inline">All</span>
+                <TabsList className="grid w-full grid-cols-6">
+                  <TabsTrigger value="ready-for-delivery" className="flex items-center gap-1">
+                    <Truck className="h-4 w-4" />
+                    <span className="hidden lg:inline">Ready</span>
                     <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.all}
+                      {viewCounts.readyForDelivery}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="recent" className="flex items-center gap-1">
@@ -282,6 +296,13 @@ export default function Orders() {
                       {viewCounts.pending}
                     </Badge>
                   </TabsTrigger>
+                  <TabsTrigger value="high-value" className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="hidden lg:inline">High Value</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1">
+                      {viewCounts.highValue}
+                    </Badge>
+                  </TabsTrigger>
                   <TabsTrigger value="completed" className="flex items-center gap-1">
                     <CheckCircle className="h-4 w-4" />
                     <span className="hidden sm:inline">Completed</span>
@@ -289,11 +310,11 @@ export default function Orders() {
                       {viewCounts.completed}
                     </Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="high-value" className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="hidden sm:inline">High Value</span>
+                  <TabsTrigger value="all" className="flex items-center gap-1">
+                    <Package className="h-4 w-4" />
+                    <span className="hidden sm:inline">All</span>
                     <Badge variant="secondary" className="ml-1 h-5 px-1">
-                      {viewCounts.highValue}
+                      {viewCounts.all}
                     </Badge>
                   </TabsTrigger>
                 </TabsList>
