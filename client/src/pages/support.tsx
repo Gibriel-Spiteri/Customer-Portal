@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
