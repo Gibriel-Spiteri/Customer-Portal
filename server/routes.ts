@@ -1391,6 +1391,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysOverdue: accountData.daysoverdue || accountData.daysOverdue || 0,
         email: accountData.email,
         phone: accountData.phone,
+        altPhone: accountData.altphone,
+        mobilePhone: accountData.mobilephone || accountData.mobilePhone,
+        defaultAddress: accountData.defaultaddress || accountData.defaultAddress,
         unbilledOrders: accountData.unbilledorders || accountData.unbilledOrders || '0.00',
         depositBalance: accountData.depositbalance || accountData.depositBalance || '0.00',
         paymentTerms: accountData.paymentterms || accountData.paymentTerms || 'Net 30',
@@ -1402,6 +1405,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error fetching account from NetSuite:', error);
       res.status(500).json({ message: 'Failed to fetch account from NetSuite' });
+    }
+  });
+
+  // Customer Contacts - Fetch from NetSuite using SuiteQL
+  app.get('/api/customer-contacts', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      // Check if NetSuite M2M is configured and user has customer ID
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
+        console.log('NetSuite M2M not configured or no customer ID, returning empty contacts');
+        return res.json([]);
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      const contacts = await m2m.getCustomerContacts(req.user.netsuiteCustomerId);
+      
+      // Transform contacts to match frontend format
+      const transformedContacts = contacts.map((contact: any) => ({
+        id: contact.id,
+        firstName: contact.firstname,
+        lastName: contact.lastname,
+        fullName: `${contact.firstname || ''} ${contact.lastname || ''}`.trim(),
+        email: contact.email,
+        phone: contact.phone,
+        mobilePhone: contact.mobilephone,
+        title: contact.title,
+        isPrimary: false, // NetSuite doesn't have a primary flag in contact record
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
+      }));
+      
+      res.json(transformedContacts);
+    } catch (error: any) {
+      console.error('Error fetching contacts from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch contacts from NetSuite' });
     }
   });
 

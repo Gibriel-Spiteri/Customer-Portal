@@ -556,6 +556,31 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Fetch customer contacts
+   */
+  async getCustomerContacts(customerId: string): Promise<any[]> {
+    const query = `
+      SELECT 
+        contact.id,
+        contact.entityid,
+        contact.firstname,
+        contact.lastname,
+        contact.email,
+        contact.phone,
+        contact.mobilephone,
+        contact.title,
+        contact.company
+      FROM 
+        contact
+      WHERE 
+        contact.company = ${customerId}
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, 100, 0);
+    return result.items || [];
+  }
+
+  /**
    * Fetch customer account balance and credit information
    */
   async getCustomerAccount(customerId: string): Promise<any> {
@@ -567,6 +592,9 @@ export class NetSuiteM2M {
         customer.creditlimit,
         customer.email,
         customer.phone,
+        customer.altphone,
+        customer.custentity_mobile_phone AS mobilePhone,
+        customer.defaultaddress,
         BUILTIN.DF(customer.terms) AS paymentTerms,
         customer.custentity_crd_rebate_balance AS crdRebateBalance,
         customer.datecreated,

@@ -20,7 +20,11 @@ import {
   CreditCard,
   Shield,
   Save,
-  Loader2
+  Loader2,
+  Phone,
+  MapPin,
+  Users,
+  Smartphone
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { ChangePassword } from "@/components/change-password";
@@ -32,6 +36,25 @@ interface Account {
   creditLimit: string | null;
   currency: string;
   isActive: boolean;
+  phone?: string;
+  altPhone?: string;
+  mobilePhone?: string;
+  defaultAddress?: string;
+  email?: string;
+  dataFreshness: 'live' | 'cached';
+  lastSyncAt: string;
+}
+
+interface Contact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  mobilePhone?: string;
+  title?: string;
+  isPrimary: boolean;
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
 }
@@ -56,6 +79,11 @@ export default function AccountSettings() {
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['/api/profile'],
+    enabled: !!token,
+  });
+
+  const { data: contacts, isLoading: contactsLoading } = useQuery<Contact[]>({
+    queryKey: ['/api/customer-contacts'],
     enabled: !!token,
   });
 
@@ -197,6 +225,146 @@ export default function AccountSettings() {
                       </div>
                     ) : (
                       <p className="text-gray-500">No account information available</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Contact Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Phone className="h-5 w-5" />
+                      <span>Contact Information</span>
+                      {account && (
+                        <DataBadge 
+                          freshness={account.dataFreshness}
+                          lastSync={account.lastSyncAt}
+                        />
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {account?.phone && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-500">Primary Phone</Label>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <p className="text-gray-900">{account.phone}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {account?.altPhone && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-500">Alternate Phone</Label>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <p className="text-gray-900">{account.altPhone}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {account?.mobilePhone && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-500">Mobile Phone</Label>
+                          <div className="flex items-center space-x-2">
+                            <Smartphone className="h-4 w-4 text-gray-400" />
+                            <p className="text-gray-900">{account.mobilePhone}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {account?.email && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-500">Email</Label>
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4 text-gray-400" />
+                            <p className="text-gray-900">{account.email}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {account?.defaultAddress && (
+                      <div className="mt-6 pt-6 border-t">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-500">Default Address</Label>
+                          <div className="flex items-start space-x-2">
+                            <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                            <p className="text-gray-900 whitespace-pre-line">{account.defaultAddress}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!account?.phone && !account?.altPhone && !account?.mobilePhone && !account?.email && !account?.defaultAddress && (
+                      <p className="text-gray-500">No contact information available</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Customer Contacts */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Users className="h-5 w-5" />
+                      <span>Customer Contacts</span>
+                      <DataBadge freshness="live" />
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {contactsLoading ? (
+                      <div className="space-y-4">
+                        {[...Array(2)].map((_, i) => (
+                          <div key={i} className="p-4 border rounded-lg">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+                            <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : contacts && contacts.length > 0 ? (
+                      <div className="space-y-4">
+                        {contacts.map((contact) => (
+                          <div key={contact.id} className="p-4 border rounded-lg hover:bg-gray-50">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="font-semibold text-gray-900">{contact.fullName}</h4>
+                                  {contact.isPrimary && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Primary</span>
+                                  )}
+                                </div>
+                                {contact.title && (
+                                  <p className="text-sm text-gray-600">{contact.title}</p>
+                                )}
+                                <div className="flex flex-wrap gap-4 mt-2">
+                                  {contact.email && (
+                                    <div className="flex items-center space-x-1">
+                                      <Mail className="h-3 w-3 text-gray-400" />
+                                      <span className="text-sm text-gray-600">{contact.email}</span>
+                                    </div>
+                                  )}
+                                  {contact.phone && (
+                                    <div className="flex items-center space-x-1">
+                                      <Phone className="h-3 w-3 text-gray-400" />
+                                      <span className="text-sm text-gray-600">{contact.phone}</span>
+                                    </div>
+                                  )}
+                                  {contact.mobilePhone && (
+                                    <div className="flex items-center space-x-1">
+                                      <Smartphone className="h-3 w-3 text-gray-400" />
+                                      <span className="text-sm text-gray-600">{contact.mobilePhone}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">No contacts found for this customer</p>
                     )}
                   </CardContent>
                 </Card>
