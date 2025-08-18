@@ -157,7 +157,7 @@ export default function Orders() {
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
                     <p className="mt-1 text-gray-600">
-                      Track and manage your orders with real-time updates from NetSuite.
+                      Track and manage your orders
                     </p>
                   </div>
                   <div className="flex items-center space-x-3">
