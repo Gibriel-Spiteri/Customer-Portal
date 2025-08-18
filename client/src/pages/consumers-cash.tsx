@@ -413,12 +413,6 @@ export default function ConsumersCash() {
                           ) : null}
                         </div>
                       )}
-                      
-                      {rebate.applyingTransaction && (
-                        <div className="text-sm text-blue-600">
-                          Applied to transaction: {rebate.applyingTransaction}
-                        </div>
-                      )}
                     </div>
                   </div>
                   
