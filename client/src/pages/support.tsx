@@ -73,7 +73,6 @@ export default function Support() {
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
     queryKey: ['/api/support/tickets'],
@@ -160,6 +159,16 @@ export default function Support() {
     });
   };
 
+  // Map status codes to names
+  const statusNames: Record<string, string> = {
+    '1': 'Not Started',
+    '2': 'In Progress',
+    '3': 'Escalated',
+    '4': 'Re-Opened',
+    '5': 'Closed',
+    '6': 'On Hold'
+  };
+
   // Get unique statuses from tickets
   const getUniqueStatuses = () => {
     if (!tickets) return [];
@@ -167,18 +176,9 @@ export default function Support() {
     return Array.from(statuses).sort();
   };
 
-  // Get unique types/categories from tickets
-  const getUniqueTypes = () => {
-    if (!tickets) return [];
-    const types = new Set(tickets.map(ticket => ticket.category).filter(Boolean));
-    return Array.from(types).sort();
-  };
-
-  // Filter tickets based on selected status and type
+  // Filter tickets based on selected status
   const filteredTickets = tickets?.filter(ticket => {
-    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
-    const matchesType = typeFilter === 'all' || ticket.category === typeFilter;
-    return matchesStatus && matchesType;
+    return statusFilter === 'all' || ticket.status === statusFilter;
   }) || [];
 
   if (!user) {
@@ -331,78 +331,43 @@ export default function Support() {
                       </Badge>
                     </div>
                     
-                    {/* Filters */}
+                    {/* Status Filter */}
                     {tickets && tickets.length > 0 && (
-                      <div className="flex flex-col md:flex-row gap-4">
-                        {/* Status Filter */}
-                        <div className="flex items-center space-x-3">
-                          <span className="text-sm font-medium text-gray-600">Status:</span>
-                          <Select
-                            value={statusFilter}
-                            onValueChange={setStatusFilter}
-                          >
-                            <SelectTrigger className="w-[180px]">
-                              <Filter className="h-4 w-4 mr-2" />
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">
-                                All Statuses ({tickets.length})
-                              </SelectItem>
-                              {getUniqueStatuses().map(status => {
-                                const count = tickets.filter(t => t.status === status).length;
-                                return (
-                                  <SelectItem key={status} value={status}>
-                                    <span className="capitalize">{status.replace('_', ' ')}</span>
-                                    <span className="ml-2 text-gray-500">({count})</span>
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Type Filter */}
-                        <div className="flex items-center space-x-3">
-                          <span className="text-sm font-medium text-gray-600">Type:</span>
-                          <Select
-                            value={typeFilter}
-                            onValueChange={setTypeFilter}
-                          >
-                            <SelectTrigger className="w-[180px]">
-                              <Tag className="h-4 w-4 mr-2" />
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">
-                                All Types ({tickets.length})
-                              </SelectItem>
-                              {getUniqueTypes().map(type => {
-                                const count = tickets.filter(t => t.category === type).length;
-                                return (
-                                  <SelectItem key={type} value={type}>
-                                    <span>{type}</span>
-                                    <span className="ml-2 text-gray-500">({count})</span>
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Clear Filters Button */}
-                        {(statusFilter !== 'all' || typeFilter !== 'all') && (
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm font-medium text-gray-600">Filter by status:</span>
+                        <Select
+                          value={statusFilter}
+                          onValueChange={setStatusFilter}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <Filter className="h-4 w-4 mr-2" />
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              All Open Cases ({tickets.length})
+                            </SelectItem>
+                            {getUniqueStatuses().map(status => {
+                              const count = tickets.filter(t => t.status === status).length;
+                              const statusName = statusNames[status] || status;
+                              return (
+                                <SelectItem key={status} value={status}>
+                                  <span>{statusName}</span>
+                                  <span className="ml-2 text-gray-500">({count})</span>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        {statusFilter !== 'all' && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setStatusFilter('all');
-                              setTypeFilter('all');
-                            }}
+                            onClick={() => setStatusFilter('all')}
                             className="text-gray-500 hover:text-gray-700"
                           >
                             <X className="h-4 w-4 mr-1" />
-                            Clear Filters
+                            Clear Filter
                           </Button>
                         )}
                       </div>
@@ -517,16 +482,13 @@ export default function Support() {
                         <>
                           <Filter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <h3 className="text-lg font-medium text-gray-900 mb-2">No Cases Found</h3>
-                          <p className="text-gray-600">No support cases match the selected filters.</p>
+                          <p className="text-gray-600">No support cases match the selected status filter.</p>
                           <Button
-                            onClick={() => {
-                              setStatusFilter('all');
-                              setTypeFilter('all');
-                            }}
+                            onClick={() => setStatusFilter('all')}
                             variant="outline"
                             className="mt-4"
                           >
-                            Clear Filters
+                            Clear Filter
                           </Button>
                         </>
                       ) : (
