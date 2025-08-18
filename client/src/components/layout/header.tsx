@@ -67,11 +67,11 @@ export function Header() {
                         {getInitials(user.firstName, user.lastName, user.email)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden md:block font-medium">
+                    <span className="hidden md:block font-medium uppercase">
                       {user.firstName || user.lastName ? (
                         `${user.firstName || ''} ${user.lastName || ''}`.trim()
                       ) : (
-                        user.email
+                        user.companyName || 'Account'
                       )}
                     </span>
                     <ChevronDown className="h-4 w-4" />
@@ -79,18 +79,16 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium uppercase">
                       {user.firstName || user.lastName ? (
                         `${user.firstName || ''} ${user.lastName || ''}`.trim()
                       ) : (
-                        user.email
+                        user.companyName || 'Account'
                       )}
                     </p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
                     {user.companyName && (
                       <p className="text-xs text-gray-500">{user.companyName}</p>
                     )}
-
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
