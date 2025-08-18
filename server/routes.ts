@@ -56,7 +56,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   }
 };
 
-// Middleware to validate customer center access
+// Middleware to validate customer center access and customer status
 const validateCustomerAccess = async (req: any, res: any, next: any) => {
   const user = req.user;
   
@@ -75,6 +75,41 @@ const validateCustomerAccess = async (req: any, res: any, next: any) => {
     };
     
     console.log('Customer center access validated for NetSuite customer:', user.netsuiteCustomerId);
+  }
+  
+  // Check customer status for all NetSuite users
+  if (user.netsuiteCustomerId) {
+    try {
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const customerData = await m2m.getCustomerAccount(user.netsuiteCustomerId);
+      
+      const customerStatus = customerData.customerstatus;
+      
+      if (customerStatus === '2' || customerStatus === 2) {
+        return res.status(403).json({ 
+          message: 'Your Account is on Hold. Speak to a Store Manager for more information.',
+          statusCode: 'GLOBAL_HOLD'
+        });
+      }
+      
+      if (customerStatus === '3' || customerStatus === 3) {
+        return res.status(403).json({ 
+          message: 'Your Account has been discontinued.',
+          statusCode: 'DISCONTINUED'
+        });
+      }
+      
+      if (customerStatus === '7' || customerStatus === 7) {
+        return res.status(403).json({ 
+          message: 'Your Account is on Contact Hold. Please contact support for assistance.',
+          statusCode: 'CONTACT_HOLD'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking customer status in middleware:', error);
+      // Allow access if we can't check status - don't block due to API errors
+    }
   }
   
   next();
@@ -614,6 +649,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date(),
       });
 
+      // Check customer status if user has NetSuite customer ID
+      if (user.netsuiteCustomerId) {
+        try {
+          const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+          const m2m = new NetSuiteM2M();
+          const customerData = await m2m.getCustomerAccount(user.netsuiteCustomerId);
+          
+          const customerStatus = customerData.customerstatus;
+          console.log(`Customer status for NetSuite ID ${user.netsuiteCustomerId}: ${customerStatus}`);
+          
+          if (customerStatus === '2' || customerStatus === 2) {
+            return res.status(403).json({ 
+              message: 'Your Account is on Hold. Speak to a Store Manager for more information.',
+              statusCode: 'GLOBAL_HOLD'
+            });
+          }
+          
+          if (customerStatus === '3' || customerStatus === 3) {
+            return res.status(403).json({ 
+              message: 'Your Account has been discontinued.',
+              statusCode: 'DISCONTINUED'
+            });
+          }
+          
+          if (customerStatus === '7' || customerStatus === 7) {
+            return res.status(403).json({ 
+              message: 'Your Account is on Contact Hold. Please contact support for assistance.',
+              statusCode: 'CONTACT_HOLD'
+            });
+          }
+        } catch (error) {
+          console.error('Error checking customer status:', error);
+          // Continue login if status check fails - don't block access due to API errors
+        }
+      }
+
       const token = jwt.sign(
         { 
           id: user.id, 
@@ -902,6 +973,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (customer.isinactive === 'T') {
         return res.status(400).json({ 
           message: 'This customer account is inactive. Please contact support for assistance.' 
+        });
+      }
+      
+      // Check customer status (custentity_customerstatus)
+      // 1 = Active, 2 = Global Hold, 3 = Discontinued, 5 = Pre-Registration, 7 = Contact Hold
+      const customerStatus = customer.customerstatus;
+      console.log(`Customer status for ${customer.customernumber}: ${customerStatus}`);
+      
+      if (customerStatus === '2' || customerStatus === 2) {
+        return res.status(403).json({ 
+          message: 'Your Account is on Hold. Speak to a Store Manager for more information.',
+          statusCode: 'GLOBAL_HOLD'
+        });
+      }
+      
+      if (customerStatus === '3' || customerStatus === 3) {
+        return res.status(403).json({ 
+          message: 'Your Account has been discontinued.',
+          statusCode: 'DISCONTINUED'
+        });
+      }
+      
+      if (customerStatus === '7' || customerStatus === 7) {
+        return res.status(403).json({ 
+          message: 'Your Account is on Contact Hold. Please contact support for assistance.',
+          statusCode: 'CONTACT_HOLD'
         });
       }
       

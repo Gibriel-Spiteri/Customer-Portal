@@ -38,6 +38,13 @@ export default function Login() {
       
       if (!response.ok) {
         const error = await response.json();
+        // Check for customer status blocks
+        if (error.statusCode === 'GLOBAL_HOLD' || 
+            error.statusCode === 'DISCONTINUED' || 
+            error.statusCode === 'CONTACT_HOLD') {
+          // These are account status blocks - show the specific message
+          throw new Error(error.message);
+        }
         throw new Error(error.message || 'Authentication failed');
       }
       

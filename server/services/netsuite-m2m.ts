@@ -251,7 +251,8 @@ export class NetSuiteM2M {
         customer.email,
         customer.firstname AS firstName,
         customer.lastname AS lastName,
-        customer.isinactive AS isInactive
+        customer.isinactive AS isInactive,
+        customer.custentity_customerstatus AS customerStatus
       FROM 
         customer
       WHERE 
@@ -604,6 +605,7 @@ export class NetSuiteM2M {
         customer.custentity_mobile_phone AS mobilePhone,
         BUILTIN.DF(customer.terms) AS paymentTerms,
         customer.custentity_crd_rebate_balance AS crdRebateBalance,
+        customer.custentity_customerstatus AS customerStatus,
         customer.datecreated,
         customer.lastmodifieddate
       FROM 
