@@ -97,22 +97,28 @@ export default function Orders() {
 
   const getStatusIcon = (status: string) => {
     const icons: Record<string, JSX.Element> = {
-      pending: <Clock className="h-4 w-4" />,
-      processing: <Package className="h-4 w-4" />,
-      shipped: <Truck className="h-4 w-4" />,
-      delivered: <CheckCircle className="h-4 w-4" />,
-      cancelled: <XCircle className="h-4 w-4" />,
+      'pending': <Clock className="h-4 w-4" />,
+      'pending approval': <Clock className="h-4 w-4" />,
+      'pending fulfillment': <Package className="h-4 w-4" />,
+      'pending billing': <CreditCard className="h-4 w-4" />,
+      'partially fulfilled': <Truck className="h-4 w-4" />,
+      'fully billed': <CheckCircle className="h-4 w-4" />,
+      'closed': <CheckCircle className="h-4 w-4" />,
+      'cancelled': <XCircle className="h-4 w-4" />,
     };
     return icons[status] || <Clock className="h-4 w-4" />;
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      processing: 'bg-blue-100 text-blue-800',
-      shipped: 'bg-blue-100 text-blue-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'pending approval': 'bg-orange-100 text-orange-800',
+      'pending fulfillment': 'bg-blue-100 text-blue-800',
+      'pending billing': 'bg-purple-100 text-purple-800',
+      'partially fulfilled': 'bg-indigo-100 text-indigo-800',
+      'fully billed': 'bg-green-100 text-green-800',
+      'closed': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -197,9 +203,12 @@ export default function Orders() {
                         <SelectContent>
                           <SelectItem value="all">All Statuses</SelectItem>
                           <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="shipped">Shipped</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="pending approval">Pending Approval</SelectItem>
+                          <SelectItem value="pending fulfillment">Pending Fulfillment</SelectItem>
+                          <SelectItem value="pending billing">Pending Billing</SelectItem>
+                          <SelectItem value="partially fulfilled">Partially Fulfilled</SelectItem>
+                          <SelectItem value="fully billed">Fully Billed</SelectItem>
+                          <SelectItem value="closed">Closed</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
