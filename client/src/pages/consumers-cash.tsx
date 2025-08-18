@@ -319,12 +319,12 @@ export default function ConsumersCash() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Rebates</CardTitle>
+            <CardTitle className="text-sm font-medium">Current Rebate Rate</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.summary.totalRebates || 0}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <div className="text-2xl font-bold">10%</div>
+            <p className="text-xs text-muted-foreground">Active rate</p>
           </CardContent>
         </Card>
       </div>
