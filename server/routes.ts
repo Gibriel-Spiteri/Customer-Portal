@@ -1949,8 +1949,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND transaction.type IN ('CustInvc', 'CashSale', 'CustCred')
           AND transaction.trandate >= '${startDate}'
           AND transaction.trandate <= '${endDate}'
-          AND transaction.mainline = 'T'
-          AND transaction.posting = 'T'
       `;
       
       console.log('Qualifying sales query:', salesQuery);
