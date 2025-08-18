@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
@@ -26,7 +27,10 @@ import {
   CreditCard,
   FileText,
   Calendar,
-  ShoppingCart
+  ShoppingCart,
+  AlertCircle,
+  DollarSign,
+  TrendingUp
 } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
@@ -69,6 +73,7 @@ export default function Orders() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+  const [activeView, setActiveView] = useState("all");
 
   const { data: orders, isLoading, error, refetch } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
@@ -139,15 +144,89 @@ export default function Orders() {
     });
   };
 
-  const filteredOrders = orders?.filter(order => {
-    const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) || [];
+  // Filter orders based on active view
+  const getFilteredOrdersByView = (viewType: string) => {
+    if (!orders) return [];
+    
+    let viewFiltered = [...orders];
+    
+    // Apply view-specific filtering
+    switch (viewType) {
+      case 'recent':
+        // Show orders from the last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        viewFiltered = viewFiltered.filter(order => 
+          new Date(order.orderDate) >= thirtyDaysAgo
+        );
+        break;
+      
+      case 'pending':
+        // Show orders with pending statuses
+        viewFiltered = viewFiltered.filter(order => 
+          order.status.toLowerCase().includes('pending') || 
+          order.status === 'partially fulfilled'
+        );
+        break;
+      
+      case 'completed':
+        // Show completed orders
+        viewFiltered = viewFiltered.filter(order => 
+          order.status === 'closed' || 
+          order.status === 'fully billed'
+        );
+        break;
+      
+      case 'high-value':
+        // Show orders above $10,000
+        viewFiltered = viewFiltered.filter(order => 
+          parseFloat(order.totalAmount) >= 10000
+        );
+        break;
+      
+      case 'all':
+      default:
+        // Show all orders
+        break;
+    }
+    
+    // Apply search and status filters
+    return viewFiltered.filter(order => {
+      const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  };
+  
+  const filteredOrders = getFilteredOrdersByView(activeView);
 
   if (!user) {
     return <div>Please log in to view your orders</div>;
   }
+
+  // Get counts for each view
+  const getViewCounts = () => {
+    if (!orders) return { all: 0, recent: 0, pending: 0, completed: 0, highValue: 0 };
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return {
+      all: orders.length,
+      recent: orders.filter(order => new Date(order.orderDate) >= thirtyDaysAgo).length,
+      pending: orders.filter(order => 
+        order.status.toLowerCase().includes('pending') || 
+        order.status === 'partially fulfilled'
+      ).length,
+      completed: orders.filter(order => 
+        order.status === 'closed' || 
+        order.status === 'fully billed'
+      ).length,
+      highValue: orders.filter(order => parseFloat(order.totalAmount) >= 10000).length
+    };
+  };
+  
+  const viewCounts = getViewCounts();
 
   return (
     <MobileLayout>
@@ -179,43 +258,84 @@ export default function Orders() {
                 </div>
               </div>
 
-              {/* Filters and Search */}
-              <Card className="mb-6">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="Search by order number..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
-                        />
+              {/* Tabs for different views */}
+              <Tabs value={activeView} onValueChange={setActiveView} className="mb-6">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="all" className="flex items-center gap-1">
+                    <Package className="h-4 w-4" />
+                    <span className="hidden sm:inline">All</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1">
+                      {viewCounts.all}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="recent" className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span className="hidden sm:inline">Recent</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1">
+                      {viewCounts.recent}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" className="flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Pending</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1">
+                      {viewCounts.pending}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="completed" className="flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Completed</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1">
+                      {viewCounts.completed}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="high-value" className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="hidden sm:inline">High Value</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1">
+                      {viewCounts.highValue}
+                    </Badge>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Filters and Search - applies to all tabs */}
+                <Card className="mt-4">
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search by order number..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="sm:w-48">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger>
+                            <Filter className="h-4 w-4 mr-2" />
+                            <SelectValue placeholder="Filter by status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="pending approval">Pending Approval</SelectItem>
+                            <SelectItem value="pending fulfillment">Pending Fulfillment</SelectItem>
+                            <SelectItem value="pending billing">Pending Billing</SelectItem>
+                            <SelectItem value="partially fulfilled">Partially Fulfilled</SelectItem>
+                            <SelectItem value="fully billed">Fully Billed</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <div className="sm:w-48">
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger>
-                          <Filter className="h-4 w-4 mr-2" />
-                          <SelectValue placeholder="Filter by status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="pending approval">Pending Approval</SelectItem>
-                          <SelectItem value="pending fulfillment">Pending Fulfillment</SelectItem>
-                          <SelectItem value="pending billing">Pending Billing</SelectItem>
-                          <SelectItem value="partially fulfilled">Partially Fulfilled</SelectItem>
-                          <SelectItem value="fully billed">Fully Billed</SelectItem>
-                          <SelectItem value="closed">Closed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Tabs>
 
               {/* Error State */}
               {error && (
