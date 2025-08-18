@@ -594,7 +594,6 @@ export class NetSuiteM2M {
         customer.phone,
         customer.altphone,
         customer.custentity_mobile_phone AS mobilePhone,
-        customer.defaultaddress,
         BUILTIN.DF(customer.terms) AS paymentTerms,
         customer.custentity_crd_rebate_balance AS crdRebateBalance,
         customer.datecreated,

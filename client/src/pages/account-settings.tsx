@@ -69,22 +69,25 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function AccountSettings() {
-  const { user, token } = useAuth();
+  const { user, token, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  const { data: account, isLoading: accountLoading } = useQuery<Account>({
+  const { data: account, isLoading: accountLoading, error: accountError } = useQuery<Account>({
     queryKey: ['/api/account'],
-    enabled: !!token,
+    enabled: !!token && !!user,
+    retry: false,
   });
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['/api/profile'],
-    enabled: !!token,
+    enabled: !!token && !!user,
+    retry: false,
   });
 
   const { data: contacts, isLoading: contactsLoading } = useQuery<Contact[]>({
     queryKey: ['/api/customer-contacts'],
-    enabled: !!token,
+    enabled: !!token && !!user,
+    retry: false,
   });
 
   const form = useForm<ProfileFormData>({
@@ -155,8 +158,56 @@ export default function AccountSettings() {
     }).format(parseFloat(amount));
   };
 
-  if (!user) {
-    return <div>Please log in to access account settings</div>;
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto">
+            <div className="py-6">
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+                    <h2 className="text-xl font-semibold text-gray-700">Loading...</h2>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is not authenticated
+  if (!user || !token) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto">
+            <div className="py-6">
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold text-gray-700 mb-2">Authentication Required</h2>
+                    <p className="text-gray-500 mb-6">Please log in to view your account settings</p>
+                    <Button onClick={() => window.location.href = '/login'}>
+                      Go to Login
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -304,12 +355,12 @@ export default function AccountSettings() {
                   </CardContent>
                 </Card>
 
-                {/* Customer Contacts */}
+                {/* Authorized Users */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <Users className="h-5 w-5" />
-                      <span>Customer Contacts</span>
+                      <span>Authorized Users</span>
                       <DataBadge freshness="live" />
                     </CardTitle>
                   </CardHeader>
