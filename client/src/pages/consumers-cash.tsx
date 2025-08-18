@@ -325,11 +325,11 @@ export default function ConsumersCash() {
           <CardContent>
             <div className="text-2xl font-bold">{data?.summary.customerRebateRate || '10'}%</div>
             <p className="text-xs text-muted-foreground">Active rate</p>
-            {data?.summary.previous12MonthsSales && (
+            {data?.summary.qualifyingSales && (
               <div className="mt-2 pt-2 border-t">
-                <p className="text-xs text-muted-foreground">12 Month Sales</p>
+                <p className="text-xs text-muted-foreground">12-Month Qualifying Sales</p>
                 <p className="text-sm font-semibold">
-                  {formatCurrency(data.summary.previous12MonthsSales)}
+                  {formatCurrency(data.summary.qualifyingSales)}
                 </p>
               </div>
             )}

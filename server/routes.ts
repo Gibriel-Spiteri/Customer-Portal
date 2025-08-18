@@ -1922,7 +1922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customerRebateRate = customerData?.rebaterate ? 
         (parseFloat(customerData.rebaterate) * 100).toFixed(1) : '10';
       
-      // Fetch previous 12 months sales
+      // Fetch previous 12 months qualifying sales for rebate level
       const twelveMonthsAgo = new Date();
       twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
       const startDate = `${twelveMonthsAgo.getMonth() + 1}/${twelveMonthsAgo.getDate()}/${twelveMonthsAgo.getFullYear()}`;
@@ -1930,19 +1930,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const salesQuery = `
         SELECT 
-          SUM(transaction.total) AS totalSales
+          SUM(transactionline.netamount) AS qualifyingSales
         FROM 
-          transaction
+          transactionline
+          INNER JOIN transaction ON transactionline.transaction = transaction.id
         WHERE 
           transaction.entity = ${customerId}
           AND transaction.type = 'SalesOrd'
           AND transaction.trandate >= '${startDate}'
           AND transaction.trandate <= '${endDate}'
+          AND transactionline.mainline = 'F'
+          AND transactionline.itemtype IN ('Inventory', 'NonInvtPart', 'Kit', 'Assembly')
       `;
       
       const salesResponse = await netsuiteM2M.executeSuiteQL(salesQuery, 1);
       const salesData = salesResponse.items?.[0];
-      const previous12MonthsSales = salesData?.totalsales || '0';
+      const qualifyingSales = salesData?.qualifyingsales || '0';
       
       // SuiteQL query to fetch all CRD rebate records with transaction IDs
       const query = `
@@ -2066,7 +2069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalRedeemed: Math.abs(totalRedeemed).toFixed(2), // Convert negative to positive for display
           totalRebates: rebates.length,
           customerRebateRate: customerRebateRate,
-          previous12MonthsSales: previous12MonthsSales
+          qualifyingSales: qualifyingSales
         }
       });
     } catch (error) {
