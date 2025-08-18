@@ -391,9 +391,9 @@ export default function ConsumersCash() {
                           </span>
                         )}
                         
-                        {rebate.earnedPercent && (
+                        {rebate.salesOrderRebateRate && (
                           <span>
-                            Rate: {rebate.earnedPercent}%
+                            Rate: {rebate.salesOrderRebateRate}%
                           </span>
                         )}
                       </div>
