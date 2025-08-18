@@ -232,57 +232,6 @@ export default function AccountSettings() {
               </div>
 
               <div className="space-y-6">
-                {/* Account Overview */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <CreditCard className="h-5 w-5" />
-                      <span>Account Overview</span>
-                      {account && (
-                        <DataBadge 
-                          freshness={account.dataFreshness}
-                          lastSync={account.lastSyncAt}
-                        />
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {accountLoading ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="space-y-2">
-                            <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                            <div className="h-6 bg-gray-200 rounded animate-pulse" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : account ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500">Current Balance</Label>
-                          <p className="text-2xl font-bold text-gray-900 mt-1">
-                            {formatCurrency(account.balance, account.currency)}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500">Credit Limit</Label>
-                          <p className="text-2xl font-bold text-gray-900 mt-1">
-                            {formatCurrency(account.creditLimit, account.currency)}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500">Account Status</Label>
-                          <p className={`text-2xl font-bold mt-1 ${account.isActive ? 'text-success' : 'text-error'}`}>
-                            {account.isActive ? 'Active' : 'Inactive'}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">No account information available</p>
-                    )}
-                  </CardContent>
-                </Card>
-
                 {/* Contact Information */}
                 <Card>
                   <CardHeader>
