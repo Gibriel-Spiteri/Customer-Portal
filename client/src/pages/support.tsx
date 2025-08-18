@@ -22,6 +22,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
+  PauseCircle,
+  RefreshCw,
   Plus,
   Loader2,
   X,
@@ -129,20 +132,24 @@ export default function Support() {
 
   const getStatusIcon = (status: string) => {
     const icons: Record<string, JSX.Element> = {
-      open: <Clock className="h-4 w-4" />,
-      in_progress: <AlertCircle className="h-4 w-4" />,
-      resolved: <CheckCircle className="h-4 w-4" />,
-      closed: <CheckCircle className="h-4 w-4" />,
+      '1': <Clock className="h-4 w-4" />,           // Not Started
+      '2': <AlertCircle className="h-4 w-4" />,     // In Progress
+      '3': <AlertTriangle className="h-4 w-4" />,   // Escalated
+      '4': <RefreshCw className="h-4 w-4" />,      // Re-Opened
+      '5': <CheckCircle className="h-4 w-4" />,     // Closed
+      '6': <PauseCircle className="h-4 w-4" />,    // On Hold
     };
     return icons[status] || <Clock className="h-4 w-4" />;
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      open: 'bg-yellow-100 text-yellow-800',
-      in_progress: 'bg-blue-100 text-blue-800',
-      resolved: 'bg-green-100 text-green-800',
-      closed: 'bg-gray-100 text-gray-800',
+      '1': 'bg-yellow-100 text-yellow-800',    // Not Started
+      '2': 'bg-blue-100 text-blue-800',        // In Progress
+      '3': 'bg-red-100 text-red-800',          // Escalated
+      '4': 'bg-orange-100 text-orange-800',    // Re-Opened
+      '5': 'bg-gray-100 text-gray-800',        // Closed
+      '6': 'bg-purple-100 text-purple-800',    // On Hold
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -415,8 +422,8 @@ export default function Support() {
                             </h3>
                             <Badge className={getStatusColor(ticket.status)}>
                               {getStatusIcon(ticket.status)}
-                              <span className="ml-1 capitalize">
-                                {ticket.status.replace('_', ' ')}
+                              <span className="ml-1">
+                                {statusNames[ticket.status] || ticket.status}
                               </span>
                             </Badge>
                           </div>
