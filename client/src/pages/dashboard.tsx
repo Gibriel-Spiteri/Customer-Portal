@@ -278,7 +278,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.totalCounts?.openCases || dashboardData?.recentCases?.filter(c => c.status?.toLowerCase() !== 'closed').length || 0} open cases`
+                      `${dashboardData?.totalCounts?.openCases || 0} open cases`
                     )}
                   </p>
                 </div>
