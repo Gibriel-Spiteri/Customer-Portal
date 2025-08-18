@@ -10,6 +10,13 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Coins,
   DollarSign, 
@@ -25,9 +32,10 @@ import {
   Award,
   Gift,
   Wallet,
-  Download
+  Download,
+  ChevronRight
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
 
 interface CRDRebate {
@@ -61,12 +69,39 @@ export default function ConsumersCash() {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number | 'all'>(25);
   
   const { data, isLoading, error, refetch } = useQuery<CRDRebatesResponse>({
     queryKey: ['/api/crd-rebates'],
     enabled: !!token,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Pagination logic
+  const paginatedRebates = useMemo(() => {
+    if (!data?.rebates) return [];
+    
+    if (pageSize === 'all') {
+      return data.rebates;
+    }
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return data.rebates.slice(startIndex, endIndex);
+  }, [data?.rebates, currentPage, pageSize]);
+
+  const totalPages = useMemo(() => {
+    if (!data?.rebates || pageSize === 'all') return 1;
+    return Math.ceil(data.rebates.length / pageSize);
+  }, [data?.rebates, pageSize]);
+
+  // Reset to page 1 when page size changes
+  const handlePageSizeChange = (value: string) => {
+    const newSize = value === 'all' ? 'all' : parseInt(value);
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -297,7 +332,23 @@ export default function ConsumersCash() {
       {/* Rebate History */}
       <Card>
         <CardHeader>
-          <CardTitle>Rebate History</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Rebate History</CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Show:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {!data?.rebates || data.rebates.length === 0 ? (
@@ -306,8 +357,9 @@ export default function ConsumersCash() {
               <p>No rebates found for your account</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {data.rebates.map((rebate) => (
+            <>
+              <div className="space-y-4">
+                {paginatedRebates.map((rebate) => (
                 <div
                   key={rebate.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -380,6 +432,64 @@ export default function ConsumersCash() {
                 </div>
               ))}
             </div>
+            
+            {/* Pagination Controls */}
+            {pageSize !== 'all' && totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, data?.rebates?.length || 0)} of {data?.rebates?.length || 0} rebates
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={i}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            </>
           )}
         </CardContent>
       </Card>
