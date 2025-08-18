@@ -409,14 +409,6 @@ export default function ConsumersCash() {
                       )}
                     </div>
                   </div>
-                  
-                  <div className="text-right">
-                    {rebate.category && (
-                      <Badge variant="outline" className="text-xs">
-                        {rebate.category}
-                      </Badge>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>
