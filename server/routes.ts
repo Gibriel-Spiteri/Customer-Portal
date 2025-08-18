@@ -1775,7 +1775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customrecord_crdrebate.custrecord_crdrebate_date DESC
       `;
       
-      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 5000);
+      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 1000);
       const rebates = rebatesResponse.items || [];
       
       // Create CSV content
@@ -1877,7 +1877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customrecord_crdrebate.custrecord_crdrebate_date DESC
       `;
       
-      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 5000);
+      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 1000);
       const rebates = rebatesResponse.items || [];
       
       // Log sample data to understand the structure
