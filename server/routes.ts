@@ -1922,6 +1922,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customerRebateRate = customerData?.rebaterate ? 
         (parseFloat(customerData.rebaterate) * 100).toFixed(1) : '10';
       
+      // Fetch previous 12 months sales
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+      const startDate = `${twelveMonthsAgo.getMonth() + 1}/${twelveMonthsAgo.getDate()}/${twelveMonthsAgo.getFullYear()}`;
+      const endDate = `${new Date().getMonth() + 1}/${new Date().getDate()}/${new Date().getFullYear()}`;
+      
+      const salesQuery = `
+        SELECT 
+          SUM(transaction.total) AS totalSales
+        FROM 
+          transaction
+        WHERE 
+          transaction.entity = ${customerId}
+          AND transaction.type = 'SalesOrd'
+          AND transaction.trandate >= '${startDate}'
+          AND transaction.trandate <= '${endDate}'
+      `;
+      
+      const salesResponse = await netsuiteM2M.executeSuiteQL(salesQuery, 1);
+      const salesData = salesResponse.items?.[0];
+      const previous12MonthsSales = salesData?.totalsales || '0';
+      
       // SuiteQL query to fetch all CRD rebate records with transaction IDs
       const query = `
         SELECT 
@@ -2043,7 +2065,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalExpired: Math.abs(totalExpired).toFixed(2),  // Convert negative to positive for display
           totalRedeemed: Math.abs(totalRedeemed).toFixed(2), // Convert negative to positive for display
           totalRebates: rebates.length,
-          customerRebateRate: customerRebateRate
+          customerRebateRate: customerRebateRate,
+          previous12MonthsSales: previous12MonthsSales
         }
       });
     } catch (error) {
