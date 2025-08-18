@@ -1753,7 +1753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const netsuiteM2M = new NetSuiteM2M();
       
-      // SuiteQL query to fetch CRD rebate records (up to 1000 records)
+      // SuiteQL query to fetch all CRD rebate records
       const query = `
         SELECT 
           customrecord_crdrebate.id,
@@ -1773,10 +1773,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customrecord_crdrebate.custrecord_crdrebate_customer = ${customerId}
         ORDER BY 
           customrecord_crdrebate.custrecord_crdrebate_date DESC
-        FETCH FIRST 1000 ROWS ONLY
       `;
       
-      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query);
+      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 5000);
       const rebates = rebatesResponse.items || [];
       
       // Create CSV content
@@ -1856,7 +1855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const netsuiteM2M = new NetSuiteM2M();
       
-      // SuiteQL query to fetch CRD rebate records (up to 1000 records)
+      // SuiteQL query to fetch all CRD rebate records
       const query = `
         SELECT 
           customrecord_crdrebate.id,
@@ -1876,10 +1875,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customrecord_crdrebate.custrecord_crdrebate_customer = ${customerId}
         ORDER BY 
           customrecord_crdrebate.custrecord_crdrebate_date DESC
-        FETCH FIRST 1000 ROWS ONLY
       `;
       
-      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query);
+      const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 5000);
       const rebates = rebatesResponse.items || [];
       
       // Log sample data to understand the structure
