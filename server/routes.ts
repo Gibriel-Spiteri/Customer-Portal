@@ -1782,15 +1782,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `;
       
       const rebatesResponse = await netsuiteM2M.executeSuiteQL(query, 1000);
-      const rebates = rebatesResponse.items || [];
+      const allRebates = rebatesResponse.items || [];
       
-      // Create CSV content
+      // Filter out reversed transactions for accurate balance
+      const rebates = allRebates.filter((r: any) => r.reversed !== 'T');
+      
+      // Create CSV content with a note about reversed transactions
       const csvHeaders = [
         'ID',
         'Date',
         'Amount',
         'Status',
-        'Reversed',
         'Sales Order',
         'Expiration Date',
         'Applying Transaction',
@@ -1812,7 +1814,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rebate.rebatedate || '',
           rebate.amount || '0',
           status,
-          rebate.reversed === 'T' ? 'Yes' : 'No',
           rebate.salesordertranid || rebate.salesorderid || '',
           rebate.expirationdate || '',
           rebate.applyingtxntranid || rebate.applyingtxnid || '',
@@ -1822,11 +1823,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ];
       });
       
+      // Calculate totals for the CSV (same logic as main endpoint)
+      const totalEarned = rebates
+        .filter((r: any) => r.typeid === 1 || r.typeid === '1')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalRedeemed = rebates
+        .filter((r: any) => r.typeid === 2 || r.typeid === '2')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalExpired = rebates
+        .filter((r: any) => r.typeid === 3 || r.typeid === '3')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalReturns = rebates
+        .filter((r: any) => r.typeid === 4 || r.typeid === '4')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalAccommodations = rebates
+        .filter((r: any) => r.typeid === 5 || r.typeid === '5')
+        .reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0);
+      
+      const totalAvailable = totalEarned + totalRedeemed + totalExpired + totalReturns + totalAccommodations;
+      
+      // Add summary rows at the end
+      const summaryRows = [
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['SUMMARY', '', '', '', '', '', '', '', '', ''],
+        ['Total Earned', '', totalEarned.toFixed(2), '', '', '', '', '', '', ''],
+        ['Total Redeemed', '', totalRedeemed.toFixed(2), '', '', '', '', '', '', ''],
+        ['Total Expired', '', totalExpired.toFixed(2), '', '', '', '', '', '', ''],
+        ['Total Returns', '', totalReturns.toFixed(2), '', '', '', '', '', '', ''],
+        ['Total Accommodations', '', totalAccommodations.toFixed(2), '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['AVAILABLE BALANCE', '', totalAvailable.toFixed(2), '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        [`Note: ${allRebates.length - rebates.length} reversed transactions excluded from this export`, '', '', '', '', '', '', '', '', '']
+      ];
+      
       // Convert to CSV format
       const csvContent = [
         csvHeaders.join(','),
         ...csvRows.map(row => row.map(cell => {
           // Escape quotes and wrap in quotes if contains comma or quotes
+          const cellStr = String(cell);
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+          }
+          return cellStr;
+        }).join(',')),
+        ...summaryRows.map(row => row.map(cell => {
           const cellStr = String(cell);
           if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
             return `"${cellStr.replace(/"/g, '""')}"`;
