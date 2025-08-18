@@ -1133,8 +1133,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estimate.status && !['Closed', 'Voided', 'Rejected'].includes(estimate.status)
       ).length;
       
+      // In NetSuite, status 5 = Closed, so exclude those
       const openCasesCount = allCases.filter((supportCase: any) => 
-        supportCase.status && supportCase.status.toLowerCase() !== 'closed'
+        supportCase.status !== '5' && supportCase.status !== 5
       ).length;
       
       const pendingOrdersCount = allOrders.filter((order: any) => 
