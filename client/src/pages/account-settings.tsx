@@ -53,8 +53,10 @@ interface Contact {
   email: string;
   phone: string;
   mobilePhone?: string;
+  bestPhone?: string;
   title?: string;
   role?: string;
+  address?: string;
   isPrimary: boolean;
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
@@ -367,60 +369,63 @@ export default function AccountSettings() {
                   </CardHeader>
                   <CardContent>
                     {contactsLoading ? (
-                      <div className="space-y-4">
-                        {[...Array(2)].map((_, i) => (
-                          <div key={i} className="p-4 border rounded-lg">
-                            <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
-                            <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3" />
-                          </div>
+                      <div className="animate-pulse">
+                        <div className="h-10 bg-gray-100 rounded mb-2" />
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="h-12 bg-gray-50 rounded mb-1" />
                         ))}
                       </div>
                     ) : contacts && contacts.length > 0 ? (
-                      <div className="space-y-4">
-                        {contacts.map((contact) => (
-                          <div key={contact.id} className="p-4 border rounded-lg hover:bg-gray-50">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-1 flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <h4 className="font-semibold text-gray-900">{contact.fullName}</h4>
-                                  {contact.isPrimary && (
-                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Primary</span>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b text-left">
+                              <th className="pb-2 pr-4 font-medium text-sm text-gray-700">Name</th>
+                              <th className="pb-2 px-4 font-medium text-sm text-gray-700">Role</th>
+                              <th className="pb-2 px-4 font-medium text-sm text-gray-700">Title</th>
+                              <th className="pb-2 px-4 font-medium text-sm text-gray-700">Email</th>
+                              <th className="pb-2 pl-4 font-medium text-sm text-gray-700">Phone</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {contacts.map((contact) => (
+                              <tr key={contact.id} className="border-b hover:bg-gray-50">
+                                <td className="py-3 pr-4">
+                                  <span className="font-medium text-gray-900">{contact.fullName}</span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  {contact.isPrimary ? (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">
+                                      Primary Contact
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm text-gray-600">{contact.role || '—'}</span>
                                   )}
-                                </div>
-                                {contact.title && (
-                                  <p className="text-sm text-gray-600">
-                                    <span className="font-medium">Title:</span> {contact.title}
-                                  </p>
-                                )}
-                                {contact.role && (
-                                  <p className="text-sm text-gray-600">
-                                    <span className="font-medium">Role:</span> {contact.role}
-                                  </p>
-                                )}
-                                <div className="flex flex-wrap gap-4 mt-2">
-                                  {contact.email && (
-                                    <div className="flex items-center space-x-1">
-                                      <Mail className="h-3 w-3 text-gray-400" />
-                                      <span className="text-sm text-gray-600">{contact.email}</span>
-                                    </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-600">
+                                  {contact.title || <span className="text-gray-400">—</span>}
+                                </td>
+                                <td className="py-3 px-4 text-sm">
+                                  {contact.email ? (
+                                    <a 
+                                      href={`mailto:${contact.email}`}
+                                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {contact.email}
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
                                   )}
-                                  {contact.phone && (
-                                    <div className="flex items-center space-x-1">
-                                      <Phone className="h-3 w-3 text-gray-400" />
-                                      <span className="text-sm text-gray-600">{contact.phone}</span>
-                                    </div>
-                                  )}
-                                  {contact.mobilePhone && (
-                                    <div className="flex items-center space-x-1">
-                                      <Smartphone className="h-3 w-3 text-gray-400" />
-                                      <span className="text-sm text-gray-600">{contact.mobilePhone}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                                </td>
+                                <td className="py-3 pl-4 text-sm text-gray-600">
+                                  {contact.bestPhone || contact.phone || contact.mobilePhone || 
+                                    <span className="text-gray-400">—</span>
+                                  }
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     ) : (
                       <p className="text-gray-500">No contacts found for this customer</p>

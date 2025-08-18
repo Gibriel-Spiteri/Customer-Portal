@@ -1430,6 +1430,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        contact.entityid || 
                        `Contact ${contact.id}`;
         
+        // Check if contact is primary (role -10)
+        const isPrimary = contact.contactrole === -10 || contact.contactrole === '-10';
+        const roleDisplay = isPrimary ? 'Primary Contact' : (contact.role || '');
+        
+        // Address is not available for contact records in NetSuite
+        const address = '';
+        
         return {
           id: contact.id,
           firstName: contact.firstname || '',
@@ -1438,9 +1445,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: contact.email || '',
           phone: contact.phone || '',
           mobilePhone: contact.mobilephone || '',
+          bestPhone: contact.custentity_best_phone || '',
           title: contact.title || '',
-          role: contact.role || contact.contactrole || '',
-          isPrimary: false, // NetSuite doesn't have a primary flag in contact record
+          role: roleDisplay,
+          address: address,
+          isPrimary: isPrimary,
           dataFreshness: 'live' as const,
           lastSyncAt: new Date().toISOString()
         };

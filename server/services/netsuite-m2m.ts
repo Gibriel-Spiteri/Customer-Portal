@@ -571,12 +571,16 @@ export class NetSuiteM2M {
         contact.title,
         contact.company,
         contact.contactrole,
+        contact.custentity_best_phone,
         BUILTIN.DF(contact.id) AS displayname,
         BUILTIN.DF(contact.contactrole) AS role
       FROM 
         contact
       WHERE 
         contact.company = ${customerId}
+      ORDER BY 
+        CASE WHEN contact.contactrole = -10 THEN 0 ELSE 1 END,
+        contact.entityid
     `.trim();
 
     const result = await this.executeSuiteQL(query, 100, 0);
