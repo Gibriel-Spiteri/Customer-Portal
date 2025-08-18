@@ -1567,17 +1567,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Map NetSuite case status to frontend format
+      // Keep NetSuite status codes as-is for proper filtering
       const mapStatus = (status: string, statusText: string): string => {
-        // NetSuite status codes: 1=Not Started, 2=In Progress, 3=Escalated, 4=Re-Opened, 5=Closed
-        const statusMap: Record<string, string> = {
-          '1': 'open',
-          '2': 'in_progress', 
-          '3': 'in_progress',
-          '4': 'open',
-          '5': 'closed'
-        };
-        return statusMap[status] || 'open';
+        // NetSuite status codes: 1=Not Started, 2=In Progress, 3=Escalated, 4=Re-Opened, 5=Closed, 6=On Hold
+        // Return the numeric status code as a string
+        return status;
       };
       
       // Transform NetSuite case data to match frontend format
@@ -1614,6 +1608,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Fetching support cases for customer ID:', req.user.netsuiteCustomerId);
       const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, null, 30);
       console.log(`Found ${cases.length} support cases from NetSuite`);
+      
+      // Debug: Log unique statuses
+      const uniqueStatuses = [...new Set(cases.map((c: any) => c.status))];
+      console.log('Unique case statuses from NetSuite:', uniqueStatuses);
       
       const transformed = cases.map(transformCase);
       res.json(transformed);
