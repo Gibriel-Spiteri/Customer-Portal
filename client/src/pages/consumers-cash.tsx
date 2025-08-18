@@ -390,12 +390,6 @@ export default function ConsumersCash() {
                             Order: {rebate.salesOrder}
                           </span>
                         )}
-                        
-                        {rebate.salesOrderRebateRate && (
-                          <span>
-                            Rate: {rebate.salesOrderRebateRate}%
-                          </span>
-                        )}
                       </div>
                       
                       {rebate.expirationDate && (
