@@ -1753,7 +1753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const netsuiteM2M = new NetSuiteM2M();
       
-      // SuiteQL query to fetch all CRD rebate records
+      // SuiteQL query to fetch all CRD rebate records with transaction IDs
       const query = `
         SELECT 
           customrecord_crdrebate.id,
@@ -1762,13 +1762,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customrecord_crdrebate.custrecord_crdrebate_type AS typeId,
           customrecord_crdrebate.custrecord_crdrebate_reversed AS reversed,
           customrecord_crdrebate.custrecord_crdrebate_salesorder AS salesOrderId,
+          salesorder.tranid AS salesOrderTranId,
           customrecord_crdrebate.custrecord_crdrebate_expiration_date AS expirationDate,
           customrecord_crdrebate.custrecord_crdrebate_applyingtxn AS applyingTxnId,
+          applyingtxn.tranid AS applyingTxnTranId,
           customrecord_crdrebate.custrecord_crdrebate_category AS categoryId,
           customrecord_crdrebate.custrecord_crdrebate_earnedpercent AS earnedPercent,
           customrecord_crdrebate.custrecord_crdrebate_sorebaterate AS salesOrderRebateRate
         FROM 
           customrecord_crdrebate
+        LEFT JOIN 
+          transaction salesorder ON customrecord_crdrebate.custrecord_crdrebate_salesorder = salesorder.id
+        LEFT JOIN 
+          transaction applyingtxn ON customrecord_crdrebate.custrecord_crdrebate_applyingtxn = applyingtxn.id
         WHERE 
           customrecord_crdrebate.custrecord_crdrebate_customer = ${customerId}
         ORDER BY 
@@ -1807,9 +1813,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rebate.amount || '0',
           status,
           rebate.reversed === 'T' ? 'Yes' : 'No',
-          rebate.salesorderid || '',
+          rebate.salesordertranid || rebate.salesorderid || '',
           rebate.expirationdate || '',
-          rebate.applyingtxnid || '',
+          rebate.applyingtxntranid || rebate.applyingtxnid || '',
           rebate.categoryid || '',
           rebate.earnedpercent || '',
           rebate.salesorderrebaterate || ''
@@ -1855,7 +1861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const netsuiteM2M = new NetSuiteM2M();
       
-      // SuiteQL query to fetch all CRD rebate records
+      // SuiteQL query to fetch all CRD rebate records with transaction IDs
       const query = `
         SELECT 
           customrecord_crdrebate.id,
@@ -1864,13 +1870,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customrecord_crdrebate.custrecord_crdrebate_type AS typeId,
           customrecord_crdrebate.custrecord_crdrebate_reversed AS reversed,
           customrecord_crdrebate.custrecord_crdrebate_salesorder AS salesOrderId,
+          salesorder.tranid AS salesOrderTranId,
           customrecord_crdrebate.custrecord_crdrebate_expiration_date AS expirationDate,
           customrecord_crdrebate.custrecord_crdrebate_applyingtxn AS applyingTxnId,
+          applyingtxn.tranid AS applyingTxnTranId,
           customrecord_crdrebate.custrecord_crdrebate_category AS categoryId,
           customrecord_crdrebate.custrecord_crdrebate_earnedpercent AS earnedPercent,
           customrecord_crdrebate.custrecord_crdrebate_sorebaterate AS salesOrderRebateRate
         FROM 
           customrecord_crdrebate
+        LEFT JOIN 
+          transaction salesorder ON customrecord_crdrebate.custrecord_crdrebate_salesorder = salesorder.id
+        LEFT JOIN 
+          transaction applyingtxn ON customrecord_crdrebate.custrecord_crdrebate_applyingtxn = applyingtxn.id
         WHERE 
           customrecord_crdrebate.custrecord_crdrebate_customer = ${customerId}
         ORDER BY 
@@ -1952,9 +1964,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: rebate.amount,
           type: rebate.typeid,
           reversed: rebate.reversed === 'T',
-          salesOrder: rebate.salesorderid,
+          salesOrder: rebate.salesordertranid || rebate.salesorderid,
           expirationDate: rebate.expirationdate,
-          applyingTransaction: rebate.applyingtxnid,
+          applyingTransaction: rebate.applyingtxntranid || rebate.applyingtxnid,
           category: rebate.categoryid,
           earnedPercent: rebate.earnedpercent,
           salesOrderRebateRate: rebate.salesorderrebaterate,
