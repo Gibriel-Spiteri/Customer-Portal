@@ -306,33 +306,27 @@ export default function ConsumersCash() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expired</CardTitle>
-            <Clock className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-600">
-              {formatCurrency(data?.summary.totalExpired || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Past expiration</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Rebate Level</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data?.summary.customerRebateRate || '10'}%</div>
             <p className="text-xs text-muted-foreground">Active rate</p>
-            {data?.summary.qualifyingSales && (
-              <div className="mt-2 pt-2 border-t">
-                <p className="text-xs text-muted-foreground">12-Month Qualifying Sales</p>
-                <p className="text-sm font-semibold">
-                  {formatCurrency(data.summary.qualifyingSales)}
-                </p>
-              </div>
-            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">12-Month Qualifying Sales</CardTitle>
+            <TrendingUp className="h-4 w-4 text-indigo-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-600">
+              {formatCurrency(data?.summary.qualifyingSales || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {data?.summary.qualifyingSales ? 'Qualifying purchases' : 'No qualifying sales'}
+            </p>
           </CardContent>
         </Card>
       </div>
