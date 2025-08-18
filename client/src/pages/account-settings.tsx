@@ -330,10 +330,7 @@ export default function AccountSettings() {
                           <thead>
                             <tr className="border-b text-left">
                               <th className="pb-2 pr-4 font-medium text-sm text-gray-700">Name</th>
-                              <th className="pb-2 px-4 font-medium text-sm text-gray-700">Role</th>
-                              <th className="pb-2 px-4 font-medium text-sm text-gray-700">Title</th>
-                              <th className="pb-2 px-4 font-medium text-sm text-gray-700">Email</th>
-                              <th className="pb-2 pl-4 font-medium text-sm text-gray-700">Phone</th>
+                              <th className="pb-2 pl-4 font-medium text-sm text-gray-700">Role</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -342,7 +339,7 @@ export default function AccountSettings() {
                                 <td className="py-3 pr-4">
                                   <span className="font-medium text-gray-900">{contact.fullName}</span>
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3 pl-4">
                                   {contact.isPrimary ? (
                                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">
                                       Primary Contact
@@ -350,26 +347,6 @@ export default function AccountSettings() {
                                   ) : (
                                     <span className="text-sm text-gray-600">{contact.role || '—'}</span>
                                   )}
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-600">
-                                  {contact.title || <span className="text-gray-400">—</span>}
-                                </td>
-                                <td className="py-3 px-4 text-sm">
-                                  {contact.email ? (
-                                    <a 
-                                      href={`mailto:${contact.email}`}
-                                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    >
-                                      {contact.email}
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
-                                  )}
-                                </td>
-                                <td className="py-3 pl-4 text-sm text-gray-600">
-                                  {contact.bestPhone || contact.phone || contact.mobilePhone || 
-                                    <span className="text-gray-400">—</span>
-                                  }
                                 </td>
                               </tr>
                             ))}
