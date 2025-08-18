@@ -293,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customerId = userinfo.sub; // Subject is typically the user/customer ID
       
       // Check if user exists in our database
-      let user = await storage.getUserByUsername(email);
+      let user = await storage.getUserByEmail(email);
       
       if (!user) {
         // Create new user from OIDC data
@@ -443,7 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, this would integrate with NetSuite's customer authentication API
       // For now, authenticate against our database
-      let user = await storage.getUserByUsername(email);
+      let user = await storage.getUserByEmail(email);
       
       if (!user) {
         return res.status(401).json({ 
@@ -533,11 +533,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Demo mode login - backdoor access for customer ${customerId}`);
       
       // Try to get demo user first
-      let user = await storage.getUserByUsername(`demo_${customerId}`);
+      let user = await storage.getUserByEmail(`demo_${customerId}`);
       
       if (!user) {
         // Check if another user already has this customer ID
-        const existingUserWithCustomer = await storage.getUserByNetsuiteId(customerId);
+        const existingUserWithCustomer = await storage.getUserByNetSuiteCustomerId(customerId);
         
         if (existingUserWithCustomer) {
           // Use the existing user with this customer ID

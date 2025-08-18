@@ -1,6 +1,6 @@
 import { users, passwordResetTokens, type User, type InsertUser, type PasswordResetToken, type InsertPasswordResetToken } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte } from "drizzle-orm";
+import { eq, and, gte, sql } from "drizzle-orm";
 import bcrypt from 'bcrypt';
 
 export interface IStorage {
@@ -23,7 +23,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    // Case-insensitive email lookup
+    const [user] = await db.select().from(users).where(
+      sql`LOWER(${users.email}) = LOWER(${email})`
+    );
     return user || undefined;
   }
 
@@ -59,6 +62,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async verifyPassword(email: string, password: string): Promise<User | undefined> {
+    // Use case-insensitive getUserByEmail method
     const user = await this.getUserByEmail(email);
     if (!user || !user.isActive) {
       return undefined;

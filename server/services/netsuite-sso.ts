@@ -133,7 +133,7 @@ export class NetSuiteSSO {
       
       if (!user && payload.email) {
         try {
-          user = await storage.getUserByUsername(payload.email);
+          user = await storage.getUserByEmail(payload.email);
         } catch (error) {
           // User not found, will create new user
         }
