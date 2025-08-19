@@ -76,6 +76,7 @@ export default function Orders() {
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [activeView, setActiveView] = useState("ready-for-delivery");
   const [cabinetBuildDetails, setCabinetBuildDetails] = useState<any>({});
+  const [visibleBuildDetails, setVisibleBuildDetails] = useState<Record<string, boolean>>({});
   const [loadingCabinetBuild, setLoadingCabinetBuild] = useState<string | null>(null);
 
   const { data: orders, isLoading, error, refetch } = useQuery<Order[]>({
@@ -863,27 +864,40 @@ export default function Orders() {
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => {
-                                                      if (cabinetBuildDetails[item.itemName]) {
-                                                        // Toggle off if already showing
-                                                        setCabinetBuildDetails(prev => {
-                                                          const newDetails = { ...prev };
-                                                          delete newDetails[item.itemName];
-                                                          return newDetails;
-                                                        });
+                                                      // Check if details are visible
+                                                      if (visibleBuildDetails[item.itemName]) {
+                                                        // Just hide the details, keep data cached
+                                                        setVisibleBuildDetails(prev => ({
+                                                          ...prev,
+                                                          [item.itemName]: false
+                                                        }));
                                                       } else {
-                                                        // Use cabBuildId if available, otherwise search by order number
-                                                        const buildIdOrOrderNum = item.cabBuildId || selectedOrder.orderNumber;
-                                                        fetchCabinetBuildDetails(buildIdOrOrderNum, item.itemName);
+                                                        // Show details if already cached, otherwise fetch
+                                                        if (cabinetBuildDetails[item.itemName]) {
+                                                          // Data is cached, just show it
+                                                          setVisibleBuildDetails(prev => ({
+                                                            ...prev,
+                                                            [item.itemName]: true
+                                                          }));
+                                                        } else {
+                                                          // Need to fetch data
+                                                          const buildIdOrOrderNum = item.cabBuildId || selectedOrder.orderNumber;
+                                                          fetchCabinetBuildDetails(buildIdOrOrderNum, item.itemName);
+                                                          setVisibleBuildDetails(prev => ({
+                                                            ...prev,
+                                                            [item.itemName]: true
+                                                          }));
+                                                        }
                                                       }
                                                     }}
                                                     disabled={loadingCabinetBuild === item.itemName}
                                                   >
                                                     {loadingCabinetBuild === item.itemName ? 'Loading...' : 
-                                                     cabinetBuildDetails[item.itemName] ? 'Hide Details' : 'View Details'}
+                                                     visibleBuildDetails[item.itemName] ? 'Hide Details' : 'View Details'}
                                                   </Button>
                                                   
                                                   {/* Display Cabinet Build Details */}
-                                                  {cabinetBuildDetails[item.itemName] && (
+                                                  {visibleBuildDetails[item.itemName] && cabinetBuildDetails[item.itemName] && (
                                                     <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
                                                       <h5 className="font-semibold text-sm mb-2">Cabinet Build Details</h5>
                                                       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -954,27 +968,40 @@ export default function Orders() {
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => {
-                                                      if (cabinetBuildDetails[item.itemName]) {
-                                                        // Toggle off if already showing
-                                                        setCabinetBuildDetails(prev => {
-                                                          const newDetails = { ...prev };
-                                                          delete newDetails[item.itemName];
-                                                          return newDetails;
-                                                        });
+                                                      // Check if details are visible
+                                                      if (visibleBuildDetails[item.itemName]) {
+                                                        // Just hide the details, keep data cached
+                                                        setVisibleBuildDetails(prev => ({
+                                                          ...prev,
+                                                          [item.itemName]: false
+                                                        }));
                                                       } else {
-                                                        // Use cntrBuildId if available, otherwise search by order number
-                                                        const buildIdOrOrderNum = item.cntrBuildId || selectedOrder.orderNumber;
-                                                        fetchCounterBuildDetails(buildIdOrOrderNum, item.itemName);
+                                                        // Show details if already cached, otherwise fetch
+                                                        if (cabinetBuildDetails[item.itemName]) {
+                                                          // Data is cached, just show it
+                                                          setVisibleBuildDetails(prev => ({
+                                                            ...prev,
+                                                            [item.itemName]: true
+                                                          }));
+                                                        } else {
+                                                          // Need to fetch data
+                                                          const buildIdOrOrderNum = item.cntrBuildId || selectedOrder.orderNumber;
+                                                          fetchCounterBuildDetails(buildIdOrOrderNum, item.itemName);
+                                                          setVisibleBuildDetails(prev => ({
+                                                            ...prev,
+                                                            [item.itemName]: true
+                                                          }));
+                                                        }
                                                       }
                                                     }}
                                                     disabled={loadingCabinetBuild === item.itemName}
                                                   >
                                                     {loadingCabinetBuild === item.itemName ? 'Loading...' : 
-                                                     cabinetBuildDetails[item.itemName] ? 'Hide Details' : 'View Details'}
+                                                     visibleBuildDetails[item.itemName] ? 'Hide Details' : 'View Details'}
                                                   </Button>
                                                   
                                                   {/* Display Counter Build Details */}
-                                                  {cabinetBuildDetails[item.itemName] && (
+                                                  {visibleBuildDetails[item.itemName] && cabinetBuildDetails[item.itemName] && (
                                                     <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
                                                       <h5 className="font-semibold text-sm mb-2">Counter Build Details</h5>
                                                       <div className="grid grid-cols-2 gap-2 text-xs">
