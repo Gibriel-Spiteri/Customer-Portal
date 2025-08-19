@@ -818,22 +818,21 @@ export default function Orders() {
                                                       <p className="font-medium mb-1">This discount includes:</p>
                                                       <div className="space-y-1">
                                                         {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
-                                                          const praAmount = parseFloat(pra.amount || 0);
-                                                          const displayAmount = Math.abs(praAmount);
+                                                          const discountAmount = Math.abs(parseFloat(pra.discountRate || 0));
                                                           
                                                           return (
                                                             <div key={praIndex} className="pl-2 border-l-2 border-yellow-300">
                                                               <div className="flex justify-between items-start">
                                                                 <div className="flex-1">
                                                                   <p className="font-medium text-yellow-700">
-                                                                    {pra.itemName || 'Promotional Adjustment'}
+                                                                    {pra.praDescription || 'Promotional Adjustment'}
                                                                   </p>
-                                                                  {pra.description && (
-                                                                    <p className="text-xs text-yellow-600">{pra.description}</p>
-                                                                  )}
+                                                                  <p className="text-xs text-yellow-600">
+                                                                    PRA Code: {pra.praCode || 'N/A'}
+                                                                  </p>
                                                                 </div>
                                                                 <p className="text-xs font-medium text-yellow-700 ml-2">
-                                                                  ${displayAmount.toFixed(2)}
+                                                                  ${discountAmount.toFixed(2)}
                                                                 </p>
                                                               </div>
                                                             </div>

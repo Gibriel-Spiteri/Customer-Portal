@@ -484,27 +484,28 @@ export class NetSuiteM2M {
         transactionline.linesequencenumber
     `.trim();
 
-    // Get promotional line items that make up the Customer Discount
-    // Exclude "We Pay the Tax" and other PROMO-ITEMIZED types
+    // Get PRA records excluding PROMO-ITEMIZED (pratype = 1)
+    // Show only non-itemized promotional adjustments
     const praQuery = `
       SELECT 
-        transactionline.id AS lineId,
-        BUILTIN.DF(transactionline.item) AS itemName,
-        transactionline.memo AS description,
-        transactionline.amount,
-        transactionline.rate
+        pra.id AS praId,
+        pra.name AS praNumber,
+        pra.custrecord_txnpra_pracode AS praCode,
+        pra.custrecord_txnpra_discrate AS discountRate,
+        pra.custrecord_txnpra_pratype AS praType,
+        CASE 
+          WHEN pra.custrecord_txnpra_pratype = '3' THEN 'CRD Rebate Redemption'
+          WHEN pra.custrecord_txnpra_pratype = '4' THEN 'Non-Itemized Promotion'
+          WHEN pra.custrecord_txnpra_pratype = '5' THEN 'Free Delivery'
+          WHEN pra.custrecord_txnpra_pratype = '2' THEN 'Header Promotion'
+          ELSE 'Promotional Adjustment'
+        END AS praDescription
       FROM 
-        transactionline
+        customrecord_txnpra pra
       WHERE 
-        transactionline.transaction = ${orderId}
-        AND transactionline.item IS NOT NULL
-        AND transactionline.item != 3620
-        AND transactionline.rate < 0
-        AND transactionline.amount > 0
-        AND (transactionline.memo NOT LIKE '%We Pay%' OR transactionline.memo IS NULL)
-        AND (BUILTIN.DF(transactionline.item) NOT LIKE '%We Pay%' OR BUILTIN.DF(transactionline.item) IS NULL)
-      ORDER BY 
-        transactionline.linesequencenumber
+        pra.custrecord_txnpra_txnid = ${orderId}
+        AND pra.custrecord_txnpra_txntype = 'salesorder'
+        AND pra.custrecord_txnpra_pratype != '1'
     `.trim();
 
     const [mainResult, linesResult, praResult] = await Promise.all([

@@ -1354,12 +1354,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           itemDescription: item.itemdescription
         })) : [],
         praDetails: orderDetails.praDetails ? orderDetails.praDetails.map((pra: any) => ({
-          lineId: pra.lineid,
-          itemName: pra.itemname,
-          description: pra.description,
-          amount: pra.amount,
-          rate: pra.rate,
-          itemType: pra.itemtype
+          praId: pra.praid,
+          praNumber: pra.pranumber,
+          praCode: pra.pracode,
+          discountRate: pra.discountrate,
+          praType: pra.pratype,
+          praDescription: pra.pradescription
         })) : [],
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
