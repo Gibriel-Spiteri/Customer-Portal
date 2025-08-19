@@ -734,7 +734,7 @@ export default function Orders() {
                                 const productsTotal = productItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 const shippingTotal = shippingItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 const discountTotal = discountItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
-                                const subtotal = productsTotal + shippingTotal;
+                                const subtotal = productsTotal; // Subtotal is products only, not including shipping
                                 
                                 return (
                                   <>
@@ -843,31 +843,41 @@ export default function Orders() {
                                     {/* Order Summary */}
                                     <div className="mt-4 pt-4 border-t-2 border-gray-300 space-y-2 bg-gray-50 p-4 rounded-lg">
                                       <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
+                                      
+                                      {/* SUBTOTAL - Products only */}
                                       <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Subtotal</span>
-                                        <span className="font-medium">${subtotal.toFixed(2)}</span>
+                                        <span className="text-gray-600">SUBTOTAL</span>
+                                        <span className="font-medium">${productsTotal.toFixed(2)}</span>
                                       </div>
+                                      
+                                      {/* DISCOUNT */}
                                       {discountTotal > 0 && (
                                         <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">Discount</span>
-                                          <span className="font-medium text-green-600">-${discountTotal.toFixed(2)}</span>
+                                          <span className="text-gray-600">DISCOUNT</span>
+                                          <span className="font-medium">-${discountTotal.toFixed(2)}</span>
                                         </div>
                                       )}
+                                      
+                                      {/* TAX */}
                                       {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
                                         <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">Tax</span>
-                                          <span className="font-medium">{formatCurrency(selectedOrder.tax)}</span>
+                                          <span className="text-gray-600">TAX</span>
+                                          <span className="font-medium">${parseFloat(selectedOrder.tax).toFixed(2)}</span>
                                         </div>
                                       )}
+                                      
+                                      {/* SHIPPING CHARGES */}
                                       {shippingTotal > 0 && (
                                         <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">Shipping Charges</span>
+                                          <span className="text-gray-600">SHIPPING CHARGES</span>
                                           <span className="font-medium">${shippingTotal.toFixed(2)}</span>
                                         </div>
                                       )}
+                                      
+                                      {/* TOTAL */}
                                       <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-300">
-                                        <span>Total</span>
-                                        <span>{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</span>
+                                        <span>TOTAL</span>
+                                        <span>${parseFloat(selectedOrder.totalAmount).toFixed(2)}</span>
                                       </div>
                                     </div>
                                   </>
