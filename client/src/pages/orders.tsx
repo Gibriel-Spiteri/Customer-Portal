@@ -811,7 +811,31 @@ export default function Orders() {
                                                   {item.itemDescription && (
                                                     <p>Details: {item.itemDescription}</p>
                                                   )}
-                                                  <p className="italic">This discount is applied based on your customer account settings and current promotions.</p>
+                                                  
+                                                  {/* Display PRA details if available */}
+                                                  {selectedOrder.praDetails && selectedOrder.praDetails.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-yellow-200">
+                                                      <p className="font-medium mb-1">Applied Promotional Adjustments:</p>
+                                                      <div className="space-y-2">
+                                                        {selectedOrder.praDetails.map((pra: any, praIndex: number) => (
+                                                          <div key={praIndex} className="pl-2 border-l-2 border-yellow-300">
+                                                            <p className="font-medium">{pra.externalDescription || pra.praNumber}</p>
+                                                            {pra.discountRate && (
+                                                              <p className="text-yellow-600">Discount: {pra.discountRate}%</p>
+                                                            )}
+                                                            {pra.reason && (
+                                                              <p className="text-yellow-600">Reason: {pra.reason}</p>
+                                                            )}
+                                                            {pra.praType && pra.praType !== 'PROMO - ITEMIZED' && (
+                                                              <p className="text-yellow-500">Type: {pra.praType}</p>
+                                                            )}
+                                                          </div>
+                                                        ))}
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                  
+                                                  <p className="italic">This discount includes all promotional adjustments and account-specific pricing.</p>
                                                 </div>
                                               )}
                                             </div>

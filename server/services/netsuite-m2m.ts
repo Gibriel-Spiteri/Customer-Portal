@@ -484,9 +484,32 @@ export class NetSuiteM2M {
         transactionline.linesequencenumber
     `.trim();
 
-    const [mainResult, linesResult] = await Promise.all([
+    // PRA (Promotional Adjustments) query
+    const praQuery = `
+      SELECT 
+        pra.id AS praId,
+        pra.name AS praNumber,
+        pra.custrecord_txnpra_pra_code AS praCode,
+        pra.custrecord_txnpra_external_description AS externalDescription,
+        pra.custrecord_txnpra_discount_item AS discountItem,
+        pra.custrecord_txnpra_discount_rate AS discountRate,
+        pra.custrecord_txnpra_type AS praType,
+        pra.custrecord_txnpra_reason AS reason,
+        pra.custrecord_txnpra_percent_of_sales_earmark AS salesEarmark,
+        pra.custrecord_txnpra_pra_selection_status AS selectionStatus
+      FROM 
+        customrecord_txnpra pra
+      INNER JOIN
+        customrecord_transaction_pra_map map ON pra.id = map.custrecord_txnpra_map_pra
+      WHERE 
+        map.custrecord_txnpra_map_transaction = ${orderId}
+        AND pra.custrecord_txnpra_type != 'PROMO - ITEMIZED'
+    `.trim();
+
+    const [mainResult, linesResult, praResult] = await Promise.all([
       this.executeSuiteQL(mainQuery, 1, 0),
-      this.executeSuiteQL(linesQuery, 100, 0)
+      this.executeSuiteQL(linesQuery, 100, 0),
+      this.executeSuiteQL(praQuery, 50, 0).catch(() => ({ items: [] })) // Gracefully handle if PRA query fails
     ]);
 
     if (mainResult.items.length === 0) {
@@ -495,7 +518,8 @@ export class NetSuiteM2M {
 
     return {
       ...mainResult.items[0],
-      lineItems: linesResult.items
+      lineItems: linesResult.items,
+      praDetails: praResult.items
     };
   }
 
