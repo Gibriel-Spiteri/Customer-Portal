@@ -1541,15 +1541,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine if this is a build ID (numeric) or order number (starts with SO)
       const isOrderNumber = buildId.startsWith('SO');
       
-      // Query for cabinet build details by ID or order number - using only basic fields
+      // Query for cabinet build details - fetch all available fields
       const query = isOrderNumber ? `
         SELECT 
-          cb.id,
+          cb.*,
           cb.name AS cabBuildId,
-          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
-          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrder,
-          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
-          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material
+          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customerName,
+          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrderName,
+          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimateName,
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS materialName
         FROM customrecord_cabbuild cb
         WHERE cb.custrecord_cabbuild_salesorder IN (
           SELECT id FROM transaction WHERE tranid = '${buildId}'
@@ -1558,12 +1558,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FETCH FIRST 1 ROWS ONLY
       ` : `
         SELECT 
-          cb.id,
+          cb.*,
           cb.name AS cabBuildId,
-          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
-          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrder,
-          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
-          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material
+          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customerName,
+          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrderName,
+          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimateName,
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS materialName
         FROM customrecord_cabbuild cb
         WHERE cb.id = ${buildId}
       `;
