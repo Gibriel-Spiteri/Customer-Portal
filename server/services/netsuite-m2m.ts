@@ -485,7 +485,7 @@ export class NetSuiteM2M {
     `.trim();
 
     // Get promotional line items that make up the Customer Discount
-    // These are the green promotional items visible in NetSuite
+    // Exclude "We Pay the Tax" and other PROMO-ITEMIZED types
     const praQuery = `
       SELECT 
         transactionline.id AS lineId,
@@ -501,6 +501,8 @@ export class NetSuiteM2M {
         AND transactionline.item != 3620
         AND transactionline.rate < 0
         AND transactionline.amount > 0
+        AND (transactionline.memo NOT LIKE '%We Pay%' OR transactionline.memo IS NULL)
+        AND (BUILTIN.DF(transactionline.item) NOT LIKE '%We Pay%' OR BUILTIN.DF(transactionline.item) IS NULL)
       ORDER BY 
         transactionline.linesequencenumber
     `.trim();
