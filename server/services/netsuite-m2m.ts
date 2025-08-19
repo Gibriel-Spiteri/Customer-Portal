@@ -458,29 +458,26 @@ export class NetSuiteM2M {
       WHERE 
         transaction.type = 'SalesOrd'
         AND transaction.id = ${orderId}
-        AND transaction.mainline = 'T'
     `.trim();
 
-    // Line items query
+    // Line items query - using correct field names
     const linesQuery = `
       SELECT 
         transactionline.id AS lineId,
-        transactionline.line AS lineNumber,
+        transactionline.linesequencenumber AS lineNumber,
         BUILTIN.DF(transactionline.item) AS itemName,
         transactionline.item AS itemId,
         transactionline.quantity,
         transactionline.rate,
         transactionline.amount,
-        transactionline.description,
-        transactionline.isclosed AS isClosed
+        transactionline.memo AS description
       FROM 
         transactionline
       WHERE 
         transactionline.transaction = ${orderId}
-        AND transactionline.mainline = 'F'
         AND transactionline.item IS NOT NULL
       ORDER BY 
-        transactionline.line
+        transactionline.linesequencenumber
     `.trim();
 
     const [mainResult, linesResult] = await Promise.all([
