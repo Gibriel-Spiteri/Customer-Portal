@@ -1357,6 +1357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           praId: pra.praid,
           praNumber: pra.pranumber,
           praCode: pra.pracode,
+          praCodeName: pra.pracodename,
           discountRate: pra.discountrate,
           praType: pra.pratype,
           praDescription: pra.pradescription

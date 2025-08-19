@@ -485,20 +485,19 @@ export class NetSuiteM2M {
     `.trim();
 
     // Get PRA records excluding PROMO-ITEMIZED (pratype = 1)
-    // Show only non-itemized promotional adjustments
+    // Show only non-itemized promotional adjustments with their NetSuite names
     const praQuery = `
       SELECT 
         pra.id AS praId,
         pra.name AS praNumber,
         pra.custrecord_txnpra_pracode AS praCode,
+        BUILTIN.DF(pra.custrecord_txnpra_pracode) AS praCodeName,
         pra.custrecord_txnpra_discrate AS discountRate,
         pra.custrecord_txnpra_pratype AS praType,
         CASE 
-          WHEN pra.custrecord_txnpra_pratype = '3' THEN 'CRD Rebate Redemption'
-          WHEN pra.custrecord_txnpra_pratype = '4' THEN 'Non-Itemized Promotion'
-          WHEN pra.custrecord_txnpra_pratype = '5' THEN 'Free Delivery'
-          WHEN pra.custrecord_txnpra_pratype = '2' THEN 'Header Promotion'
-          ELSE 'Promotional Adjustment'
+          WHEN pra.custrecord_txnpra_pracode = '11' THEN 'CRD REBATE REDEMPTION'
+          WHEN pra.custrecord_txnpra_pracode = '372' THEN 'Limited Time Spring Into Savings Promo'
+          ELSE BUILTIN.DF(pra.custrecord_txnpra_pracode)
         END AS praDescription
       FROM 
         customrecord_txnpra pra
