@@ -1523,6 +1523,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cabinet Build Details - Fetch from NetSuite using SuiteQL
+  app.get('/api/cabinet-build/:orderId/:itemName', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const { orderId, itemName } = req.params;
+      
+      // Check if NetSuite M2M is configured
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.status(400).json({ message: 'NetSuite M2M not configured' });
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Query for cabinet build details associated with this sales order
+      const query = `
+        SELECT 
+          cb.id,
+          cb.name AS cabBuildId,
+          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
+          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
+          BUILTIN.DF(cb.custrecord_cabbuild_upperdoorstyle) AS upperDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_lowerdoorstyle) AS lowerDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_cabinetconstruction) AS cabinetConstruction,
+          cb.custrecord_cabbuild_hingetype AS hingeType,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerconstruction) AS drawerConstruction,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerstyle) AS drawerStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_exteriorfinish) AS exteriorFinish,
+          BUILTIN.DF(cb.custrecord_cabbuild_interiorfinish) AS interiorFinish
+        FROM customrecord_cabbuild cb
+        WHERE cb.custrecord_cabbuild_estimate LIKE '%${orderId}%'
+        FETCH FIRST 1 ROWS ONLY
+      `;
+      
+      const result = await m2m.suiteql(query);
+      
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: 'Cabinet build details not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      console.error('Error fetching cabinet build details from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch cabinet build details' });
+    }
+  });
+
   // Customer Contacts - Fetch from NetSuite using SuiteQL
   app.get('/api/customer-contacts', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {

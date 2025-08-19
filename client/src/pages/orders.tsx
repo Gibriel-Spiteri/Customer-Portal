@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 interface OrderItem {
   id: string;
@@ -74,6 +75,8 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [activeView, setActiveView] = useState("ready-for-delivery");
+  const [cabinetBuildDetails, setCabinetBuildDetails] = useState<any>({});
+  const [loadingCabinetBuild, setLoadingCabinetBuild] = useState<string | null>(null);
 
   const { data: orders, isLoading, error, refetch } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
@@ -97,6 +100,26 @@ export default function Orders() {
       });
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const fetchCabinetBuildDetails = async (salesOrderId: string, itemName: string) => {
+    setLoadingCabinetBuild(itemName);
+    try {
+      const response = await apiRequest(`/api/cabinet-build/${salesOrderId}/${encodeURIComponent(itemName)}`);
+      setCabinetBuildDetails(prev => ({
+        ...prev,
+        [itemName]: response
+      }));
+    } catch (error) {
+      console.error('Failed to fetch cabinet build details:', error);
+      toast({
+        title: "Failed to load details",
+        description: "Unable to fetch cabinet build details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCabinetBuild(null);
     }
   };
 
@@ -808,6 +831,76 @@ export default function Orders() {
                                                   )}
                                                   {item.itemDescription && (
                                                     <p>Details: {item.itemDescription}</p>
+                                                  )}
+                                                </div>
+                                              )}
+                                              {/* Add View Details button for SPCAB items */}
+                                              {itemNameLower.includes('spcab') && (
+                                                <div className="mt-2">
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                      if (cabinetBuildDetails[item.itemName]) {
+                                                        // Toggle off if already showing
+                                                        setCabinetBuildDetails(prev => {
+                                                          const newDetails = { ...prev };
+                                                          delete newDetails[item.itemName];
+                                                          return newDetails;
+                                                        });
+                                                      } else {
+                                                        fetchCabinetBuildDetails(selectedOrder.orderNumber, item.itemName);
+                                                      }
+                                                    }}
+                                                    disabled={loadingCabinetBuild === item.itemName}
+                                                  >
+                                                    {loadingCabinetBuild === item.itemName ? 'Loading...' : 
+                                                     cabinetBuildDetails[item.itemName] ? 'Hide Details' : 'View Details'}
+                                                  </Button>
+                                                  
+                                                  {/* Display Cabinet Build Details */}
+                                                  {cabinetBuildDetails[item.itemName] && (
+                                                    <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+                                                      <h5 className="font-semibold text-sm mb-2">Cabinet Build Details</h5>
+                                                      <div className="grid grid-cols-2 gap-2 text-xs">
+                                                        <div>
+                                                          <span className="text-gray-500">Build ID:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabBuildId || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Material:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].material || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Upper Door Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].upperDoorStyle || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Lower Door Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].lowerDoorStyle || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Cabinet Construction:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabinetConstruction || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Door Type:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].hingeType || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Drawer Construction:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].drawerConstruction || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Drawer Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].drawerStyle || 'N/A'}</p>
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                          <span className="text-gray-500">Exterior Finish:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].exteriorFinish || 'N/A'}</p>
+                                                        </div>
+                                                      </div>
+                                                    </div>
                                                   )}
                                                 </div>
                                               )}
