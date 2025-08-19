@@ -802,9 +802,6 @@ export default function Orders() {
                                               {/* Show additional details for Customer Discount */}
                                               {itemNameLower === 'customer discount' && (
                                                 <div className={`text-xs ${descColor} mt-2 space-y-1`}>
-                                                  {item.itemType && (
-                                                    <p>Type: {item.itemType}</p>
-                                                  )}
                                                   {item.discountPercent && (
                                                     <p>Discount Rate: {item.discountPercent}%</p>
                                                   )}
@@ -815,25 +812,22 @@ export default function Orders() {
                                                   {/* Display PRA details if available */}
                                                   {selectedOrder.praDetails && selectedOrder.praDetails.length > 0 && (
                                                     <div className="mt-2 pt-2 border-t border-yellow-200">
-                                                      <p className="font-medium mb-1">This discount includes:</p>
                                                       <div className="space-y-1">
                                                         {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
                                                           const discountAmount = Math.abs(parseFloat(pra.discountRate || 0));
                                                           const displayPercent = pra.praCode === '372' ? ' • 5% Off' : '';
                                                           
                                                           return (
-                                                            <div key={praIndex} className="pl-2 border-l-2 border-yellow-300">
-                                                              <div className="flex justify-between items-start">
-                                                                <div className="flex-1">
-                                                                  <p className="font-medium text-yellow-700">
-                                                                    {pra.praDescription || 'Promotional Adjustment'}
-                                                                    {displayPercent && <span className="text-xs">{displayPercent}</span>}
-                                                                  </p>
-                                                                </div>
-                                                                <p className="text-xs font-medium text-yellow-700 ml-2">
-                                                                  ${discountAmount.toFixed(2)}
+                                                            <div key={praIndex} className="flex justify-between items-start pl-2 border-l-2 border-yellow-300">
+                                                              <div className="flex-1">
+                                                                <p className="font-medium text-yellow-700">
+                                                                  {pra.praDescription || 'Promotional Adjustment'}
+                                                                  {displayPercent && <span className="text-xs">{displayPercent}</span>}
                                                                 </p>
                                                               </div>
+                                                              <p className="text-sm font-medium text-yellow-700">
+                                                                ${discountAmount.toFixed(2)}
+                                                              </p>
                                                             </div>
                                                           );
                                                         })}

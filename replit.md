@@ -101,7 +101,16 @@ Preferred communication style: Simple, everyday language.
 - **Request logging** with duration tracking for API calls
 - **WebSocket connection management** with automatic reconnection
 
-## Recent Features (Aug 14, 2025)
+## Recent Features (Aug 19, 2025)
+
+### Customer Discount PRA Details Display
+- **Promotional Adjustment Breakdown**: Shows non-itemized PRA records from NetSuite under Customer Discount
+- **NetSuite Integration**: Fetches actual promotional names from customrecord_txnpra table
+- **Clean UI Design**: Right-aligned amounts matching main discount total
+- **PRA Type Filtering**: Excludes PROMO-ITEMIZED types, showing only CRD Rebate Redemption and Non-Itemized Promotions
+- **Actual NetSuite Names**: Displays "CRD REBATE REDEMPTION" and "Limited Time Spring Into Savings Promo" as they appear in NetSuite
+
+## Previous Features (Aug 14, 2025)
 
 ### Header Logo Update
 - **Replaced Text with Logo**: Changed "Customer Portal" text to company logo
