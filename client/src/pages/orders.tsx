@@ -746,8 +746,8 @@ export default function Orders() {
                                 const customerDiscountTotal = customerDiscountItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 const promotionalTotal = promotionalItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 
-                                // Subtotal is the true product total before any discounts
-                                const subtotal = productsTotal;
+                                // Subtotal includes products minus promotional adjustments (green items)
+                                const subtotal = productsTotal - promotionalTotal;
                                 
                                 return (
                                   <>
