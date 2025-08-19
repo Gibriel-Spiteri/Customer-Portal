@@ -230,9 +230,12 @@ export default function Estimates() {
                               variant="outline" 
                               size="sm"
                               onClick={async () => {
+                                // Open modal immediately with basic estimate info
+                                setSelectedEstimate(estimate);
                                 setLoadingEstimateDetails(true);
+                                
+                                // Fetch full estimate details in background
                                 try {
-                                  // Fetch estimate details with items
                                   const response = await fetch(`/api/estimates/${estimate.id}`, {
                                     headers: {
                                       'Authorization': `Bearer ${token}`
@@ -242,18 +245,15 @@ export default function Estimates() {
                                     const estimateWithDetails = await response.json();
                                     console.log('Estimate details fetched:', estimateWithDetails);
                                     console.log('Line items count:', estimateWithDetails.items?.length || 0);
+                                    // Update with complete details
                                     setSelectedEstimate(estimateWithDetails);
                                   } else {
                                     console.error('Failed to fetch estimate details, status:', response.status);
                                     const errorText = await response.text();
                                     console.error('Error response:', errorText);
-                                    // Fall back to basic estimate info if details fail
-                                    setSelectedEstimate(estimate);
                                   }
                                 } catch (error) {
                                   console.error('Failed to fetch estimate details:', error);
-                                  // Fall back to basic estimate info
-                                  setSelectedEstimate(estimate);
                                 } finally {
                                   setLoadingEstimateDetails(false);
                                 }
@@ -373,7 +373,22 @@ export default function Estimates() {
                       )}
 
                       {/* Estimate Items */}
-                      {selectedEstimate.items && selectedEstimate.items.length > 0 && (
+                      {loadingEstimateDetails ? (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold flex items-center">
+                              <ShoppingCart className="h-5 w-5 mr-2" />
+                              Line Items
+                            </h3>
+                            <div className="animate-pulse space-y-2">
+                              <div className="h-12 bg-gray-200 rounded"></div>
+                              <div className="h-12 bg-gray-200 rounded"></div>
+                              <div className="h-12 bg-gray-200 rounded"></div>
+                            </div>
+                          </div>
+                        </>
+                      ) : selectedEstimate.items && selectedEstimate.items.length > 0 && (
                         <>
                           <Separator />
                           <div className="space-y-3">

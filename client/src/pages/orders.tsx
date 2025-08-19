@@ -511,9 +511,12 @@ export default function Orders() {
                               variant="outline" 
                               size="sm"
                               onClick={async () => {
+                                // Open modal immediately with basic order info
+                                setSelectedOrder(order);
                                 setLoadingOrderDetails(true);
+                                
+                                // Fetch full order details in background
                                 try {
-                                  // Fetch order details with items
                                   const response = await fetch(`/api/orders/${order.id}`, {
                                     headers: {
                                       'Authorization': `Bearer ${token}`
@@ -523,18 +526,15 @@ export default function Orders() {
                                     const orderWithDetails = await response.json();
                                     console.log('Order details fetched:', orderWithDetails);
                                     console.log('Line items count:', orderWithDetails.items?.length || 0);
+                                    // Update with complete details
                                     setSelectedOrder(orderWithDetails);
                                   } else {
                                     console.error('Failed to fetch order details, status:', response.status);
                                     const errorText = await response.text();
                                     console.error('Error response:', errorText);
-                                    // Fall back to basic order info if details fail
-                                    setSelectedOrder(order);
                                   }
                                 } catch (error) {
                                   console.error('Failed to fetch order details:', error);
-                                  // Fall back to basic order info
-                                  setSelectedOrder(order);
                                 } finally {
                                   setLoadingOrderDetails(false);
                                 }
@@ -665,7 +665,22 @@ export default function Orders() {
                       </div>
 
                       {/* Order Items */}
-                      {selectedOrder.items && selectedOrder.items.length > 0 && (
+                      {loadingOrderDetails ? (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold flex items-center">
+                              <ShoppingCart className="h-5 w-5 mr-2" />
+                              Order Items
+                            </h3>
+                            <div className="animate-pulse space-y-2">
+                              <div className="h-12 bg-gray-200 rounded"></div>
+                              <div className="h-12 bg-gray-200 rounded"></div>
+                              <div className="h-12 bg-gray-200 rounded"></div>
+                            </div>
+                          </div>
+                        </>
+                      ) : selectedOrder.items && selectedOrder.items.length > 0 && (
                         <>
                           <Separator />
                           <div className="space-y-3">
