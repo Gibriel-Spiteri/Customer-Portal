@@ -735,11 +735,15 @@ export default function Orders() {
                                 
                                 const productItems = regularItems.filter(item => !shippingItems.includes(item));
                                 
-                                // Calculate totals using rate × quantity for correct amounts
+                                // Calculate totals using rate × quantity for correct amounts, or amount directly if no qty
                                 const productsTotal = productItems.reduce((sum, item) => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
                                   const rate = Math.abs(parseFloat(item.rate || 0));
-                                  return sum + (qty * rate);
+                                  const amount = Math.abs(parseFloat(item.amount || 0));
+                                  
+                                  // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
+                                  const itemTotal = qty > 0 ? qty * rate : amount;
+                                  return sum + itemTotal;
                                 }, 0);
                                 
                                 const shippingTotal = shippingItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
@@ -755,11 +759,15 @@ export default function Orders() {
                                     {productItems.map((item, index) => {
                                       const quantity = parseFloat(item.quantity || 0);
                                       const rate = parseFloat(item.rate || 0);
+                                      const amount = parseFloat(item.amount || 0);
                                       
                                       const displayQuantity = Math.abs(quantity);
                                       const displayRate = Math.abs(rate);
-                                      // Calculate the correct amount from quantity × rate
-                                      const displayAmount = displayQuantity * displayRate;
+                                      
+                                      // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
+                                      const displayAmount = displayQuantity > 0 
+                                        ? displayQuantity * displayRate 
+                                        : Math.abs(amount);
                                       
                                       return (
                                         <div key={`product-${item.id || index}`} className="bg-gray-50 p-3 rounded-lg">
