@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { 
   Calculator,
   Download,
@@ -22,14 +24,19 @@ import {
   Calendar,
   DollarSign,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ShoppingCart,
+  FileText
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { OAuthAuthorize } from "@/components/oauth-authorize";
 import { queryClient } from "@/lib/queryClient";
 
 interface EstimateItem {
+  id?: string;
   name: string;
+  itemName?: string;
+  description?: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -51,6 +58,9 @@ interface Estimate {
   customerName?: string;
   totalAmount?: string;
   lastSyncAt?: string;
+  subtotal?: string;
+  tax?: string;
+  shipping?: string;
 }
 
 export default function Estimates() {
@@ -58,6 +68,8 @@ export default function Estimates() {
   const [showOAuthAuthorize, setShowOAuthAuthorize] = useState(false);
   const [, setLocation] = useLocation();
   const [syncStatusCollapsed, setSyncStatusCollapsed] = useState(true);
+  const [selectedEstimate, setSelectedEstimate] = useState<Estimate | null>(null);
+  const [loadingEstimateDetails, setLoadingEstimateDetails] = useState(false);
 
   const { data: estimates = [], isLoading, error, refetch } = useQuery<Estimate[]>({
     queryKey: ['/api/estimates'],
@@ -217,7 +229,30 @@ export default function Estimates() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => setLocation(`/estimates/${estimate.id}`)}
+                              onClick={async () => {
+                                setLoadingEstimateDetails(true);
+                                try {
+                                  // Fetch estimate details with items
+                                  const response = await fetch(`/api/estimates/${estimate.id}`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`
+                                    }
+                                  });
+                                  if (response.ok) {
+                                    const estimateWithDetails = await response.json();
+                                    setSelectedEstimate(estimateWithDetails);
+                                  } else {
+                                    // Fall back to basic estimate info if details fail
+                                    setSelectedEstimate(estimate);
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to fetch estimate details:', error);
+                                  // Fall back to basic estimate info
+                                  setSelectedEstimate(estimate);
+                                } finally {
+                                  setLoadingEstimateDetails(false);
+                                }
+                              }}
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
@@ -263,6 +298,163 @@ export default function Estimates() {
                   </CollapsibleContent>
                 </Collapsible>
               </Card>
+
+              {/* Estimate Details Modal */}
+              <Dialog open={!!selectedEstimate} onOpenChange={() => setSelectedEstimate(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center justify-between">
+                      <span>Estimate Details</span>
+                      {selectedEstimate && (
+                        <Badge className={getStatusColor(selectedEstimate.status)}>
+                          {selectedEstimate.status.charAt(0).toUpperCase() + selectedEstimate.status.slice(1)}
+                        </Badge>
+                      )}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Estimate #{selectedEstimate?.estimateNumber}
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  {selectedEstimate && (
+                    <div className="space-y-6 mt-4">
+                      {/* Estimate Summary */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Estimate Date</h3>
+                          <p className="text-base flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            {formatDate(selectedEstimate.estimateDate)}
+                          </p>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h3>
+                          <p className="text-lg font-semibold">
+                            {formatCurrency(selectedEstimate.amount || selectedEstimate.totalAmount || '0', selectedEstimate.currency)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Expiry Date */}
+                      {selectedEstimate.expiryDate && (
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Expires On</h3>
+                          <p className="text-base flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            {formatDate(selectedEstimate.expiryDate)}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Job ID and End User */}
+                      {(selectedEstimate.memo || selectedEstimate.tagFor) && (
+                        <>
+                          <Separator />
+                          <div className="grid grid-cols-2 gap-4">
+                            {selectedEstimate.memo && (
+                              <div>
+                                <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
+                                <p className="text-base">{selectedEstimate.memo}</p>
+                              </div>
+                            )}
+                            {selectedEstimate.tagFor && (
+                              <div>
+                                <h3 className="text-sm font-medium text-gray-500 mb-1">End User</h3>
+                                <p className="text-base">{selectedEstimate.tagFor}</p>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Estimate Items */}
+                      {selectedEstimate.items && selectedEstimate.items.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold flex items-center">
+                              <ShoppingCart className="h-5 w-5 mr-2" />
+                              Line Items
+                            </h3>
+                            <div className="space-y-2">
+                              {selectedEstimate.items.map((item, index) => (
+                                <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-gray-900">{item.itemName || item.name}</h4>
+                                      {item.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right ml-4">
+                                      <p className="font-semibold">{formatCurrency(item.amount.toString())}</p>
+                                      <p className="text-sm text-gray-600">
+                                        {item.quantity} × {formatCurrency(item.rate.toString())}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              
+                              {/* Estimate Totals */}
+                              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                                {selectedEstimate.subtotal && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Subtotal</span>
+                                    <span>{formatCurrency(selectedEstimate.subtotal)}</span>
+                                  </div>
+                                )}
+                                {selectedEstimate.tax && parseFloat(selectedEstimate.tax) > 0 && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Tax</span>
+                                    <span>{formatCurrency(selectedEstimate.tax)}</span>
+                                  </div>
+                                )}
+                                {selectedEstimate.shipping && parseFloat(selectedEstimate.shipping) > 0 && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Shipping</span>
+                                    <span>{formatCurrency(selectedEstimate.shipping)}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-base font-semibold pt-2 border-t">
+                                  <span>Total</span>
+                                  <span>{formatCurrency(selectedEstimate.amount || selectedEstimate.totalAmount || '0', selectedEstimate.currency)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Description */}
+                      {selectedEstimate.description && (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold flex items-center">
+                              <FileText className="h-5 w-5 mr-2" />
+                              Description
+                            </h3>
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <p className="text-base">{selectedEstimate.description}</p>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end space-x-3 pt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setSelectedEstimate(null)}
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </main>

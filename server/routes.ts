@@ -1656,7 +1656,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: estimate.id,
         estimateNumber: estimate.documentnumber || estimate.tranid,
         status: estimate.status === 'A' ? 'open' : estimate.status?.toLowerCase(),
-        total: estimate.total || '0',
+        amount: estimate.total || '0',
+        totalAmount: estimate.total || '0',
         subtotal: estimate.total || '0', // Use total as subtotal since subtotal not available
         tax: estimate.tax || '0',
         shipping: '0', // Shipping not available in SuiteQL
@@ -1669,7 +1670,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         location: estimate.location,
         shippingAddress: '', // Not available in SuiteQL
         billingAddress: '', // Not available in SuiteQL
-        items: estimate.items || []
+        items: estimate.items ? estimate.items.map((item: any) => ({
+          id: item.lineid,
+          lineNumber: item.linenumber,
+          name: item.itemname,
+          itemName: item.itemname,
+          quantity: item.quantity || 0,
+          rate: item.rate || '0.00',
+          amount: item.amount || '0.00',
+          description: item.description || ''
+        })) : [],
+        dataFreshness: 'live' as const,
+        lastSyncAt: new Date().toISOString()
       };
       
       res.json(transformedEstimate);

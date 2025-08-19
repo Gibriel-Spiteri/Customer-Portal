@@ -734,10 +734,10 @@ export default function Orders() {
                                       .filter(([key, value]) => value)
                                       .map(([key, value]) => (
                                         <span key={key} className="block">
-                                          {key === 'addressee' ? <strong>{value}</strong> : value}
+                                          {key === 'addressee' ? <strong>{String(value)}</strong> : String(value)}
                                         </span>
                                       ))
-                                  : selectedOrder.shippingAddress
+                                  : String(selectedOrder.shippingAddress)
                                 }
                               </p>
                             </div>
