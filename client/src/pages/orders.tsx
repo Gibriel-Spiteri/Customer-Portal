@@ -742,10 +742,9 @@ export default function Orders() {
                                   const amount = parseFloat(item.amount || 0);
                                   const itemNameLower = (item.itemName || '').toLowerCase();
                                   
-                                  // Check if this is a percentage discount item
+                                  // Check if this is a percentage discount item (only actual discounts, not protection plans)
                                   const isPercentageDiscount = itemNameLower.includes('% discount') || 
-                                                               itemNameLower.includes('discount') ||
-                                                               itemNameLower.includes('protection plan');
+                                                               (itemNameLower === 'discount');
                                   
                                   // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
                                   let itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
@@ -774,10 +773,9 @@ export default function Orders() {
                                       const amount = parseFloat(item.amount || 0);
                                       const itemNameLower = (item.itemName || '').toLowerCase();
                                       
-                                      // Check if this is a percentage discount item
+                                      // Check if this is a percentage discount item (only actual discounts, not protection plans)
                                       const isPercentageDiscount = itemNameLower.includes('% discount') || 
-                                                                   itemNameLower.includes('discount') ||
-                                                                   itemNameLower.includes('protection plan');
+                                                                   (itemNameLower === 'discount');
                                       
                                       const displayQuantity = Math.abs(quantity);
                                       const displayRate = Math.abs(rate);
