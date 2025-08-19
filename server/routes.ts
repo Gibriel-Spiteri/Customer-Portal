@@ -1538,8 +1538,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Query for cabinet build details by ID
-      const query = `
+      // Determine if this is a build ID (numeric) or order number (starts with SO)
+      const isOrderNumber = buildId.startsWith('SO');
+      
+      // Query for cabinet build details by ID or order number
+      const query = isOrderNumber ? `
+        SELECT 
+          cb.id,
+          cb.name AS cabBuildId,
+          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
+          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrder,
+          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
+          BUILTIN.DF(cb.custrecord_cabbuild_upperdoorstyle) AS upperDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_lowerdoorstyle) AS lowerDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_cabinetconstruction) AS cabinetConstruction,
+          cb.custrecord_cabbuild_hingetype AS hingeType,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerconstruction) AS drawerConstruction,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerstyle) AS drawerStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_exteriorfinish) AS exteriorFinish,
+          BUILTIN.DF(cb.custrecord_cabbuild_interiorfinish) AS interiorFinish
+        FROM customrecord_cabbuild cb
+        WHERE cb.custrecord_cabbuild_salesorder IN (
+          SELECT id FROM transaction WHERE tranid = '${buildId}'
+        )
+        OR cb.name LIKE '%${buildId}%'
+        FETCH FIRST 1 ROWS ONLY
+      ` : `
         SELECT 
           cb.id,
           cb.name AS cabBuildId,
@@ -1585,8 +1610,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Query for counter build details by ID
-      const query = `
+      // Determine if this is a build ID (numeric) or order number (starts with SO)
+      const isOrderNumber = buildId.startsWith('SO');
+      
+      // Query for counter build details by ID or order number
+      const query = isOrderNumber ? `
+        SELECT 
+          cb.id,
+          cb.name AS cntrBuildId,
+          BUILTIN.DF(cb.custrecord_cntrbuild_customer) AS customer,
+          BUILTIN.DF(cb.custrecord_cntrbuild_salesorder) AS salesOrder,
+          BUILTIN.DF(cb.custrecord_cntrbuild_material) AS material,
+          BUILTIN.DF(cb.custrecord_cntrbuild_edge) AS edge,
+          BUILTIN.DF(cb.custrecord_cntrbuild_backsplash) AS backsplash,
+          BUILTIN.DF(cb.custrecord_cntrbuild_thickness) AS thickness
+        FROM customrecord_cntrbuild cb
+        WHERE cb.custrecord_cntrbuild_salesorder IN (
+          SELECT id FROM transaction WHERE tranid = '${buildId}'
+        )
+        OR cb.name LIKE '%${buildId}%'
+        FETCH FIRST 1 ROWS ONLY
+      ` : `
         SELECT 
           cb.id,
           cb.name AS cntrBuildId,

@@ -856,8 +856,8 @@ export default function Orders() {
                                                   )}
                                                 </div>
                                               )}
-                                              {/* Add View Details button for SPCAB items with cabinet build ID */}
-                                              {itemNameLower.includes('spcab') && item.cabBuildId && (
+                                              {/* Add View Details button for SPCAB items */}
+                                              {itemNameLower.includes('spcab') && (
                                                 <div className="mt-2">
                                                   <Button
                                                     size="sm"
@@ -871,7 +871,9 @@ export default function Orders() {
                                                           return newDetails;
                                                         });
                                                       } else {
-                                                        fetchCabinetBuildDetails(item.cabBuildId, item.itemName);
+                                                        // Use cabBuildId if available, otherwise search by order number
+                                                        const buildIdOrOrderNum = item.cabBuildId || selectedOrder.orderNumber;
+                                                        fetchCabinetBuildDetails(buildIdOrOrderNum, item.itemName);
                                                       }
                                                     }}
                                                     disabled={loadingCabinetBuild === item.itemName}
@@ -927,8 +929,8 @@ export default function Orders() {
                                                 </div>
                                               )}
                                               
-                                              {/* Add View Details button for SPCNTR items with counter build ID */}
-                                              {itemNameLower.includes('spcntr') && item.cntrBuildId && (
+                                              {/* Add View Details button for SPCNTR items */}
+                                              {itemNameLower.includes('spcntr') && (
                                                 <div className="mt-2">
                                                   <Button
                                                     size="sm"
@@ -942,7 +944,9 @@ export default function Orders() {
                                                           return newDetails;
                                                         });
                                                       } else {
-                                                        fetchCounterBuildDetails(item.cntrBuildId, item.itemName);
+                                                        // Use cntrBuildId if available, otherwise search by order number
+                                                        const buildIdOrOrderNum = item.cntrBuildId || selectedOrder.orderNumber;
+                                                        fetchCounterBuildDetails(buildIdOrOrderNum, item.itemName);
                                                       }
                                                     }}
                                                     disabled={loadingCabinetBuild === item.itemName}
