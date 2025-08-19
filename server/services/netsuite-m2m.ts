@@ -456,7 +456,7 @@ export class NetSuiteM2M {
         AND transaction.id = ${orderId}
     `.trim();
 
-    // Line items query - using correct field names
+    // Line items query - enhanced with additional discount details
     const linesQuery = `
       SELECT 
         transactionline.id AS lineId,
@@ -466,9 +466,17 @@ export class NetSuiteM2M {
         transactionline.quantity,
         transactionline.rate,
         transactionline.amount,
-        transactionline.memo AS description
+        transactionline.memo AS description,
+        transactionline.ratepercent AS discountPercent,
+        transactionline.isclosed,
+        transactionline.uniquekey,
+        item.itemtype AS itemType,
+        item.displayname AS itemDisplayName,
+        item.description AS itemDescription
       FROM 
         transactionline
+      LEFT JOIN
+        item ON transactionline.item = item.id
       WHERE 
         transactionline.transaction = ${orderId}
         AND transactionline.item IS NOT NULL

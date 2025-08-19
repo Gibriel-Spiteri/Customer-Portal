@@ -799,6 +799,21 @@ export default function Orders() {
                                               {item.description && (
                                                 <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                               )}
+                                              {/* Show additional details for Customer Discount */}
+                                              {itemNameLower === 'customer discount' && (
+                                                <div className={`text-xs ${descColor} mt-2 space-y-1`}>
+                                                  {item.itemType && (
+                                                    <p>Type: {item.itemType}</p>
+                                                  )}
+                                                  {item.discountPercent && (
+                                                    <p>Discount Rate: {item.discountPercent}%</p>
+                                                  )}
+                                                  {item.itemDescription && (
+                                                    <p>Details: {item.itemDescription}</p>
+                                                  )}
+                                                  <p className="italic">This discount is applied based on your customer account settings and current promotions.</p>
+                                                </div>
+                                              )}
                                             </div>
                                             <div className="text-right ml-4">
                                               <p className={`font-semibold ${textColor}`}>

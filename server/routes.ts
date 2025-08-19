@@ -1343,10 +1343,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: item.lineid,
           lineNumber: item.linenumber,
           itemName: item.itemname,
+          itemId: item.itemid,
           quantity: item.quantity || 0,
           rate: item.rate || '0.00',
           amount: item.amount || '0.00',
-          description: item.description || ''
+          description: item.description || '',
+          discountPercent: item.discountpercent,
+          itemType: item.itemtype,
+          itemDisplayName: item.itemdisplayname,
+          itemDescription: item.itemdescription
         })) : [],
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
