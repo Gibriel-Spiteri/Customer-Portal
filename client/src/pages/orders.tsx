@@ -692,109 +692,105 @@ export default function Orders() {
                               {(() => {
                                 const allItems = selectedOrder.items || [];
                                 
-                                // Separate Customer Discount from other promotional items
-                                const customerDiscountItems = allItems.filter(item => {
-                                  const itemName = item.itemName?.toLowerCase() || '';
-                                  return itemName === 'customer discount';
-                                });
-                                
-                                // Other promotional items (PRAs) that don't count as discounts in summary
-                                const promotionalItems = allItems.filter(item => {
-                                  const itemName = item.itemName?.toLowerCase() || '';
-                                  const amount = parseFloat(item.amount || 0);
-                                  return Math.abs(amount) > 0.01 && 
-                                         !customerDiscountItems.includes(item) &&
-                                         (itemName.includes('credit') ||
-                                          itemName.includes('we pay the tax') ||
-                                          itemName.includes('we pay'));
-                                });
-                                
-                                // Regular items and shipping (exclude tax items and promotional items)
-                                const regularItems = allItems.filter(item => {
+                                // Filter out tax items and items with zero amounts
+                                const displayItems = allItems.filter(item => {
                                   const itemName = item.itemName || '';
                                   const itemNameLower = itemName.toLowerCase();
                                   const amount = parseFloat(item.amount || 0);
-                                  // Exclude zero amounts, tax items, and promotional items
+                                  
+                                  // Exclude tax items and zero amounts
                                   const isTaxItem = itemName.includes('NY_') || 
-                                                   itemNameLower.includes('tax') ||
                                                    itemNameLower.includes('ny_suffolk') ||
                                                    itemNameLower.includes('ny_bhdl') ||
-                                                   itemNameLower.includes('ny_ny');
+                                                   itemNameLower.includes('ny_ny') ||
+                                                   (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                                   
-                                  return Math.abs(amount) > 0.01 && 
-                                         !isTaxItem &&
-                                         !customerDiscountItems.includes(item) &&
-                                         !promotionalItems.includes(item);
+                                  return Math.abs(amount) > 0.01 && !isTaxItem;
                                 });
                                 
-                                // Separate shipping from products
-                                const shippingItems = regularItems.filter(item => {
-                                  const itemName = item.itemName?.toLowerCase() || '';
-                                  return itemName.includes('delivered') || itemName.includes('ups') || itemName.includes('shipping');
-                                });
+                                // Calculate totals for summary section
+                                let productsTotal = 0;
+                                let shippingTotal = 0;
+                                let customerDiscountTotal = 0;
+                                let promotionalTotal = 0;
                                 
-                                const productItems = regularItems.filter(item => !shippingItems.includes(item));
-                                
-                                // Calculate totals using rate × quantity for correct amounts, or amount directly if no qty
-                                const productsTotal = productItems.reduce((sum, item) => {
+                                displayItems.forEach(item => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
                                   const rate = Math.abs(parseFloat(item.rate || 0));
                                   const amount = parseFloat(item.amount || 0);
                                   const itemNameLower = (item.itemName || '').toLowerCase();
                                   
-                                  // Check if this is a percentage discount item (only actual discounts, not protection plans)
-                                  const isPercentageDiscount = itemNameLower.includes('% discount') || 
-                                                               (itemNameLower === 'discount');
+                                  const itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
                                   
-                                  // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
-                                  let itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
-                                  
-                                  // For percentage discounts that come in as positive from NetSuite, subtract them
-                                  if (isPercentageDiscount && amount > 0) {
-                                    return sum - itemTotal;
+                                  if (itemNameLower === 'customer discount') {
+                                    customerDiscountTotal = itemTotal;
+                                  } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                                    shippingTotal += itemTotal;
+                                  } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                    promotionalTotal += itemTotal;
+                                  } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
+                                    // Percentage discounts reduce the products total
+                                    productsTotal -= itemTotal;
+                                  } else {
+                                    // Regular products
+                                    productsTotal += itemTotal;
                                   }
-                                  
-                                  return sum + itemTotal;
-                                }, 0);
-                                
-                                const shippingTotal = shippingItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
-                                const customerDiscountTotal = customerDiscountItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
-                                const promotionalTotal = promotionalItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
+                                });
                                 
                                 // Subtotal includes products minus promotional adjustments (green items)
                                 const subtotal = productsTotal - promotionalTotal;
                                 
                                 return (
                                   <>
-                                    {/* Product Items */}
-                                    {productItems.map((item, index) => {
+                                    {/* Display all items in original NetSuite order */}
+                                    {displayItems.map((item, index) => {
                                       const quantity = parseFloat(item.quantity || 0);
                                       const rate = parseFloat(item.rate || 0);
                                       const amount = parseFloat(item.amount || 0);
                                       const itemNameLower = (item.itemName || '').toLowerCase();
                                       
-                                      // Check if this is a percentage discount item (only actual discounts, not protection plans)
-                                      const isPercentageDiscount = itemNameLower.includes('% discount') || 
-                                                                   (itemNameLower === 'discount');
-                                      
                                       const displayQuantity = Math.abs(quantity);
                                       const displayRate = Math.abs(rate);
                                       
-                                      // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
+                                      // Calculate display amount
                                       let displayAmount = displayQuantity > 0 
                                         ? displayQuantity * displayRate 
                                         : Math.abs(amount);
                                       
-                                      // For percentage discounts, show as negative
-                                      const isNegative = isPercentageDiscount && amount > 0;
+                                      // Determine item type and styling
+                                      let bgColor = "bg-gray-50";
+                                      let textColor = "text-gray-900";
+                                      let descColor = "text-gray-600";
+                                      let isNegative = false;
                                       
-                                      // Use green background for percentage discounts, gray for regular items
-                                      const bgColor = isPercentageDiscount ? "bg-green-50" : "bg-gray-50";
-                                      const textColor = isPercentageDiscount ? "text-green-900" : "text-gray-900";
-                                      const descColor = isPercentageDiscount ? "text-green-700" : "text-gray-600";
+                                      if (itemNameLower === 'customer discount') {
+                                        // Customer Discount - Yellow
+                                        bgColor = "bg-yellow-50";
+                                        textColor = "text-yellow-900";
+                                        descColor = "text-yellow-700";
+                                        isNegative = true;
+                                      } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                                        // Shipping - Blue
+                                        bgColor = "bg-blue-50";
+                                        textColor = "text-blue-900";
+                                        descColor = "text-blue-700";
+                                      } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                        // Promotional credits - Green
+                                        bgColor = "bg-green-50";
+                                        textColor = "text-green-900";
+                                        descColor = "text-green-700";
+                                        isNegative = true;
+                                      } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
+                                        // Percentage discounts - Green
+                                        bgColor = "bg-green-50";
+                                        textColor = "text-green-900";
+                                        descColor = "text-green-700";
+                                        isNegative = amount > 0; // Show as negative if positive in NetSuite
+                                      }
+                                      // Everything else is a regular product (gray)
                                       
                                       return (
-                                        <div key={`product-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
+                                        <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
                                           <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                               <h4 className={`font-medium ${textColor}`}>
@@ -813,84 +809,6 @@ export default function Orders() {
                                                   {displayQuantity} × ${displayRate.toFixed(2)}
                                                 </p>
                                               )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                    
-                                    {/* Promotional Items (PRAs) */}
-                                    {promotionalItems.length > 0 && promotionalItems.map((item, index) => {
-                                      const amount = parseFloat(item.amount || 0);
-                                      const displayAmount = Math.abs(amount);
-                                      
-                                      return (
-                                        <div key={`promo-${item.id || index}`} className="bg-green-50 p-3 rounded-lg">
-                                          <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                              <h4 className="font-medium text-green-900">
-                                                {item.itemName}
-                                              </h4>
-                                              {item.description && (
-                                                <p className="text-sm text-green-700 mt-1">{item.description}</p>
-                                              )}
-                                            </div>
-                                            <div className="text-right ml-4">
-                                              <p className="font-semibold text-green-900">
-                                                -${displayAmount.toFixed(2)}
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                    
-                                    {/* Customer Discount */}
-                                    {customerDiscountItems.length > 0 && customerDiscountItems.map((item, index) => {
-                                      const amount = parseFloat(item.amount || 0);
-                                      const displayAmount = Math.abs(amount);
-                                      
-                                      return (
-                                        <div key={`discount-${item.id || index}`} className="bg-yellow-50 p-3 rounded-lg">
-                                          <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                              <h4 className="font-medium text-yellow-900">
-                                                {item.itemName}
-                                              </h4>
-                                              {item.description && (
-                                                <p className="text-sm text-yellow-700 mt-1">{item.description}</p>
-                                              )}
-                                            </div>
-                                            <div className="text-right ml-4">
-                                              <p className="font-semibold text-yellow-900">
-                                                -${displayAmount.toFixed(2)}
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                    
-                                    {/* Shipping Items */}
-                                    {shippingItems.length > 0 && shippingItems.map((item, index) => {
-                                      const amount = parseFloat(item.amount || 0);
-                                      const displayAmount = Math.abs(amount);
-                                      
-                                      return (
-                                        <div key={`shipping-${item.id || index}`} className="bg-blue-50 p-3 rounded-lg">
-                                          <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                              <h4 className="font-medium text-blue-900">
-                                                {item.itemName}
-                                              </h4>
-                                              {item.description && (
-                                                <p className="text-sm text-blue-700 mt-1">{item.description}</p>
-                                              )}
-                                            </div>
-                                            <div className="text-right ml-4">
-                                              <p className="font-semibold text-blue-900">
-                                                ${displayAmount.toFixed(2)}
-                                              </p>
                                             </div>
                                           </div>
                                         </div>
