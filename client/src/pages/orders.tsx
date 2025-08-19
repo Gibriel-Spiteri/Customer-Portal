@@ -790,23 +790,28 @@ export default function Orders() {
                                       // For percentage discounts, show as negative
                                       const isNegative = isPercentageDiscount && amount > 0;
                                       
+                                      // Use green background for percentage discounts, gray for regular items
+                                      const bgColor = isPercentageDiscount ? "bg-green-50" : "bg-gray-50";
+                                      const textColor = isPercentageDiscount ? "text-green-900" : "text-gray-900";
+                                      const descColor = isPercentageDiscount ? "text-green-700" : "text-gray-600";
+                                      
                                       return (
-                                        <div key={`product-${item.id || index}`} className="bg-gray-50 p-3 rounded-lg">
+                                        <div key={`product-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
                                           <div className="flex justify-between items-start">
                                             <div className="flex-1">
-                                              <h4 className="font-medium text-gray-900">
+                                              <h4 className={`font-medium ${textColor}`}>
                                                 {item.itemName}
                                               </h4>
                                               {item.description && (
-                                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                                <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                               )}
                                             </div>
                                             <div className="text-right ml-4">
-                                              <p className="font-semibold text-gray-900">
+                                              <p className={`font-semibold ${textColor}`}>
                                                 {isNegative ? '-' : ''}${displayAmount.toFixed(2)}
                                               </p>
                                               {displayQuantity > 0 && (
-                                                <p className="text-sm text-gray-600">
+                                                <p className={`text-sm ${descColor}`}>
                                                   {displayQuantity} × ${displayRate.toFixed(2)}
                                                 </p>
                                               )}
