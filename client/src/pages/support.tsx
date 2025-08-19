@@ -394,7 +394,7 @@ export default function Support() {
                               Closed ({tickets.filter(t => t.status === '5').length})
                             </SelectItem>
                             <SelectItem value="6">
-                              On Hold (COR-CHECK PO) ({tickets.filter(t => t.status === '6').length})
+                              On Hold ({tickets.filter(t => t.status === '6').length})
                             </SelectItem>
                           </SelectContent>
                         </Select>
