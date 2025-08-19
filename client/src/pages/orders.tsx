@@ -813,11 +813,11 @@ export default function Orders() {
                                             </div>
                                             <div className="text-right ml-4 w-24">
                                               <p className={`font-semibold ${textColor}`}>
-                                                {isNegative ? '-' : ''}${displayAmount.toFixed(2)}
+                                                {isNegative ? '-' : ''}${displayAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </p>
                                               {displayQuantity > 0 && (
                                                 <p className={`text-sm ${descColor}`}>
-                                                  {displayQuantity} × ${displayRate.toFixed(2)}
+                                                  {displayQuantity} × ${displayRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </p>
                                               )}
                                             </div>
@@ -841,7 +841,7 @@ export default function Orders() {
                                                       </div>
                                                       <div className="text-right ml-4 w-24">
                                                         <p className="text-sm font-medium text-yellow-700">
-                                                          ${discountAmount.toFixed(2)}
+                                                          ${discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                         </p>
                                                       </div>
                                                     </div>
@@ -862,14 +862,14 @@ export default function Orders() {
                                       {/* SUBTOTAL - Products plus promotional adjustments */}
                                       <div className="flex justify-between text-sm">
                                         <span className="text-gray-600">SUBTOTAL</span>
-                                        <span className="font-medium">${subtotal.toFixed(2)}</span>
+                                        <span className="font-medium">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                       
                                       {/* DISCOUNT - Customer Discount only */}
                                       {customerDiscountTotal > 0 && (
                                         <div className="flex justify-between text-sm">
                                           <span className="text-gray-600">DISCOUNT</span>
-                                          <span className="font-medium">-${customerDiscountTotal.toFixed(2)}</span>
+                                          <span className="font-medium">-${customerDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       )}
                                       
@@ -877,7 +877,7 @@ export default function Orders() {
                                       {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
                                         <div className="flex justify-between text-sm">
                                           <span className="text-gray-600">TAX</span>
-                                          <span className="font-medium">${parseFloat(selectedOrder.tax).toFixed(2)}</span>
+                                          <span className="font-medium">${parseFloat(selectedOrder.tax).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       )}
                                       
@@ -885,14 +885,14 @@ export default function Orders() {
                                       {shippingTotal > 0 && (
                                         <div className="flex justify-between text-sm">
                                           <span className="text-gray-600">SHIPPING CHARGES</span>
-                                          <span className="font-medium">${shippingTotal.toFixed(2)}</span>
+                                          <span className="font-medium">${shippingTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       )}
                                       
                                       {/* TOTAL */}
                                       <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-300">
                                         <span>TOTAL</span>
-                                        <span>${parseFloat(selectedOrder.totalAmount).toFixed(2)}</span>
+                                        <span>${parseFloat(selectedOrder.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                     </div>
                                   </>
