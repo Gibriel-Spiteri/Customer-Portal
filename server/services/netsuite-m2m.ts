@@ -484,26 +484,25 @@ export class NetSuiteM2M {
         transactionline.linesequencenumber
     `.trim();
 
-    // PRA (Promotional Adjustments) query
+    // Get promotional line items that make up the Customer Discount
+    // These are the green promotional items visible in NetSuite
     const praQuery = `
       SELECT 
-        pra.id AS praId,
-        pra.name AS praNumber,
-        pra.custrecord_txnpra_pra_code AS praCode,
-        pra.custrecord_txnpra_external_description AS externalDescription,
-        pra.custrecord_txnpra_discount_item AS discountItem,
-        pra.custrecord_txnpra_discount_rate AS discountRate,
-        pra.custrecord_txnpra_type AS praType,
-        pra.custrecord_txnpra_reason AS reason,
-        pra.custrecord_txnpra_percent_of_sales_earmark AS salesEarmark,
-        pra.custrecord_txnpra_pra_selection_status AS selectionStatus
+        transactionline.id AS lineId,
+        BUILTIN.DF(transactionline.item) AS itemName,
+        transactionline.memo AS description,
+        transactionline.amount,
+        transactionline.rate
       FROM 
-        customrecord_txnpra pra
-      INNER JOIN
-        customrecord_transaction_pra_map map ON pra.id = map.custrecord_txnpra_map_pra
+        transactionline
       WHERE 
-        map.custrecord_txnpra_map_transaction = ${orderId}
-        AND pra.custrecord_txnpra_type != 'PROMO - ITEMIZED'
+        transactionline.transaction = ${orderId}
+        AND transactionline.item IS NOT NULL
+        AND transactionline.item != 3620
+        AND transactionline.rate < 0
+        AND transactionline.amount > 0
+      ORDER BY 
+        transactionline.linesequencenumber
     `.trim();
 
     const [mainResult, linesResult, praResult] = await Promise.all([

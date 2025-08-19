@@ -815,22 +815,30 @@ export default function Orders() {
                                                   {/* Display PRA details if available */}
                                                   {selectedOrder.praDetails && selectedOrder.praDetails.length > 0 && (
                                                     <div className="mt-2 pt-2 border-t border-yellow-200">
-                                                      <p className="font-medium mb-1">Applied Promotional Adjustments:</p>
-                                                      <div className="space-y-2">
-                                                        {selectedOrder.praDetails.map((pra: any, praIndex: number) => (
-                                                          <div key={praIndex} className="pl-2 border-l-2 border-yellow-300">
-                                                            <p className="font-medium">{pra.externalDescription || pra.praNumber}</p>
-                                                            {pra.discountRate && (
-                                                              <p className="text-yellow-600">Discount: {pra.discountRate}%</p>
-                                                            )}
-                                                            {pra.reason && (
-                                                              <p className="text-yellow-600">Reason: {pra.reason}</p>
-                                                            )}
-                                                            {pra.praType && pra.praType !== 'PROMO - ITEMIZED' && (
-                                                              <p className="text-yellow-500">Type: {pra.praType}</p>
-                                                            )}
-                                                          </div>
-                                                        ))}
+                                                      <p className="font-medium mb-1">This discount includes:</p>
+                                                      <div className="space-y-1">
+                                                        {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
+                                                          const praAmount = parseFloat(pra.amount || 0);
+                                                          const displayAmount = Math.abs(praAmount);
+                                                          
+                                                          return (
+                                                            <div key={praIndex} className="pl-2 border-l-2 border-yellow-300">
+                                                              <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                  <p className="font-medium text-yellow-700">
+                                                                    {pra.itemName || 'Promotional Adjustment'}
+                                                                  </p>
+                                                                  {pra.description && (
+                                                                    <p className="text-xs text-yellow-600">{pra.description}</p>
+                                                                  )}
+                                                                </div>
+                                                                <p className="text-xs font-medium text-yellow-700 ml-2">
+                                                                  ${displayAmount.toFixed(2)}
+                                                                </p>
+                                                              </div>
+                                                            </div>
+                                                          );
+                                                        })}
                                                       </div>
                                                     </div>
                                                   )}
