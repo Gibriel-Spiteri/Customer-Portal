@@ -689,82 +689,170 @@ export default function Orders() {
                               Order Items
                             </h3>
                             <div className="space-y-2">
-                              {selectedOrder.items
-                                .filter(item => {
-                                  // Filter out items with $0.00 amount (like Customer Discount with 0)
+                              {(() => {
+                                const allItems = selectedOrder.items || [];
+                                
+                                // Identify discount/credit items (positive amounts that are actually credits)
+                                const discountItems = allItems.filter(item => {
+                                  const itemName = item.itemName?.toLowerCase() || '';
                                   const amount = parseFloat(item.amount || 0);
-                                  return Math.abs(amount) > 0.01; // Keep items with amount greater than 1 cent
-                                })
-                                .map((item, index) => {
-                                  const quantity = parseFloat(item.quantity || 0);
-                                  const rate = parseFloat(item.rate || 0);
-                                  const amount = parseFloat(item.amount || 0);
-                                  
-                                  // Always show absolute values (convert negatives to positive)
-                                  const displayQuantity = Math.abs(quantity);
-                                  const displayRate = Math.abs(rate);
-                                  const displayAmount = Math.abs(amount);
-                                  
-                                  return (
-                                    <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
-                                      <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                          <h4 className="font-medium text-gray-900">
-                                            {item.itemName}
-                                          </h4>
-                                          {item.description && (
-                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                                          )}
-                                        </div>
-                                        <div className="text-right ml-4">
-                                          <p className="font-semibold text-gray-900">
-                                            ${displayAmount.toFixed(2)}
-                                          </p>
-                                          <p className="text-sm text-gray-600">
-                                            {displayQuantity} × ${displayRate.toFixed(2)}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
+                                  return Math.abs(amount) > 0.01 && (
+                                    itemName.includes('discount') ||
+                                    itemName.includes('credit') ||
+                                    itemName.includes('we pay the tax') ||
+                                    itemName.includes('we pay')
                                   );
-                                })}
-                              
-                              {/* Order Totals */}
-                              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                                {(() => {
-                                  // Calculate subtotal from line items (excluding tax items)
-                                  const subtotal = selectedOrder.items
-                                    ?.filter(item => {
-                                      const itemName = item.itemName?.toLowerCase() || '';
+                                });
+                                
+                                // Regular items and shipping
+                                const regularItems = allItems.filter(item => {
+                                  const itemName = item.itemName?.toLowerCase() || '';
+                                  const amount = parseFloat(item.amount || 0);
+                                  // Exclude zero amounts, tax items, and discount items
+                                  return Math.abs(amount) > 0.01 && 
+                                         !itemName.includes('ny_suffolk') &&
+                                         !itemName.includes('ny_bhdl') &&
+                                         !itemName.includes('ny_ny') &&
+                                         !discountItems.includes(item);
+                                });
+                                
+                                // Separate shipping from products
+                                const shippingItems = regularItems.filter(item => {
+                                  const itemName = item.itemName?.toLowerCase() || '';
+                                  return itemName.includes('delivered') || itemName.includes('ups') || itemName.includes('shipping');
+                                });
+                                
+                                const productItems = regularItems.filter(item => !shippingItems.includes(item));
+                                
+                                // Calculate totals
+                                const productsTotal = productItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
+                                const shippingTotal = shippingItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
+                                const discountTotal = discountItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
+                                const subtotal = productsTotal + shippingTotal;
+                                
+                                return (
+                                  <>
+                                    {/* Product Items */}
+                                    {productItems.map((item, index) => {
+                                      const quantity = parseFloat(item.quantity || 0);
+                                      const rate = parseFloat(item.rate || 0);
                                       const amount = parseFloat(item.amount || 0);
-                                      // Exclude zero amount items and tax-related items
-                                      return Math.abs(amount) > 0.01 && 
-                                             !itemName.includes('ny_suffolk') &&
-                                             !itemName.includes('ny_bhdl');
-                                    })
-                                    ?.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0) || 0;
-                                  
-                                  if (subtotal > 0) {
-                                    return (
+                                      
+                                      const displayQuantity = Math.abs(quantity);
+                                      const displayRate = Math.abs(rate);
+                                      const displayAmount = Math.abs(amount);
+                                      
+                                      return (
+                                        <div key={`product-${item.id || index}`} className="bg-gray-50 p-3 rounded-lg">
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <h4 className="font-medium text-gray-900">
+                                                {item.itemName}
+                                              </h4>
+                                              {item.description && (
+                                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                              )}
+                                            </div>
+                                            <div className="text-right ml-4">
+                                              <p className="font-semibold text-gray-900">
+                                                ${displayAmount.toFixed(2)}
+                                              </p>
+                                              {displayQuantity > 0 && (
+                                                <p className="text-sm text-gray-600">
+                                                  {displayQuantity} × ${displayRate.toFixed(2)}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                    
+                                    {/* Discount/Credit Items */}
+                                    {discountItems.length > 0 && discountItems.map((item, index) => {
+                                      const amount = parseFloat(item.amount || 0);
+                                      const displayAmount = Math.abs(amount);
+                                      
+                                      return (
+                                        <div key={`discount-${item.id || index}`} className="bg-green-50 p-3 rounded-lg">
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <h4 className="font-medium text-green-900">
+                                                {item.itemName}
+                                              </h4>
+                                              {item.description && (
+                                                <p className="text-sm text-green-700 mt-1">{item.description}</p>
+                                              )}
+                                            </div>
+                                            <div className="text-right ml-4">
+                                              <p className="font-semibold text-green-900">
+                                                -${displayAmount.toFixed(2)}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                    
+                                    {/* Shipping Items */}
+                                    {shippingItems.length > 0 && shippingItems.map((item, index) => {
+                                      const amount = parseFloat(item.amount || 0);
+                                      const displayAmount = Math.abs(amount);
+                                      
+                                      return (
+                                        <div key={`shipping-${item.id || index}`} className="bg-blue-50 p-3 rounded-lg">
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <h4 className="font-medium text-blue-900">
+                                                {item.itemName}
+                                              </h4>
+                                              {item.description && (
+                                                <p className="text-sm text-blue-700 mt-1">{item.description}</p>
+                                              )}
+                                            </div>
+                                            <div className="text-right ml-4">
+                                              <p className="font-semibold text-blue-900">
+                                                ${displayAmount.toFixed(2)}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                    
+                                    {/* Order Summary */}
+                                    <div className="mt-4 pt-4 border-t-2 border-gray-300 space-y-2 bg-gray-50 p-4 rounded-lg">
+                                      <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
                                       <div className="flex justify-between text-sm">
                                         <span className="text-gray-600">Subtotal</span>
-                                        <span>${subtotal.toFixed(2)}</span>
+                                        <span className="font-medium">${subtotal.toFixed(2)}</span>
                                       </div>
-                                    );
-                                  }
-                                  return null;
-                                })()}
-                                {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Tax</span>
-                                    <span>{formatCurrency(selectedOrder.tax)}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between text-base font-semibold pt-2 border-t">
-                                  <span>Total</span>
-                                  <span>{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</span>
-                                </div>
-                              </div>
+                                      {discountTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">Discount</span>
+                                          <span className="font-medium text-green-600">-${discountTotal.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                      {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">Tax</span>
+                                          <span className="font-medium">{formatCurrency(selectedOrder.tax)}</span>
+                                        </div>
+                                      )}
+                                      {shippingTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">Shipping Charges</span>
+                                          <span className="font-medium">${shippingTotal.toFixed(2)}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-300">
+                                        <span>Total</span>
+                                        <span>{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</span>
+                                      </div>
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </>
