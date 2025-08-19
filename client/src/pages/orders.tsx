@@ -106,10 +106,11 @@ export default function Orders() {
   const fetchCabinetBuildDetails = async (salesOrderId: string, itemName: string) => {
     setLoadingCabinetBuild(itemName);
     try {
-      const response = await apiRequest(`/api/cabinet-build/${salesOrderId}/${encodeURIComponent(itemName)}`);
+      const response = await apiRequest('GET', `/api/cabinet-build/${salesOrderId}/${encodeURIComponent(itemName)}`);
+      const data = await response.json();
       setCabinetBuildDetails(prev => ({
         ...prev,
-        [itemName]: response
+        [itemName]: data
       }));
     } catch (error) {
       console.error('Failed to fetch cabinet build details:', error);
