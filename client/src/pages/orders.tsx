@@ -735,14 +735,19 @@ export default function Orders() {
                                 
                                 const productItems = regularItems.filter(item => !shippingItems.includes(item));
                                 
-                                // Calculate totals
-                                const productsTotal = productItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
+                                // Calculate totals using rate × quantity for correct amounts
+                                const productsTotal = productItems.reduce((sum, item) => {
+                                  const qty = Math.abs(parseFloat(item.quantity || 0));
+                                  const rate = Math.abs(parseFloat(item.rate || 0));
+                                  return sum + (qty * rate);
+                                }, 0);
+                                
                                 const shippingTotal = shippingItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 const customerDiscountTotal = customerDiscountItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 const promotionalTotal = promotionalItems.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0);
                                 
-                                // NetSuite calculates subtotal as products + promotional adjustments (not shown as discounts)
-                                const subtotal = productsTotal + promotionalTotal;
+                                // Subtotal is the true product total before any discounts
+                                const subtotal = productsTotal;
                                 
                                 return (
                                   <>
@@ -750,11 +755,11 @@ export default function Orders() {
                                     {productItems.map((item, index) => {
                                       const quantity = parseFloat(item.quantity || 0);
                                       const rate = parseFloat(item.rate || 0);
-                                      const amount = parseFloat(item.amount || 0);
                                       
                                       const displayQuantity = Math.abs(quantity);
                                       const displayRate = Math.abs(rate);
-                                      const displayAmount = Math.abs(amount);
+                                      // Calculate the correct amount from quantity × rate
+                                      const displayAmount = displayQuantity * displayRate;
                                       
                                       return (
                                         <div key={`product-${item.id || index}`} className="bg-gray-50 p-3 rounded-lg">
