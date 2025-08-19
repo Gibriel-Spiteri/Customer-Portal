@@ -20,11 +20,14 @@ export function useWebSocket({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const isConnectingRef = useRef(false);
 
   const connect = useCallback(() => {
-    if (!enabled || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (!enabled || isConnectingRef.current || wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
+    
+    isConnectingRef.current = true;
 
     try {
       const ws = new WebSocket(url);
@@ -33,6 +36,7 @@ export function useWebSocket({
       ws.onopen = () => {
         setIsConnected(true);
         reconnectAttempts.current = 0;
+        isConnectingRef.current = false;
         onConnect?.();
         console.log('WebSocket connected');
       };
@@ -48,12 +52,13 @@ export function useWebSocket({
 
       ws.onclose = () => {
         setIsConnected(false);
+        isConnectingRef.current = false;
         onDisconnect?.();
         console.log('WebSocket disconnected');
 
         // Attempt to reconnect
         if (enabled && reconnectAttempts.current < maxReconnectAttempts) {
-          const delay = Math.pow(2, reconnectAttempts.current) * 1000; // Exponential backoff
+          const delay = Math.min(Math.pow(2, reconnectAttempts.current) * 1000, 30000); // Exponential backoff with max 30s
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttempts.current++;
             console.log(`Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts})...`);
@@ -102,7 +107,7 @@ export function useWebSocket({
     return () => {
       disconnect();
     };
-  }, [enabled, connect, disconnect]);
+  }, [enabled]); // Remove connect and disconnect from dependencies to prevent infinite loop
 
   return {
     isConnected,
