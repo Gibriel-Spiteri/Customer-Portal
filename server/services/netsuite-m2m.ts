@@ -456,7 +456,7 @@ export class NetSuiteM2M {
         AND transaction.id = ${orderId}
     `.trim();
 
-    // Line items query - enhanced with additional discount details
+    // Line items query - enhanced with additional discount details and build IDs
     const linesQuery = `
       SELECT 
         transactionline.id AS lineId,
@@ -470,6 +470,8 @@ export class NetSuiteM2M {
         transactionline.ratepercent AS discountPercent,
         transactionline.isclosed,
         transactionline.uniquekey,
+        transactionline.custcol_itemopt_cabbuild AS cabBuildId,
+        transactionline.custcol_itemopt_cntrbuild AS cntrBuildId,
         item.itemtype AS itemType,
         item.displayname AS itemDisplayName,
         item.description AS itemDescription

@@ -103,10 +103,10 @@ export default function Orders() {
     }
   };
 
-  const fetchCabinetBuildDetails = async (salesOrderId: string, itemName: string) => {
+  const fetchCabinetBuildDetails = async (buildId: string, itemName: string) => {
     setLoadingCabinetBuild(itemName);
     try {
-      const response = await apiRequest('GET', `/api/cabinet-build/${salesOrderId}/${encodeURIComponent(itemName)}`);
+      const response = await apiRequest('GET', `/api/cabinet-build/${buildId}`);
       const data = await response.json();
       setCabinetBuildDetails(prev => ({
         ...prev,
@@ -117,6 +117,27 @@ export default function Orders() {
       toast({
         title: "Failed to load details",
         description: "Unable to fetch cabinet build details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCabinetBuild(null);
+    }
+  };
+  
+  const fetchCounterBuildDetails = async (buildId: string, itemName: string) => {
+    setLoadingCabinetBuild(itemName);
+    try {
+      const response = await apiRequest('GET', `/api/counter-build/${buildId}`);
+      const data = await response.json();
+      setCabinetBuildDetails(prev => ({
+        ...prev,
+        [itemName]: data
+      }));
+    } catch (error) {
+      console.error('Failed to fetch counter build details:', error);
+      toast({
+        title: "Failed to load details",
+        description: "Unable to fetch counter build details. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -835,8 +856,8 @@ export default function Orders() {
                                                   )}
                                                 </div>
                                               )}
-                                              {/* Add View Details button for SPCAB items */}
-                                              {itemNameLower.includes('spcab') && (
+                                              {/* Add View Details button for SPCAB items with cabinet build ID */}
+                                              {itemNameLower.includes('spcab') && item.cabBuildId && (
                                                 <div className="mt-2">
                                                   <Button
                                                     size="sm"
@@ -850,7 +871,7 @@ export default function Orders() {
                                                           return newDetails;
                                                         });
                                                       } else {
-                                                        fetchCabinetBuildDetails(selectedOrder.orderNumber, item.itemName);
+                                                        fetchCabinetBuildDetails(item.cabBuildId, item.itemName);
                                                       }
                                                     }}
                                                     disabled={loadingCabinetBuild === item.itemName}
@@ -899,6 +920,61 @@ export default function Orders() {
                                                         <div className="col-span-2">
                                                           <span className="text-gray-500">Exterior Finish:</span>
                                                           <p className="font-medium">{cabinetBuildDetails[item.itemName].exteriorFinish || 'N/A'}</p>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+                                              
+                                              {/* Add View Details button for SPCNTR items with counter build ID */}
+                                              {itemNameLower.includes('spcntr') && item.cntrBuildId && (
+                                                <div className="mt-2">
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                      if (cabinetBuildDetails[item.itemName]) {
+                                                        // Toggle off if already showing
+                                                        setCabinetBuildDetails(prev => {
+                                                          const newDetails = { ...prev };
+                                                          delete newDetails[item.itemName];
+                                                          return newDetails;
+                                                        });
+                                                      } else {
+                                                        fetchCounterBuildDetails(item.cntrBuildId, item.itemName);
+                                                      }
+                                                    }}
+                                                    disabled={loadingCabinetBuild === item.itemName}
+                                                  >
+                                                    {loadingCabinetBuild === item.itemName ? 'Loading...' : 
+                                                     cabinetBuildDetails[item.itemName] ? 'Hide Details' : 'View Details'}
+                                                  </Button>
+                                                  
+                                                  {/* Display Counter Build Details */}
+                                                  {cabinetBuildDetails[item.itemName] && (
+                                                    <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+                                                      <h5 className="font-semibold text-sm mb-2">Counter Build Details</h5>
+                                                      <div className="grid grid-cols-2 gap-2 text-xs">
+                                                        <div>
+                                                          <span className="text-gray-500">Build ID:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cntrBuildId || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Material:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].material || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Edge:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].edge || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Backsplash:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].backsplash || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Thickness:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].thickness || 'N/A'}</p>
                                                         </div>
                                                       </div>
                                                     </div>

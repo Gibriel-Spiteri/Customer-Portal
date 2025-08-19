@@ -1351,7 +1351,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           discountPercent: item.discountpercent,
           itemType: item.itemtype,
           itemDisplayName: item.itemdisplayname,
-          itemDescription: item.itemdescription
+          itemDescription: item.itemdescription,
+          cabBuildId: item.cabbuildid,
+          cntrBuildId: item.cntrbuildid
         })) : [],
         praDetails: orderDetails.praDetails ? orderDetails.praDetails.map((pra: any) => ({
           praId: pra.praid,
@@ -1524,9 +1526,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cabinet Build Details - Fetch from NetSuite using SuiteQL
-  app.get('/api/cabinet-build/:orderId/:itemName', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+  app.get('/api/cabinet-build/:buildId', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const { orderId, itemName } = req.params;
+      const { buildId } = req.params;
       
       // Check if NetSuite M2M is configured
       if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
@@ -1536,8 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Query for cabinet build details associated with this sales order
-      // Try to find by sales order field first, then by estimate field as fallback
+      // Query for cabinet build details by ID
       const query = `
         SELECT 
           cb.id,
@@ -1555,11 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           BUILTIN.DF(cb.custrecord_cabbuild_exteriorfinish) AS exteriorFinish,
           BUILTIN.DF(cb.custrecord_cabbuild_interiorfinish) AS interiorFinish
         FROM customrecord_cabbuild cb
-        WHERE cb.custrecord_cabbuild_salesorder IN (
-          SELECT id FROM transaction WHERE tranid = '${orderId}'
-        )
-        OR cb.name LIKE '%${orderId}%'
-        FETCH FIRST 1 ROWS ONLY
+        WHERE cb.id = ${buildId}
       `;
       
       const result = await m2m.suiteql(query);
@@ -1572,6 +1569,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error fetching cabinet build details from NetSuite:', error);
       res.status(500).json({ message: 'Failed to fetch cabinet build details' });
+    }
+  });
+  
+  // Counter Build Details - Fetch from NetSuite using SuiteQL
+  app.get('/api/counter-build/:buildId', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const { buildId } = req.params;
+      
+      // Check if NetSuite M2M is configured
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.status(400).json({ message: 'NetSuite M2M not configured' });
+      }
+      
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      
+      // Query for counter build details by ID
+      const query = `
+        SELECT 
+          cb.id,
+          cb.name AS cntrBuildId,
+          BUILTIN.DF(cb.custrecord_cntrbuild_customer) AS customer,
+          BUILTIN.DF(cb.custrecord_cntrbuild_salesorder) AS salesOrder,
+          BUILTIN.DF(cb.custrecord_cntrbuild_material) AS material,
+          BUILTIN.DF(cb.custrecord_cntrbuild_edge) AS edge,
+          BUILTIN.DF(cb.custrecord_cntrbuild_backsplash) AS backsplash,
+          BUILTIN.DF(cb.custrecord_cntrbuild_thickness) AS thickness
+        FROM customrecord_cntrbuild cb
+        WHERE cb.id = ${buildId}
+      `;
+      
+      const result = await m2m.suiteql(query);
+      
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: 'Counter build details not found' });
+      }
+      
+      res.json(result[0]);
+    } catch (error: any) {
+      console.error('Error fetching counter build details from NetSuite:', error);
+      res.status(500).json({ message: 'Failed to fetch counter build details' });
     }
   });
 
