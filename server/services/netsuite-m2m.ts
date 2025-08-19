@@ -441,18 +441,14 @@ export class NetSuiteM2M {
         transaction.trandate AS orderDate,
         transaction.status,
         transaction.total,
-        transaction.subtotal,
         transaction.taxtotal AS tax,
-        transaction.shippingcost AS shipping,
         transaction.memo,
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
         transaction.shipdate,
         transaction.shipmethod,
         transaction.createddate,
-        transaction.lastmodifieddate,
-        transaction.shipaddress AS shippingAddress,
-        transaction.billaddress AS billingAddress
+        transaction.lastmodifieddate
       FROM 
         transaction
       WHERE 
