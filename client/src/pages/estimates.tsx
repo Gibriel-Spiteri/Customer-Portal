@@ -401,7 +401,14 @@ export default function Estimates() {
                                 const quantity = parseFloat(item.quantity || 0);
                                 const rate = parseFloat(item.rate || 0);
                                 const amount = parseFloat(item.amount || 0);
-                                const isDiscount = quantity < 0 || amount < 0;
+                                
+                                // Check if this is a discount or credit (typically has negative amount)
+                                const isCredit = amount < 0;
+                                
+                                // For display purposes, always show absolute values
+                                const displayQuantity = Math.abs(quantity);
+                                const displayRate = Math.abs(rate);
+                                const displayAmount = Math.abs(amount);
                                 
                                 return (
                                   <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
@@ -409,18 +416,18 @@ export default function Estimates() {
                                       <div className="flex-1">
                                         <h4 className="font-medium text-gray-900">
                                           {item.itemName || item.name}
-                                          {isDiscount && <span className="ml-2 text-xs text-gray-500">(Discount/Adjustment)</span>}
+                                          {isCredit && <span className="ml-2 text-xs text-red-600">(Credit/Discount)</span>}
                                         </h4>
                                         {item.description && (
                                           <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                                         )}
                                       </div>
                                       <div className="text-right ml-4">
-                                        <p className={`font-semibold ${amount < 0 ? 'text-red-600' : ''}`}>
-                                          {formatCurrency(amount.toString())}
+                                        <p className={`font-semibold ${isCredit ? 'text-red-600' : 'text-gray-900'}`}>
+                                          {isCredit ? '-' : ''}${displayAmount.toFixed(2)}
                                         </p>
                                         <p className="text-sm text-gray-600">
-                                          {Math.abs(quantity)} × {formatCurrency(Math.abs(rate).toString())}
+                                          {displayQuantity} × ${displayRate.toFixed(2)}
                                         </p>
                                       </div>
                                     </div>

@@ -1318,6 +1318,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch order details with line items from NetSuite
       const orderDetails = await m2m.getOrderDetails(req.params.id);
       
+      // Log the raw data to understand what NetSuite is returning
+      console.log('Raw NetSuite order data:', JSON.stringify(orderDetails, null, 2));
+      
       // Transform the response to match frontend expectations
       const transformed = {
         id: orderDetails.id,
