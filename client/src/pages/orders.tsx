@@ -731,22 +731,33 @@ export default function Orders() {
                               
                               {/* Order Totals */}
                               <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                                {selectedOrder.subtotal && (
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Subtotal</span>
-                                    <span>{formatCurrency(selectedOrder.subtotal)}</span>
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Calculate subtotal from line items (excluding tax items)
+                                  const subtotal = selectedOrder.items
+                                    ?.filter(item => {
+                                      const itemName = item.itemName?.toLowerCase() || '';
+                                      const amount = parseFloat(item.amount || 0);
+                                      // Exclude zero amount items and tax-related items
+                                      return Math.abs(amount) > 0.01 && 
+                                             !itemName.includes('ny_suffolk') &&
+                                             !itemName.includes('ny_bhdl');
+                                    })
+                                    ?.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || 0)), 0) || 0;
+                                  
+                                  if (subtotal > 0) {
+                                    return (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Subtotal</span>
+                                        <span>${subtotal.toFixed(2)}</span>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                                 {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
                                   <div className="flex justify-between text-sm">
                                     <span className="text-gray-600">Tax</span>
                                     <span>{formatCurrency(selectedOrder.tax)}</span>
-                                  </div>
-                                )}
-                                {selectedOrder.shipping && parseFloat(selectedOrder.shipping) > 0 && (
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Shipping</span>
-                                    <span>{formatCurrency(selectedOrder.shipping)}</span>
                                   </div>
                                 )}
                                 <div className="flex justify-between text-base font-semibold pt-2 border-t">
