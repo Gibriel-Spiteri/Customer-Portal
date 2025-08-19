@@ -1584,13 +1584,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE cb.id = ${buildId}
       `;
       
-      const result = await m2m.suiteql(query);
+      const result = await m2m.executeSuiteQL(query, 1, 0);
       
-      if (!result || result.length === 0) {
+      if (!result || !result.items || result.items.length === 0) {
         return res.status(404).json({ message: 'Cabinet build details not found' });
       }
       
-      res.json(result[0]);
+      res.json(result.items[0]);
     } catch (error: any) {
       console.error('Error fetching cabinet build details from NetSuite:', error);
       res.status(500).json({ message: 'Failed to fetch cabinet build details' });
@@ -1644,13 +1644,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE cb.id = ${buildId}
       `;
       
-      const result = await m2m.suiteql(query);
+      const result = await m2m.executeSuiteQL(query, 1, 0);
       
-      if (!result || result.length === 0) {
+      if (!result || !result.items || result.items.length === 0) {
         return res.status(404).json({ message: 'Counter build details not found' });
       }
       
-      res.json(result[0]);
+      res.json(result.items[0]);
     } catch (error: any) {
       console.error('Error fetching counter build details from NetSuite:', error);
       res.status(500).json({ message: 'Failed to fetch counter build details' });
