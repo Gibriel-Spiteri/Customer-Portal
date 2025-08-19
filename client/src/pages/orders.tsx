@@ -704,15 +704,21 @@ export default function Orders() {
                                   );
                                 });
                                 
-                                // Regular items and shipping
+                                // Regular items and shipping (exclude tax items)
                                 const regularItems = allItems.filter(item => {
-                                  const itemName = item.itemName?.toLowerCase() || '';
+                                  const itemName = item.itemName || '';
+                                  const itemNameLower = itemName.toLowerCase();
                                   const amount = parseFloat(item.amount || 0);
                                   // Exclude zero amounts, tax items, and discount items
+                                  // Tax items typically have patterns like NY_SUFFOLK, NY_BHDL, or contain "tax" in the name
+                                  const isTaxItem = itemName.includes('NY_') || 
+                                                   itemNameLower.includes('tax') ||
+                                                   itemNameLower.includes('ny_suffolk') ||
+                                                   itemNameLower.includes('ny_bhdl') ||
+                                                   itemNameLower.includes('ny_ny');
+                                  
                                   return Math.abs(amount) > 0.01 && 
-                                         !itemName.includes('ny_suffolk') &&
-                                         !itemName.includes('ny_bhdl') &&
-                                         !itemName.includes('ny_ny') &&
+                                         !isTaxItem &&
                                          !discountItems.includes(item);
                                 });
                                 
