@@ -521,8 +521,13 @@ export default function Orders() {
                                   });
                                   if (response.ok) {
                                     const orderWithDetails = await response.json();
+                                    console.log('Order details fetched:', orderWithDetails);
+                                    console.log('Line items count:', orderWithDetails.items?.length || 0);
                                     setSelectedOrder(orderWithDetails);
                                   } else {
+                                    console.error('Failed to fetch order details, status:', response.status);
+                                    const errorText = await response.text();
+                                    console.error('Error response:', errorText);
                                     // Fall back to basic order info if details fail
                                     setSelectedOrder(order);
                                   }

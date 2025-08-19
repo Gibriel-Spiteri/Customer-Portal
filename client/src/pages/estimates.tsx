@@ -240,8 +240,13 @@ export default function Estimates() {
                                   });
                                   if (response.ok) {
                                     const estimateWithDetails = await response.json();
+                                    console.log('Estimate details fetched:', estimateWithDetails);
+                                    console.log('Line items count:', estimateWithDetails.items?.length || 0);
                                     setSelectedEstimate(estimateWithDetails);
                                   } else {
+                                    console.error('Failed to fetch estimate details, status:', response.status);
+                                    const errorText = await response.text();
+                                    console.error('Error response:', errorText);
                                     // Fall back to basic estimate info if details fail
                                     setSelectedEstimate(estimate);
                                   }
