@@ -397,24 +397,36 @@ export default function Estimates() {
                               Line Items
                             </h3>
                             <div className="space-y-2">
-                              {selectedEstimate.items.map((item, index) => (
-                                <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-gray-900">{item.itemName || item.name}</h4>
-                                      {item.description && (
-                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                                      )}
-                                    </div>
-                                    <div className="text-right ml-4">
-                                      <p className="font-semibold">{formatCurrency(item.amount.toString())}</p>
-                                      <p className="text-sm text-gray-600">
-                                        {item.quantity} × {formatCurrency(item.rate.toString())}
-                                      </p>
+                              {selectedEstimate.items.map((item, index) => {
+                                const quantity = parseFloat(item.quantity || 0);
+                                const rate = parseFloat(item.rate || 0);
+                                const amount = parseFloat(item.amount || 0);
+                                const isDiscount = quantity < 0 || amount < 0;
+                                
+                                return (
+                                  <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <h4 className="font-medium text-gray-900">
+                                          {item.itemName || item.name}
+                                          {isDiscount && <span className="ml-2 text-xs text-gray-500">(Discount/Adjustment)</span>}
+                                        </h4>
+                                        {item.description && (
+                                          <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                        )}
+                                      </div>
+                                      <div className="text-right ml-4">
+                                        <p className={`font-semibold ${amount < 0 ? 'text-red-600' : ''}`}>
+                                          {formatCurrency(amount.toString())}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                          {Math.abs(quantity)} × {formatCurrency(Math.abs(rate).toString())}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                               
                               {/* Estimate Totals */}
                               <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
