@@ -739,10 +739,22 @@ export default function Orders() {
                                 const productsTotal = productItems.reduce((sum, item) => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
                                   const rate = Math.abs(parseFloat(item.rate || 0));
-                                  const amount = Math.abs(parseFloat(item.amount || 0));
+                                  const amount = parseFloat(item.amount || 0);
+                                  const itemNameLower = (item.itemName || '').toLowerCase();
+                                  
+                                  // Check if this is a percentage discount item
+                                  const isPercentageDiscount = itemNameLower.includes('% discount') || 
+                                                               itemNameLower.includes('discount') ||
+                                                               itemNameLower.includes('protection plan');
                                   
                                   // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
-                                  const itemTotal = qty > 0 ? qty * rate : amount;
+                                  let itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
+                                  
+                                  // For percentage discounts that come in as positive from NetSuite, subtract them
+                                  if (isPercentageDiscount && amount > 0) {
+                                    return sum - itemTotal;
+                                  }
+                                  
                                   return sum + itemTotal;
                                 }, 0);
                                 
@@ -760,14 +772,23 @@ export default function Orders() {
                                       const quantity = parseFloat(item.quantity || 0);
                                       const rate = parseFloat(item.rate || 0);
                                       const amount = parseFloat(item.amount || 0);
+                                      const itemNameLower = (item.itemName || '').toLowerCase();
+                                      
+                                      // Check if this is a percentage discount item
+                                      const isPercentageDiscount = itemNameLower.includes('% discount') || 
+                                                                   itemNameLower.includes('discount') ||
+                                                                   itemNameLower.includes('protection plan');
                                       
                                       const displayQuantity = Math.abs(quantity);
                                       const displayRate = Math.abs(rate);
                                       
                                       // If there's a quantity, calculate from qty × rate, otherwise use the amount directly
-                                      const displayAmount = displayQuantity > 0 
+                                      let displayAmount = displayQuantity > 0 
                                         ? displayQuantity * displayRate 
                                         : Math.abs(amount);
+                                      
+                                      // For percentage discounts, show as negative
+                                      const isNegative = isPercentageDiscount && amount > 0;
                                       
                                       return (
                                         <div key={`product-${item.id || index}`} className="bg-gray-50 p-3 rounded-lg">
@@ -782,7 +803,7 @@ export default function Orders() {
                                             </div>
                                             <div className="text-right ml-4">
                                               <p className="font-semibold text-gray-900">
-                                                ${displayAmount.toFixed(2)}
+                                                {isNegative ? '-' : ''}${displayAmount.toFixed(2)}
                                               </p>
                                               {displayQuantity > 0 && (
                                                 <p className="text-sm text-gray-600">
