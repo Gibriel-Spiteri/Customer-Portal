@@ -889,36 +889,58 @@ export default function Orders() {
                                                       <div className="grid grid-cols-2 gap-2 text-xs">
                                                         <div>
                                                           <span className="text-gray-500">Build ID:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabbuildid || cabinetBuildDetails[item.itemName].name || ''}</p>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabbuildid || ''}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Customer:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].customername || cabinetBuildDetails[item.itemName].customer || ''}</p>
-                                                        </div>
-                                                        <div>
-                                                          <span className="text-gray-500">Sales Order:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].salesordername || ''}</p>
-                                                        </div>
-                                                        <div>
-                                                          <span className="text-gray-500">Estimate:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].estimatename || ''}</p>
+                                                          <span className="text-gray-500">Product Line:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].prodline || ''}</p>
                                                         </div>
                                                         <div>
                                                           <span className="text-gray-500">Material:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].materialname || cabinetBuildDetails[item.itemName].material || ''}</p>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].material || ''}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Door Style:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].custrecord_cabbuild_doorstyle || ''}</p>
+                                                          <span className="text-gray-500">Upper Door Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].upperdoorstyle || ''}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Finish:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].custrecord_cabbuild_finish || ''}</p>
+                                                          <span className="text-gray-500">Lower Door Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].lowerdoorstyle || ''}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Construction:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].custrecord_cabbuild_construction || ''}</p>
+                                                          <span className="text-gray-500">Cabinet Construction:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabinetconstruction || ''}</p>
                                                         </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Cabinet Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabinetstyle || ''}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Hinge Type:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].hingetype || ''}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Drawer Construction:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].drawerconstruction || ''}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Drawer Style:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].drawerstyle || ''}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Exterior Finish:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].exteriorfinish || ''}</p>
+                                                        </div>
+                                                        <div>
+                                                          <span className="text-gray-500">Treatment:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].treatment || ''}</p>
+                                                        </div>
+                                                        {cabinetBuildDetails[item.itemName].memo && (
+                                                          <div className="col-span-2">
+                                                            <span className="text-gray-500">Memo:</span>
+                                                            <p className="font-medium">{cabinetBuildDetails[item.itemName].memo}</p>
+                                                          </div>
+                                                        )}
                                                       </div>
                                                     </div>
                                                   )}

@@ -1541,15 +1541,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine if this is a build ID (numeric) or order number (starts with SO)
       const isOrderNumber = buildId.startsWith('SO');
       
-      // Query for cabinet build details - fetch all available fields
+      // Query for cabinet build details with specific fields
       const query = isOrderNumber ? `
         SELECT 
-          cb.*,
+          cb.id,
           cb.name AS cabBuildId,
-          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customerName,
-          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrderName,
-          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimateName,
-          BUILTIN.DF(cb.custrecord_cabbuild_material) AS materialName
+          BUILTIN.DF(cb.custrecord_cabbuild_prodline) AS prodLine,
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
+          BUILTIN.DF(cb.custrecord_cabbuild_updoorstyle) AS upperDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_lowdoorstyle) AS lowerDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_cabconstr) AS cabinetConstruction,
+          BUILTIN.DF(cb.custrecord_cabbuild_cabstyle) AS cabinetStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_hinge) AS hingeType,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerconstr) AS drawerConstruction,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerstyle) AS drawerStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_extfinish) AS exteriorFinish,
+          BUILTIN.DF(cb.custrecord_cabbuild_treatment) AS treatment,
+          cb.custrecord_cabbuild_memo AS memo
         FROM customrecord_cabbuild cb
         WHERE cb.custrecord_cabbuild_salesorder IN (
           SELECT id FROM transaction WHERE tranid = '${buildId}'
@@ -1558,12 +1566,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FETCH FIRST 1 ROWS ONLY
       ` : `
         SELECT 
-          cb.*,
+          cb.id,
           cb.name AS cabBuildId,
-          BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customerName,
-          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrderName,
-          BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimateName,
-          BUILTIN.DF(cb.custrecord_cabbuild_material) AS materialName
+          BUILTIN.DF(cb.custrecord_cabbuild_prodline) AS prodLine,
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
+          BUILTIN.DF(cb.custrecord_cabbuild_updoorstyle) AS upperDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_lowdoorstyle) AS lowerDoorStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_cabconstr) AS cabinetConstruction,
+          BUILTIN.DF(cb.custrecord_cabbuild_cabstyle) AS cabinetStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_hinge) AS hingeType,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerconstr) AS drawerConstruction,
+          BUILTIN.DF(cb.custrecord_cabbuild_drawerstyle) AS drawerStyle,
+          BUILTIN.DF(cb.custrecord_cabbuild_extfinish) AS exteriorFinish,
+          BUILTIN.DF(cb.custrecord_cabbuild_treatment) AS treatment,
+          cb.custrecord_cabbuild_memo AS memo
         FROM customrecord_cabbuild cb
         WHERE cb.id = ${buildId}
       `;
