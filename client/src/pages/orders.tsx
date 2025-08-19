@@ -796,7 +796,8 @@ export default function Orders() {
                                               <h4 className={`font-medium ${textColor}`}>
                                                 {item.itemName}
                                               </h4>
-                                              {item.description && (
+                                              {item.description && 
+                                                !item.description.toLowerCase().includes('click print for description') && (
                                                 <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                               )}
                                               {/* Show additional details for Customer Discount */}
