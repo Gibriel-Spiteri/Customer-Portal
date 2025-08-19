@@ -1541,7 +1541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine if this is a build ID (numeric) or order number (starts with SO)
       const isOrderNumber = buildId.startsWith('SO');
       
-      // Query for cabinet build details by ID or order number
+      // Query for cabinet build details by ID or order number - using only basic fields
       const query = isOrderNumber ? `
         SELECT 
           cb.id,
@@ -1549,15 +1549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
           BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrder,
           BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
-          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
-          BUILTIN.DF(cb.custrecord_cabbuild_upperdoorstyle) AS upperDoorStyle,
-          BUILTIN.DF(cb.custrecord_cabbuild_lowerdoorstyle) AS lowerDoorStyle,
-          BUILTIN.DF(cb.custrecord_cabbuild_cabinetconstruction) AS cabinetConstruction,
-          cb.custrecord_cabbuild_hingetype AS hingeType,
-          BUILTIN.DF(cb.custrecord_cabbuild_drawerconstruction) AS drawerConstruction,
-          BUILTIN.DF(cb.custrecord_cabbuild_drawerstyle) AS drawerStyle,
-          BUILTIN.DF(cb.custrecord_cabbuild_exteriorfinish) AS exteriorFinish,
-          BUILTIN.DF(cb.custrecord_cabbuild_interiorfinish) AS interiorFinish
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material
         FROM customrecord_cabbuild cb
         WHERE cb.custrecord_cabbuild_salesorder IN (
           SELECT id FROM transaction WHERE tranid = '${buildId}'
@@ -1571,15 +1563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
           BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrder,
           BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
-          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
-          BUILTIN.DF(cb.custrecord_cabbuild_upperdoorstyle) AS upperDoorStyle,
-          BUILTIN.DF(cb.custrecord_cabbuild_lowerdoorstyle) AS lowerDoorStyle,
-          BUILTIN.DF(cb.custrecord_cabbuild_cabinetconstruction) AS cabinetConstruction,
-          cb.custrecord_cabbuild_hingetype AS hingeType,
-          BUILTIN.DF(cb.custrecord_cabbuild_drawerconstruction) AS drawerConstruction,
-          BUILTIN.DF(cb.custrecord_cabbuild_drawerstyle) AS drawerStyle,
-          BUILTIN.DF(cb.custrecord_cabbuild_exteriorfinish) AS exteriorFinish,
-          BUILTIN.DF(cb.custrecord_cabbuild_interiorfinish) AS interiorFinish
+          BUILTIN.DF(cb.custrecord_cabbuild_material) AS material
         FROM customrecord_cabbuild cb
         WHERE cb.id = ${buildId}
       `;

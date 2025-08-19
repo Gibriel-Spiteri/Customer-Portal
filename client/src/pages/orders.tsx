@@ -892,36 +892,20 @@ export default function Orders() {
                                                           <p className="font-medium">{cabinetBuildDetails[item.itemName].cabBuildId || 'N/A'}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Material:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].material || 'N/A'}</p>
+                                                          <span className="text-gray-500">Customer:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].customer || 'N/A'}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Upper Door Style:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].upperDoorStyle || 'N/A'}</p>
+                                                          <span className="text-gray-500">Sales Order:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].salesOrder || 'N/A'}</p>
                                                         </div>
                                                         <div>
-                                                          <span className="text-gray-500">Lower Door Style:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].lowerDoorStyle || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                          <span className="text-gray-500">Cabinet Construction:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].cabinetConstruction || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                          <span className="text-gray-500">Door Type:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].hingeType || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                          <span className="text-gray-500">Drawer Construction:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].drawerConstruction || 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                          <span className="text-gray-500">Drawer Style:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].drawerStyle || 'N/A'}</p>
+                                                          <span className="text-gray-500">Estimate:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].estimate || 'N/A'}</p>
                                                         </div>
                                                         <div className="col-span-2">
-                                                          <span className="text-gray-500">Exterior Finish:</span>
-                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].exteriorFinish || 'N/A'}</p>
+                                                          <span className="text-gray-500">Material:</span>
+                                                          <p className="font-medium">{cabinetBuildDetails[item.itemName].material || 'N/A'}</p>
                                                         </div>
                                                       </div>
                                                     </div>
