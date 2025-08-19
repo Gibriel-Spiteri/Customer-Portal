@@ -397,43 +397,45 @@ export default function Estimates() {
                               Line Items
                             </h3>
                             <div className="space-y-2">
-                              {selectedEstimate.items.map((item, index) => {
-                                const quantity = parseFloat(item.quantity || 0);
-                                const rate = parseFloat(item.rate || 0);
-                                const amount = parseFloat(item.amount || 0);
-                                
-                                // Check if this is a discount or credit (typically has negative amount)
-                                const isCredit = amount < 0;
-                                
-                                // For display purposes, always show absolute values
-                                const displayQuantity = Math.abs(quantity);
-                                const displayRate = Math.abs(rate);
-                                const displayAmount = Math.abs(amount);
-                                
-                                return (
-                                  <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
-                                    <div className="flex justify-between items-start">
-                                      <div className="flex-1">
-                                        <h4 className="font-medium text-gray-900">
-                                          {item.itemName || item.name}
-                                          {isCredit && <span className="ml-2 text-xs text-red-600">(Credit/Discount)</span>}
-                                        </h4>
-                                        {item.description && (
-                                          <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                                        )}
-                                      </div>
-                                      <div className="text-right ml-4">
-                                        <p className={`font-semibold ${isCredit ? 'text-red-600' : 'text-gray-900'}`}>
-                                          {isCredit ? '-' : ''}${displayAmount.toFixed(2)}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                          {displayQuantity} × ${displayRate.toFixed(2)}
-                                        </p>
+                              {selectedEstimate.items
+                                .filter(item => {
+                                  // Filter out items with $0.00 amount
+                                  const amount = parseFloat(item.amount || 0);
+                                  return Math.abs(amount) > 0.01; // Keep items with amount greater than 1 cent
+                                })
+                                .map((item, index) => {
+                                  const quantity = parseFloat(item.quantity || 0);
+                                  const rate = parseFloat(item.rate || 0);
+                                  const amount = parseFloat(item.amount || 0);
+                                  
+                                  // Always show absolute values (convert negatives to positive)
+                                  const displayQuantity = Math.abs(quantity);
+                                  const displayRate = Math.abs(rate);
+                                  const displayAmount = Math.abs(amount);
+                                  
+                                  return (
+                                    <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
+                                      <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                          <h4 className="font-medium text-gray-900">
+                                            {item.itemName || item.name}
+                                          </h4>
+                                          {item.description && (
+                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                          )}
+                                        </div>
+                                        <div className="text-right ml-4">
+                                          <p className="font-semibold text-gray-900">
+                                            ${displayAmount.toFixed(2)}
+                                          </p>
+                                          <p className="text-sm text-gray-600">
+                                            {displayQuantity} × ${displayRate.toFixed(2)}
+                                          </p>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
                               
                               {/* Estimate Totals */}
                               <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
