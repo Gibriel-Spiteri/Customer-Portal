@@ -801,45 +801,17 @@ export default function Orders() {
                                               )}
                                               {/* Show additional details for Customer Discount */}
                                               {itemNameLower === 'customer discount' && (
-                                                <div className={`text-xs ${descColor} mt-2 space-y-1`}>
+                                                <div className={`text-xs ${descColor} mt-2`}>
                                                   {item.discountPercent && (
                                                     <p>Discount Rate: {item.discountPercent}%</p>
                                                   )}
                                                   {item.itemDescription && (
                                                     <p>Details: {item.itemDescription}</p>
                                                   )}
-                                                  
-                                                  {/* Display PRA details if available */}
-                                                  {selectedOrder.praDetails && selectedOrder.praDetails.length > 0 && (
-                                                    <div className="mt-2 pt-2 border-t border-yellow-200">
-                                                      <div className="space-y-1">
-                                                        {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
-                                                          const discountAmount = Math.abs(parseFloat(pra.discountRate || 0));
-                                                          const displayPercent = pra.praCode === '372' ? ' • 5% Off' : '';
-                                                          
-                                                          return (
-                                                            <div key={praIndex} className="flex justify-between items-start pl-2 border-l-2 border-yellow-300">
-                                                              <div className="flex-1">
-                                                                <p className="font-medium text-yellow-700">
-                                                                  {pra.praDescription || 'Promotional Adjustment'}
-                                                                  {displayPercent && <span className="text-xs">{displayPercent}</span>}
-                                                                </p>
-                                                              </div>
-                                                              <p className="text-sm font-medium text-yellow-700">
-                                                                ${discountAmount.toFixed(2)}
-                                                              </p>
-                                                            </div>
-                                                          );
-                                                        })}
-                                                      </div>
-                                                    </div>
-                                                  )}
-                                                  
-                                                  <p className="italic">This discount includes all promotional adjustments and account-specific pricing.</p>
                                                 </div>
                                               )}
                                             </div>
-                                            <div className="text-right ml-4">
+                                            <div className="text-right ml-4 w-24">
                                               <p className={`font-semibold ${textColor}`}>
                                                 {isNegative ? '-' : ''}${displayAmount.toFixed(2)}
                                               </p>
@@ -850,6 +822,35 @@ export default function Orders() {
                                               )}
                                             </div>
                                           </div>
+                                          
+                                          {/* Display PRA details if available - moved outside main flex */}
+                                          {itemNameLower === 'customer discount' && selectedOrder.praDetails && selectedOrder.praDetails.length > 0 && (
+                                            <div className="mt-2 pt-2 border-t border-yellow-200">
+                                              <div className="space-y-1">
+                                                {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
+                                                  const discountAmount = Math.abs(parseFloat(pra.discountRate || 0));
+                                                  const displayPercent = pra.praCode === '372' ? ' • 5% Off' : '';
+                                                  
+                                                  return (
+                                                    <div key={praIndex} className="flex justify-between items-start pl-2 border-l-2 border-yellow-300">
+                                                      <div className="flex-1">
+                                                        <p className="font-medium text-yellow-700">
+                                                          {pra.praDescription || 'Promotional Adjustment'}
+                                                          {displayPercent && <span className="text-xs">{displayPercent}</span>}
+                                                        </p>
+                                                      </div>
+                                                      <div className="text-right ml-4 w-24">
+                                                        <p className="text-sm font-medium text-yellow-700">
+                                                          ${discountAmount.toFixed(2)}
+                                                        </p>
+                                                      </div>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                              <p className="italic text-xs text-yellow-600 mt-2">This discount includes all promotional adjustments and account-specific pricing.</p>
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     })}
