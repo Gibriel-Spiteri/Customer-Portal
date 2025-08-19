@@ -756,13 +756,6 @@ export default function Orders() {
                                       const displayRate = Math.abs(rate);
                                       const displayAmount = Math.abs(amount);
                                       
-                                      // Check if there's a line-level discount (amount doesn't match quantity * rate)
-                                      const expectedAmount = displayQuantity * displayRate;
-                                      const hasLineDiscount = Math.abs(expectedAmount - displayAmount) > 0.01;
-                                      
-                                      // Calculate effective rate if there's a discount
-                                      const effectiveRate = displayQuantity > 0 ? displayAmount / displayQuantity : displayRate;
-                                      
                                       return (
                                         <div key={`product-${item.id || index}`} className="bg-gray-50 p-3 rounded-lg">
                                           <div className="flex justify-between items-start">
@@ -780,14 +773,7 @@ export default function Orders() {
                                               </p>
                                               {displayQuantity > 0 && (
                                                 <p className="text-sm text-gray-600">
-                                                  {hasLineDiscount ? (
-                                                    <>
-                                                      {displayQuantity} × ${effectiveRate.toFixed(2)}
-                                                      <span className="text-xs text-gray-500 block">(includes discount)</span>
-                                                    </>
-                                                  ) : (
-                                                    `${displayQuantity} × $${displayRate.toFixed(2)}`
-                                                  )}
+                                                  {displayQuantity} × ${displayRate.toFixed(2)}
                                                 </p>
                                               )}
                                             </div>
