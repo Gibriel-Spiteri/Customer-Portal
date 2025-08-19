@@ -1537,11 +1537,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const m2m = new NetSuiteM2M();
       
       // Query for cabinet build details associated with this sales order
+      // Try to find by sales order field first, then by estimate field as fallback
       const query = `
         SELECT 
           cb.id,
           cb.name AS cabBuildId,
           BUILTIN.DF(cb.custrecord_cabbuild_customer) AS customer,
+          BUILTIN.DF(cb.custrecord_cabbuild_salesorder) AS salesOrder,
           BUILTIN.DF(cb.custrecord_cabbuild_estimate) AS estimate,
           BUILTIN.DF(cb.custrecord_cabbuild_material) AS material,
           BUILTIN.DF(cb.custrecord_cabbuild_upperdoorstyle) AS upperDoorStyle,
@@ -1553,7 +1555,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           BUILTIN.DF(cb.custrecord_cabbuild_exteriorfinish) AS exteriorFinish,
           BUILTIN.DF(cb.custrecord_cabbuild_interiorfinish) AS interiorFinish
         FROM customrecord_cabbuild cb
-        WHERE cb.custrecord_cabbuild_estimate LIKE '%${orderId}%'
+        WHERE cb.custrecord_cabbuild_salesorder IN (
+          SELECT id FROM transaction WHERE tranid = '${orderId}'
+        )
+        OR cb.name LIKE '%${orderId}%'
         FETCH FIRST 1 ROWS ONLY
       `;
       
