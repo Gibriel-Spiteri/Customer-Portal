@@ -1562,7 +1562,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE cb.custrecord_cabbuild_salesorder IN (
           SELECT id FROM transaction WHERE tranid = '${buildId}'
         )
-        OR cb.name LIKE '%${buildId}%'
         FETCH FIRST 1 ROWS ONLY
       ` : `
         SELECT 
@@ -1628,7 +1627,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE cb.custrecord_cntrbuild_salesorder IN (
           SELECT id FROM transaction WHERE tranid = '${buildId}'
         )
-        OR cb.name LIKE '%${buildId}%'
         FETCH FIRST 1 ROWS ONLY
       ` : `
         SELECT 

@@ -560,6 +560,9 @@ export default function Orders() {
                                 // Open modal immediately with basic order info
                                 setSelectedOrder(order);
                                 setLoadingOrderDetails(true);
+                                // Clear cached build details when switching orders
+                                setCabinetBuildDetails({});
+                                setVisibleBuildDetails({});
                                 
                                 // Fetch full order details in background
                                 try {
@@ -1154,7 +1157,12 @@ export default function Orders() {
                       <div className="flex justify-end space-x-3 pt-4">
                         <Button 
                           variant="outline" 
-                          onClick={() => setSelectedOrder(null)}
+                          onClick={() => {
+                            setSelectedOrder(null);
+                            // Clear cached build details when closing order
+                            setCabinetBuildDetails({});
+                            setVisibleBuildDetails({});
+                          }}
                         >
                           Close
                         </Button>
