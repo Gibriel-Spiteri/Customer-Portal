@@ -1270,6 +1270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shippingAddress: null,
         memo: item.memo || '',
         customerName: item.customername,
+        jobId: item.jobid || '',
+        crdEndUser: item.crdenduser || '',
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
       });
