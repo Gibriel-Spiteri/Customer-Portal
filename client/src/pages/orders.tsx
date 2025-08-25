@@ -539,18 +539,10 @@ export default function Orders() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-500">Ship Date:</span>
-                            <p className="text-gray-900">{formatDate(order.shipDate)}</p>
-                          </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <span className="font-medium text-gray-500">Delivery Date:</span>
                             <p className="text-gray-900">{formatDate(order.deliveryDate)}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-500">Tracking Number:</span>
-                            <p className="text-gray-900">{order.trackingNumber || 'N/A'}</p>
                           </div>
                           <div className="flex justify-end">
                             <Button 
