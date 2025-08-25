@@ -415,9 +415,7 @@ export class NetSuiteM2M {
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
         transaction.createddate,
-        transaction.lastmodifieddate,
-        transaction.custbody_jobid AS jobId,
-        transaction.custbody_crdenduser AS crdEndUser
+        transaction.lastmodifieddate
       FROM 
         transaction
       WHERE 

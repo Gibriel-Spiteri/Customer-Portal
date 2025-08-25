@@ -60,8 +60,6 @@ interface Order {
   currency: string;
   shippingAddress: any;
   trackingNumber: string | null;
-  jobId?: string;
-  crdEndUser?: string;
   items?: OrderItem[];
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
@@ -523,16 +521,6 @@ export default function Orders() {
                             <p className="text-sm text-gray-600">
                               Order Date: {formatDate(order.orderDate)}
                             </p>
-                            {order.jobId && (
-                              <p className="text-sm text-gray-600">
-                                Job ID: {order.jobId}
-                              </p>
-                            )}
-                            {order.crdEndUser && (
-                              <p className="text-sm text-gray-600">
-                                CRD End User: {order.crdEndUser}
-                              </p>
-                            )}
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-semibold text-gray-900">
