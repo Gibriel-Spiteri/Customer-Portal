@@ -436,24 +436,24 @@ export default function Orders() {
                 </Tabs>
               </div>
 
-              {/* Filters and Search - applies to all views */}
-              <Card className="mb-6">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
+              {/* Filters and Search - Mobile optimized */}
+              <Card className="mb-4 sm:mb-6">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col gap-3">
+                    <div className="w-full">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
-                          placeholder="Search by order number..."
+                          placeholder="Search orders..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 h-12 text-base sm:text-sm sm:h-10"
                         />
                       </div>
                     </div>
-                    <div className="sm:w-48">
+                    <div className="w-full">
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-12 sm:h-10">
                           <Filter className="h-4 w-4 mr-2" />
                           <SelectValue placeholder="Filter by status" />
                         </SelectTrigger>
@@ -489,60 +489,67 @@ export default function Orders() {
                   // Loading Skeletons
                   [...Array(5)].map((_, i) => (
                     <Card key={i}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="space-y-2">
-                            <Skeleton className="h-5 w-32" />
-                            <Skeleton className="h-4 w-24" />
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+                            <div className="space-y-2">
+                              <Skeleton className="h-5 w-32" />
+                              <Skeleton className="h-4 w-24" />
+                            </div>
+                            <div className="space-y-2">
+                              <Skeleton className="h-6 w-24" />
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <Skeleton className="h-5 w-20" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-6 w-20" />
                             <Skeleton className="h-6 w-16" />
                           </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-10 w-full sm:w-32" />
                         </div>
                       </CardContent>
                     </Card>
                   ))
                 ) : filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => (
-                    <Card key={order.id}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {order.orderNumber}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              Order Date: {formatDate(order.orderDate)}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-semibold text-gray-900">
-                              {formatCurrency(order.totalAmount, order.currency)}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge className={getStatusColor(order.status)}>
-                                {getStatusIcon(order.status)}
-                                <span className="ml-1 capitalize">{order.status}</span>
-                              </Badge>
-                              <DataBadge 
-                                freshness={order.dataFreshness}
-                                lastSync={order.lastSyncAt}
-                              />
+                    <Card key={order.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-4 sm:p-6">
+                        {/* Mobile-first layout */}
+                        <div className="space-y-3">
+                          {/* Order info and amount - stacked on mobile, side by side on larger screens */}
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div className="space-y-1">
+                              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                                {order.orderNumber}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {formatDate(order.orderDate)}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-start sm:items-end space-y-2">
+                              <p className="text-xl font-bold text-gray-900">
+                                {formatCurrency(order.totalAmount, order.currency)}
+                              </p>
                             </div>
                           </div>
-                        </div>
+                          
+                          {/* Status badges - responsive layout */}
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className={`${getStatusColor(order.status)} px-3 py-1`}>
+                              {getStatusIcon(order.status)}
+                              <span className="ml-1.5 capitalize">{order.status}</span>
+                            </Badge>
+                            <DataBadge 
+                              freshness={order.dataFreshness}
+                              lastSync={order.lastSyncAt}
+                            />
+                          </div>
 
-                        <div className="flex justify-end">
+                          {/* View Details button - full width on mobile */}
+                          <div className="pt-2">
                             <Button 
                               variant="outline" 
-                              size="sm"
+                              size="default"
+                              className="w-full sm:w-auto"
                               onClick={async () => {
                                 // Open modal immediately with basic order info
                                 setSelectedOrder(order);
@@ -579,6 +586,7 @@ export default function Orders() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </Button>
+                          </div>
                         </div>
 
                         {order.shippingAddress && (
@@ -594,11 +602,11 @@ export default function Orders() {
                   ))
                 ) : (
                   <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center py-8">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="text-center py-6 sm:py-8">
                         <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
-                        <p className="text-gray-600">
+                        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
+                        <p className="text-sm sm:text-base text-gray-600">
                           {searchTerm || statusFilter !== 'all' 
                             ? 'No orders match your current filters.'
                             : 'You don\'t have any orders yet.'
@@ -610,20 +618,20 @@ export default function Orders() {
                 )}
               </div>
 
-              {/* Summary Card */}
+              {/* Summary Card - Mobile optimized */}
               {filteredOrders.length > 0 && (
-                <Card className="mt-6">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
+                <Card className="mt-4 sm:mt-6">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
                         <h3 className="font-medium text-gray-900">Summary</h3>
                         <p className="text-sm text-gray-600">
                           Showing {filteredOrders.length} of {orders?.length || 0} orders
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-sm text-gray-600">Total Value</p>
-                        <p className="text-lg font-semibold text-gray-900">
+                        <p className="text-xl sm:text-lg font-bold text-gray-900">
                           {formatCurrency(
                             filteredOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0).toString()
                           )}
