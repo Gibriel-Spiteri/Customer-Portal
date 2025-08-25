@@ -539,12 +539,7 @@ export default function Orders() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-500">Delivery Date:</span>
-                            <p className="text-gray-900">{formatDate(order.deliveryDate)}</p>
-                          </div>
-                          <div className="flex justify-end">
+                        <div className="flex justify-end">
                             <Button 
                               variant="outline" 
                               size="sm"
@@ -584,7 +579,6 @@ export default function Orders() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </Button>
-                          </div>
                         </div>
 
                         {order.shippingAddress && (
