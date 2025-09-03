@@ -2209,6 +2209,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Customer Growth Analysis endpoint
+  app.get('/api/analytics/customer-growth', authenticateToken, async (req: any, res) => {
+    try {
+      console.log('Fetching customer growth data from NetSuite...');
+      
+      // Check if NetSuite M2M is configured
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.status(503).json({ 
+          message: 'NetSuite integration not configured',
+          details: 'M2M authentication credentials are missing'
+        });
+      }
+
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+
+      // SuiteQL query to get customer creation dates grouped by month
+      const query = `
+        SELECT 
+          TO_CHAR(customer.datecreated, 'YYYY-MM') AS month,
+          COUNT(customer.id) AS new_customers,
+          MIN(customer.datecreated) AS earliest_date,
+          MAX(customer.datecreated) AS latest_date
+        FROM 
+          customer
+        WHERE 
+          customer.datecreated IS NOT NULL
+          AND customer.datecreated >= ADD_MONTHS(CURRENT_DATE, -24)
+        GROUP BY 
+          TO_CHAR(customer.datecreated, 'YYYY-MM')
+        ORDER BY 
+          TO_CHAR(customer.datecreated, 'YYYY-MM') DESC
+      `.trim();
+
+      const result = await m2m.executeSuiteQL(query, 100, 0);
+
+      // Calculate growth metrics
+      const monthlyData = result.items || [];
+      
+      // Calculate month-over-month growth
+      const growthData = monthlyData.map((month, index) => {
+        const previousMonth = monthlyData[index + 1];
+        let growthRate = null;
+        let growthAmount = null;
+        
+        if (previousMonth && previousMonth.new_customers > 0) {
+          growthAmount = month.new_customers - previousMonth.new_customers;
+          growthRate = ((month.new_customers - previousMonth.new_customers) / previousMonth.new_customers * 100).toFixed(2);
+        }
+        
+        return {
+          ...month,
+          growth_rate: growthRate ? `${growthRate}%` : null,
+          growth_amount: growthAmount
+        };
+      });
+
+      // Calculate statistics
+      const totalCustomers = monthlyData.reduce((sum, month) => sum + month.new_customers, 0);
+      const avgPerMonth = monthlyData.length > 0 ? (totalCustomers / monthlyData.length).toFixed(1) : 0;
+      const lastMonth = monthlyData[0]?.new_customers || 0;
+      const lastThreeMonths = monthlyData.slice(0, 3).reduce((sum, month) => sum + month.new_customers, 0);
+      const lastSixMonths = monthlyData.slice(0, 6).reduce((sum, month) => sum + month.new_customers, 0);
+      const lastYear = monthlyData.slice(0, 12).reduce((sum, month) => sum + month.new_customers, 0);
+
+      res.json({
+        success: true,
+        summary: {
+          total_in_period: totalCustomers,
+          average_per_month: parseFloat(avgPerMonth),
+          last_month: lastMonth,
+          last_3_months: lastThreeMonths,
+          last_6_months: lastSixMonths,
+          last_12_months: lastYear,
+          period: 'Last 24 months',
+          data_points: monthlyData.length
+        },
+        monthly_breakdown: growthData,
+        query_info: {
+          executed_at: new Date().toISOString(),
+          records_returned: result.items.length,
+          has_more: result.hasMore
+        }
+      });
+
+    } catch (error) {
+      console.error('Customer growth analysis error:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch customer growth data',
+        error: error.message,
+        details: 'Check NetSuite M2M configuration and permissions'
+      });
+    }
+  });
+
   // CRD Rebate (Consumers Cash) endpoint
   app.get('/api/crd-rebates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
