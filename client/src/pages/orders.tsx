@@ -75,7 +75,7 @@ export default function Orders() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
-  const [activeView, setActiveView] = useState("ready-for-delivery");
+  const [activeView, setActiveView] = useState("active");
   const [cabinetBuildDetails, setCabinetBuildDetails] = useState<any>({});
   const [visibleBuildDetails, setVisibleBuildDetails] = useState<Record<string, boolean>>({});
   const [loadingCabinetBuild, setLoadingCabinetBuild] = useState<string | null>(null);
@@ -199,8 +199,15 @@ export default function Orders() {
     
     // Apply view-specific filtering
     switch (viewType) {
+      case 'active':
+        viewFiltered = viewFiltered.filter(order => 
+          order.status !== 'closed' && 
+          order.status !== 'fully billed' &&
+          order.status !== 'cancelled'
+        );
+        break;
+
       case 'ready-for-delivery':
-        // Show orders that are fulfilled and ready for delivery
         viewFiltered = viewFiltered.filter(order => 
           order.status === 'partially fulfilled' || 
           order.status === 'pending billing' ||
@@ -208,32 +215,7 @@ export default function Orders() {
         );
         break;
         
-      case 'recent':
-        // Show orders from the last 30 days
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        viewFiltered = viewFiltered.filter(order => 
-          new Date(order.orderDate) >= thirtyDaysAgo
-        );
-        break;
-      
-      case 'pending':
-        // Show orders with pending statuses
-        viewFiltered = viewFiltered.filter(order => 
-          order.status.toLowerCase().includes('pending') || 
-          order.status === 'partially fulfilled'
-        );
-        break;
-      
-      case 'high-value':
-        // Show orders above $10,000
-        viewFiltered = viewFiltered.filter(order => 
-          parseFloat(order.totalAmount) >= 10000
-        );
-        break;
-        
       case 'completed':
-        // Show completed orders
         viewFiltered = viewFiltered.filter(order => 
           order.status === 'closed' || 
           order.status === 'fully billed'
@@ -242,7 +224,6 @@ export default function Orders() {
       
       case 'all':
       default:
-        // Show all orders
         break;
     }
     
@@ -266,23 +247,19 @@ export default function Orders() {
 
   // Get counts for each view
   const getViewCounts = () => {
-    if (!orders) return { readyForDelivery: 0, recent: 0, pending: 0, highValue: 0, completed: 0, all: 0 };
-    
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    if (!orders) return { active: 0, readyForDelivery: 0, completed: 0, all: 0 };
     
     return {
+      active: orders.filter(order => 
+        order.status !== 'closed' && 
+        order.status !== 'fully billed' &&
+        order.status !== 'cancelled'
+      ).length,
       readyForDelivery: orders.filter(order => 
         order.status === 'partially fulfilled' || 
         order.status === 'pending billing' ||
         (order.status === 'fully billed' && !order.deliveryDate)
       ).length,
-      recent: orders.filter(order => new Date(order.orderDate) >= thirtyDaysAgo).length,
-      pending: orders.filter(order => 
-        order.status.toLowerCase().includes('pending') || 
-        order.status === 'partially fulfilled'
-      ).length,
-      highValue: orders.filter(order => parseFloat(order.totalAmount) >= 10000).length,
       completed: orders.filter(order => 
         order.status === 'closed' || 
         order.status === 'fully billed'
@@ -328,49 +305,31 @@ export default function Orders() {
                 <Select value={activeView} onValueChange={setActiveView}>
                   <SelectTrigger className="w-full">
                     <div className="flex items-center gap-2">
+                      {activeView === 'active' && <Package className="h-4 w-4 text-blue-500" />}
                       {activeView === 'ready-for-delivery' && <Truck className="h-4 w-4 text-orange-500" />}
-                      {activeView === 'recent' && <Calendar className="h-4 w-4 text-blue-500" />}
-                      {activeView === 'pending' && <AlertCircle className="h-4 w-4 text-amber-500" />}
-                      {activeView === 'high-value' && <DollarSign className="h-4 w-4 text-purple-500" />}
                       {activeView === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
                       {activeView === 'all' && <Package className="h-4 w-4 text-gray-500" />}
                       <span>
+                        {activeView === 'active' && `Active (${viewCounts.active})`}
                         {activeView === 'ready-for-delivery' && `Ready for Delivery (${viewCounts.readyForDelivery})`}
-                        {activeView === 'recent' && `Recent Orders (${viewCounts.recent})`}
-                        {activeView === 'pending' && `Pending Orders (${viewCounts.pending})`}
-                        {activeView === 'high-value' && `High Value (${viewCounts.highValue})`}
                         {activeView === 'completed' && `Completed (${viewCounts.completed})`}
                         {activeView === 'all' && `All Orders (${viewCounts.all})`}
                       </span>
                     </div>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="active">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-blue-500" />
+                        <span>Active</span>
+                        <Badge variant="secondary" className="ml-auto">{viewCounts.active}</Badge>
+                      </div>
+                    </SelectItem>
                     <SelectItem value="ready-for-delivery">
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4 text-orange-500" />
                         <span>Ready for Delivery</span>
                         <Badge variant="secondary" className="ml-auto">{viewCounts.readyForDelivery}</Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="recent">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-blue-500" />
-                        <span>Recent Orders</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.recent}</Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="pending">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-500" />
-                        <span>Pending Orders</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.pending}</Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="high-value">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-purple-500" />
-                        <span>High Value</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.highValue}</Badge>
                       </div>
                     </SelectItem>
                     <SelectItem value="completed">
@@ -395,32 +354,18 @@ export default function Orders() {
               <div className="hidden sm:block mb-6">
                 <Tabs value={activeView} onValueChange={setActiveView}>
                   <TabsList className="w-full overflow-x-auto flex justify-start">
+                    <TabsTrigger value="active" className="flex items-center gap-1 min-w-fit px-3 py-2">
+                      <Package className="h-4 w-4 text-blue-500" />
+                      <span>Active</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1">
+                        {viewCounts.active}
+                      </Badge>
+                    </TabsTrigger>
                     <TabsTrigger value="ready-for-delivery" className="flex items-center gap-1 min-w-fit px-3 py-2">
                       <Truck className="h-4 w-4 text-orange-500" />
                       <span>Ready for Delivery</span>
                       <Badge variant="secondary" className="ml-1 h-5 px-1">
                         {viewCounts.readyForDelivery}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="recent" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <Calendar className="h-4 w-4 text-blue-500" />
-                      <span>Recent</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.recent}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="pending" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <AlertCircle className="h-4 w-4 text-amber-500" />
-                      <span>Pending</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.pending}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="high-value" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <DollarSign className="h-4 w-4 text-purple-500" />
-                      <span>High Value</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.highValue}
                       </Badge>
                     </TabsTrigger>
                     <TabsTrigger value="completed" className="flex items-center gap-1 min-w-fit px-3 py-2">
