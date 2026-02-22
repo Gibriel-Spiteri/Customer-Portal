@@ -26,13 +26,13 @@ const navigation: NavigationItem[] = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Sales Orders',
-    href: '/orders',
+    name: 'Estimates',
+    href: '/estimates',
     icon: ShoppingCart,
   },
   {
-    name: 'Estimates',
-    href: '/estimates',
+    name: 'Sales Orders',
+    href: '/orders',
     icon: Calculator,
   },
   {
