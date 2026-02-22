@@ -239,6 +239,29 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Support Cases Card */}
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <Link href="/support">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-purple-100 rounded-full">
+                  <HeadphonesIcon className="h-7 w-7 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">Support Cases</h3>
+                  <p className="text-sm text-gray-600">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-20" />
+                    ) : (
+                      `${dashboardData?.totalCounts?.openCases || 0} open cases`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+
         {/* Consumers Cash Card */}
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:shadow-md transition-shadow">
           <CardContent className="p-5">
@@ -256,29 +279,6 @@ export default function Dashboard() {
                       `Balance: ${formatCurrency(dashboardData.account.crdRebateBalance)}`
                     ) : (
                       'View CRD rebate rewards'
-                    )}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Support Cases Card */}
-        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <Link href="/support">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <HeadphonesIcon className="h-7 w-7 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900">Support Cases</h3>
-                  <p className="text-sm text-gray-600">
-                    {isLoading ? (
-                      <Skeleton className="h-4 w-20" />
-                    ) : (
-                      `${dashboardData?.totalCounts?.openCases || 0} open cases`
                     )}
                   </p>
                 </div>
