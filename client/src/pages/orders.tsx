@@ -60,6 +60,8 @@ interface Order {
   currency: string;
   shippingAddress: any;
   trackingNumber: string | null;
+  memo?: string;
+  tagFor?: string;
   items?: OrderItem[];
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
@@ -677,6 +679,18 @@ export default function Orders() {
                             {formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}
                           </p>
                         </div>
+                        {selectedOrder.memo && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
+                            <p className="text-base">{selectedOrder.memo}</p>
+                          </div>
+                        )}
+                        {selectedOrder.tagFor && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">CRD END USER</h3>
+                            <p className="text-base">{selectedOrder.tagFor}</p>
+                          </div>
+                        )}
                       </div>
 
                       <Separator />

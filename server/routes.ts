@@ -1269,6 +1269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trackingNumber: null,
         shippingAddress: null,
         memo: item.memo || '',
+        tagFor: item.tagfor || '',
         customerName: item.customername,
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
@@ -1338,6 +1339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         billingAddress: orderDetails.billingaddress,
         trackingNumber: null,
         memo: orderDetails.memo,
+        tagFor: orderDetails.tagfor || '',
         customerName: orderDetails.customername,
         items: orderDetails.lineItems ? orderDetails.lineItems.map((item: any) => ({
           id: item.lineid,
