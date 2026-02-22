@@ -15,7 +15,7 @@ import {
   Phone,
   ArrowRight,
   DollarSign,
-  Handshake,
+  HandHelping,
   CalculatorIcon
 } from "lucide-react";
 import { Link } from "wouter";
@@ -245,7 +245,7 @@ export default function Dashboard() {
             <Link href="/support">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-purple-100 rounded-full">
-                  <Handshake className="h-7 w-7 text-purple-600" />
+                  <HandHelping className="h-7 w-7 text-purple-600" />
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900">Support</h3>
