@@ -523,69 +523,63 @@ export default function Orders() {
               {/* Order Details Modal */}
               <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <DialogTitle className="flex items-center gap-2">
-                          <span>Order Details</span>
-                          {selectedOrder && (
+                  <DialogHeader className="pb-0">
+                    <DialogTitle className="text-xl font-bold">
+                      Order #{selectedOrder?.orderNumber}
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Details for order #{selectedOrder?.orderNumber}
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  {selectedOrder && (
+                    <div className="space-y-6">
+                      {/* Order Header Card */}
+                      <div className="rounded-lg border bg-gray-50 p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-3">
                             <Badge className={getStatusColor(selectedOrder.status)}>
                               {getStatusIcon(selectedOrder.status)}
                               <span className="ml-1 capitalize">{selectedOrder.status}</span>
                             </Badge>
-                          )}
-                        </DialogTitle>
-                        <DialogDescription>
-                          Order #{selectedOrder?.orderNumber}
-                        </DialogDescription>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 text-purple-600 border-purple-200 hover:bg-purple-50"
-                        onClick={() => {
-                          setSelectedOrder(null);
-                          navigate('/support');
-                        }}
-                      >
-                        <HeadphonesIcon className="h-4 w-4 mr-1.5" />
-                        Submit Case
-                      </Button>
-                    </div>
-                  </DialogHeader>
-                  
-                  {selectedOrder && (
-                    <div className="space-y-6 mt-4">
-                      {/* Order Summary */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Order Date</h3>
-                          <p className="text-base flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                            {formatDate(selectedOrder.orderDate)}
-                          </p>
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h3>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}
-                          </p>
-                        </div>
-                        {selectedOrder.memo && (
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
-                            <p className="text-base">{selectedOrder.memo}</p>
+                            <span className="text-sm text-gray-500 flex items-center">
+                              <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                              {formatDate(selectedOrder.orderDate)}
+                            </span>
+                            <span className="text-base font-semibold">
+                              {formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}
+                            </span>
                           </div>
-                        )}
-                        {selectedOrder.tagFor && (
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-500 mb-1">CRD END USER</h3>
-                            <p className="text-base">{selectedOrder.tagFor}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 text-purple-600 border-purple-200 hover:bg-purple-50 w-fit"
+                            onClick={() => {
+                              setSelectedOrder(null);
+                              navigate('/support');
+                            }}
+                          >
+                            <HeadphonesIcon className="h-4 w-4 mr-1.5" />
+                            Submit Case
+                          </Button>
+                        </div>
+                        {(selectedOrder.memo || selectedOrder.tagFor) && (
+                          <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3 pt-3 border-t border-gray-200">
+                            {selectedOrder.memo && (
+                              <div className="text-sm">
+                                <span className="text-gray-500">Job ID:</span>{" "}
+                                <span className="font-medium">{selectedOrder.memo}</span>
+                              </div>
+                            )}
+                            {selectedOrder.tagFor && (
+                              <div className="text-sm">
+                                <span className="text-gray-500">CRD End User:</span>{" "}
+                                <span className="font-medium">{selectedOrder.tagFor}</span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-
-                      <Separator />
 
                       {/* Shipping Information */}
                       <div className="space-y-4">
