@@ -491,90 +491,125 @@ export default function Orders() {
               {/* Orders List */}
               {isLoading ? (
                 <Card>
-                  <CardContent className="p-0">
-                    <div className="space-y-1 p-4">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
                       {[...Array(5)].map((_, i) => (
                         <div key={i} className="flex items-center gap-4 py-3">
                           <Skeleton className="h-4 w-24" />
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-4 w-32 flex-1" />
                           <Skeleton className="h-4 w-20" />
                           <Skeleton className="h-6 w-16" />
-                          <Skeleton className="h-8 w-20" />
                         </div>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
               ) : filteredOrders.length > 0 ? (
-                <Card>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order #</th>
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
-                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {filteredOrders.map((order) => (
-                            <tr 
-                              key={order.id} 
-                              className="hover:bg-gray-50 transition-colors cursor-pointer"
-                              onClick={async () => {
-                                setSelectedOrder(order);
-                                setLoadingOrderDetails(true);
-                                setCabinetBuildDetails({});
-                                setVisibleBuildDetails({});
-                                try {
-                                  const response = await fetch(`/api/orders/${order.id}`, {
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`
-                                    }
-                                  });
-                                  if (response.ok) {
-                                    const orderWithDetails = await response.json();
-                                    setSelectedOrder(orderWithDetails);
-                                  }
-                                } catch (error) {
-                                  console.error('Failed to fetch order details:', error);
-                                } finally {
-                                  setLoadingOrderDetails(false);
-                                }
-                              }}
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {order.orderNumber}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {order.tagFor ? toTitleCase(order.tagFor) : '-'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {order.memo ? toTitleCase(order.memo) : '-'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {formatDate(order.orderDate)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                                {formatCurrency(order.totalAmount, order.currency)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
-                                  <span className="capitalize text-xs">{order.status}</span>
-                                </Badge>
-                              </td>
+                <>
+                  {/* Desktop table - hidden on mobile */}
+                  <Card className="hidden md:block">
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order #</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
+                              <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {filteredOrders.map((order) => (
+                              <tr 
+                                key={order.id} 
+                                className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                onClick={async () => {
+                                  setSelectedOrder(order);
+                                  setLoadingOrderDetails(true);
+                                  setCabinetBuildDetails({});
+                                  setVisibleBuildDetails({});
+                                  try {
+                                    const response = await fetch(`/api/orders/${order.id}`, {
+                                      headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    if (response.ok) {
+                                      setSelectedOrder(await response.json());
+                                    }
+                                  } catch (error) {
+                                    console.error('Failed to fetch order details:', error);
+                                  } finally {
+                                    setLoadingOrderDetails(false);
+                                  }
+                                }}
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{order.tagFor ? toTitleCase(order.tagFor) : '-'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{order.memo ? toTitleCase(order.memo) : '-'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.orderDate)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(order.totalAmount, order.currency)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
+                                    <span className="capitalize text-xs">{order.status}</span>
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Mobile cards - hidden on desktop */}
+                  <div className="md:hidden space-y-3">
+                    {filteredOrders.map((order) => (
+                      <Card 
+                        key={order.id} 
+                        className="cursor-pointer active:bg-gray-50 transition-colors"
+                        onClick={async () => {
+                          setSelectedOrder(order);
+                          setLoadingOrderDetails(true);
+                          setCabinetBuildDetails({});
+                          setVisibleBuildDetails({});
+                          try {
+                            const response = await fetch(`/api/orders/${order.id}`, {
+                              headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (response.ok) {
+                              setSelectedOrder(await response.json());
+                            }
+                          } catch (error) {
+                            console.error('Failed to fetch order details:', error);
+                          } finally {
+                            setLoadingOrderDetails(false);
+                          }
+                        }}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{order.orderNumber}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{formatDate(order.orderDate)}</p>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount, order.currency)}</p>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-gray-600 space-y-0.5">
+                              {order.tagFor && <p><span className="text-gray-400">End User:</span> {toTitleCase(order.tagFor)}</p>}
+                              {order.memo && <p><span className="text-gray-400">Job ID:</span> {toTitleCase(order.memo)}</p>}
+                            </div>
+                            <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
+                              <span className="capitalize text-xs">{order.status}</span>
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <Card>
                   <CardContent className="p-4 sm:p-6">
