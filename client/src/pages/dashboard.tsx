@@ -42,6 +42,7 @@ interface DashboardData {
     orderDate: string;
     totalAmount: string;
     currency: string;
+    tagFor?: string;
     dataFreshness: 'live' | 'cached';
     lastSyncAt: string;
   }>;
@@ -406,14 +407,13 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">#{order.orderNumber}</p>
-                          <p className="text-xs text-gray-500">{formatDate(order.orderDate)}</p>
+                          {order.tagFor && (
+                            <p className="text-xs text-gray-500 truncate">{order.tagFor}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <span className="text-sm font-semibold">{formatCurrency(order.totalAmount, order.currency)}</span>
-                        <Badge className={`text-xs ${getStatusColor(order.status)}`}>
-                          {order.status}
-                        </Badge>
                       </div>
                     </div>
                   </Link>

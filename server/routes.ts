@@ -1169,9 +1169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: order.id,
           orderNumber: order.ordernumber || order.tranid,
           status: order.status,
-          totalAmount: order.total || '0.00', // Frontend expects totalAmount, not total
+          totalAmount: order.total || '0.00',
           currency: 'USD',
-          orderDate: order.orderdate || order.trandate
+          orderDate: order.orderdate || order.trandate,
+          tagFor: order.tagfor || ''
         })),
         recentPayments: payments.slice(0, 5).map((payment: any) => ({
           id: payment.id,
