@@ -597,9 +597,9 @@ export default function Orders() {
                             <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount, order.currency)}</p>
                           </div>
                           <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-600 space-y-0.5">
-                              {order.tagFor && <p><span className="text-gray-400">End User:</span> {toTitleCase(order.tagFor)}</p>}
-                              {order.memo && <p><span className="text-gray-400">Job ID:</span> {toTitleCase(order.memo)}</p>}
+                            <div className="text-sm text-gray-700 space-y-1">
+                              {order.tagFor && <p className="font-medium"><span className="text-gray-400 text-xs">End User:</span> {toTitleCase(order.tagFor)}</p>}
+                              {order.memo && <p className="font-medium"><span className="text-gray-400 text-xs">Job ID:</span> {toTitleCase(order.memo)}</p>}
                             </div>
                             <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
                               <span className="capitalize text-xs">{order.status}</span>

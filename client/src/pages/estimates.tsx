@@ -276,9 +276,9 @@ export default function Estimates() {
                             <p className="text-sm font-semibold text-gray-900">{formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}</p>
                           </div>
                           <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-600 space-y-0.5">
-                              {estimate.tagFor && <p><span className="text-gray-400">End User:</span> {toTitleCase(estimate.tagFor)}</p>}
-                              {estimate.memo && <p><span className="text-gray-400">Job ID:</span> {toTitleCase(estimate.memo)}</p>}
+                            <div className="text-sm text-gray-700 space-y-1">
+                              {estimate.tagFor && <p className="font-medium"><span className="text-gray-400 text-xs">End User:</span> {toTitleCase(estimate.tagFor)}</p>}
+                              {estimate.memo && <p className="font-medium"><span className="text-gray-400 text-xs">Job ID:</span> {toTitleCase(estimate.memo)}</p>}
                             </div>
                             <Badge variant="secondary" className={getStatusColor(estimate.status)}>
                               {estimate.status.charAt(0).toUpperCase() + estimate.status.slice(1)}
