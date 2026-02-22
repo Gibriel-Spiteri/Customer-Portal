@@ -19,7 +19,6 @@ import { Separator } from "@/components/ui/separator";
 import { 
   Calculator,
   Download,
-  Eye,
   Send,
   Calendar,
   DollarSign,
@@ -192,20 +191,45 @@ export default function Estimates() {
                           <tr className="border-b border-gray-200">
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Estimate ID</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
                             <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
-                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {estimates.map((estimate) => (
-                            <tr key={estimate.id} className="hover:bg-gray-50 transition-colors">
+                            <tr 
+                              key={estimate.id} 
+                              className="hover:bg-gray-50 transition-colors cursor-pointer"
+                              onClick={async () => {
+                                setSelectedEstimate(estimate);
+                                setLoadingEstimateDetails(true);
+                                try {
+                                  const response = await fetch(`/api/estimates/${estimate.id}`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`
+                                    }
+                                  });
+                                  if (response.ok) {
+                                    const estimateWithDetails = await response.json();
+                                    setSelectedEstimate(estimateWithDetails);
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to fetch estimate details:', error);
+                                } finally {
+                                  setLoadingEstimateDetails(false);
+                                }
+                              }}
+                            >
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {estimate.estimateNumber}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {estimate.memo || '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {estimate.tagFor || '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {formatDate(estimate.estimateDate)}
@@ -217,34 +241,6 @@ export default function Estimates() {
                                 <Badge variant="secondary" className={getStatusColor(estimate.status)}>
                                   {estimate.status.charAt(0).toUpperCase() + estimate.status.slice(1)}
                                 </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={async () => {
-                                    setSelectedEstimate(estimate);
-                                    setLoadingEstimateDetails(true);
-                                    try {
-                                      const response = await fetch(`/api/estimates/${estimate.id}`, {
-                                        headers: {
-                                          'Authorization': `Bearer ${token}`
-                                        }
-                                      });
-                                      if (response.ok) {
-                                        const estimateWithDetails = await response.json();
-                                        setSelectedEstimate(estimateWithDetails);
-                                      }
-                                    } catch (error) {
-                                      console.error('Failed to fetch estimate details:', error);
-                                    } finally {
-                                      setLoadingEstimateDetails(false);
-                                    }
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
                               </td>
                             </tr>
                           ))}

@@ -17,7 +17,6 @@ import {
   Search, 
   Filter, 
   RefreshCw, 
-  Eye,
   Truck,
   Package,
   Clock,
@@ -512,20 +511,47 @@ export default function Orders() {
                           <tr className="border-b border-gray-200">
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order #</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
                             <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
-                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {filteredOrders.map((order) => (
-                            <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                            <tr 
+                              key={order.id} 
+                              className="hover:bg-gray-50 transition-colors cursor-pointer"
+                              onClick={async () => {
+                                setSelectedOrder(order);
+                                setLoadingOrderDetails(true);
+                                setCabinetBuildDetails({});
+                                setVisibleBuildDetails({});
+                                try {
+                                  const response = await fetch(`/api/orders/${order.id}`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`
+                                    }
+                                  });
+                                  if (response.ok) {
+                                    const orderWithDetails = await response.json();
+                                    setSelectedOrder(orderWithDetails);
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to fetch order details:', error);
+                                } finally {
+                                  setLoadingOrderDetails(false);
+                                }
+                              }}
+                            >
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {order.orderNumber}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {order.memo || '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {order.tagFor || '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {formatDate(order.orderDate)}
@@ -537,36 +563,6 @@ export default function Orders() {
                                 <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
                                   <span className="capitalize text-xs">{order.status}</span>
                                 </Badge>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={async () => {
-                                    setSelectedOrder(order);
-                                    setLoadingOrderDetails(true);
-                                    setCabinetBuildDetails({});
-                                    setVisibleBuildDetails({});
-                                    try {
-                                      const response = await fetch(`/api/orders/${order.id}`, {
-                                        headers: {
-                                          'Authorization': `Bearer ${token}`
-                                        }
-                                      });
-                                      if (response.ok) {
-                                        const orderWithDetails = await response.json();
-                                        setSelectedOrder(orderWithDetails);
-                                      }
-                                    } catch (error) {
-                                      console.error('Failed to fetch order details:', error);
-                                    } finally {
-                                      setLoadingOrderDetails(false);
-                                    }
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
                               </td>
                             </tr>
                           ))}
