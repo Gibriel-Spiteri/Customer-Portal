@@ -466,16 +466,11 @@ export default function Dashboard() {
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
                     <CheckCircle className="h-4 w-4 text-blue-500 mx-auto mb-1" />
                     <p className="text-xs text-gray-500">Redeemed</p>
                     <p className="text-sm font-semibold text-gray-900">{formatCurrency(crdData.summary.totalRedeemed)}</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-                    <XCircle className="h-4 w-4 text-red-400 mx-auto mb-1" />
-                    <p className="text-xs text-gray-500">Expired</p>
-                    <p className="text-sm font-semibold text-gray-900">{formatCurrency(crdData.summary.totalExpired)}</p>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
                     <TrendingUp className="h-4 w-4 text-purple-500 mx-auto mb-1" />
