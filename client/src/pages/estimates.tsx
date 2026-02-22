@@ -396,6 +396,8 @@ export default function Estimates() {
                                 let shippingTotal = 0;
                                 let customerDiscountTotal = 0;
                                 let promotionalTotal = 0;
+                                let taxCreditTotal = 0;
+                                let percentDiscountTotal = 0;
                                 
                                 allItems.forEach(item => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
@@ -409,16 +411,18 @@ export default function Estimates() {
                                     customerDiscountTotal = itemTotal;
                                   } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
                                     shippingTotal += itemTotal;
-                                  } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                  } else if (itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                    taxCreditTotal += itemTotal;
+                                  } else if (itemNameLower.includes('credit')) {
                                     promotionalTotal += itemTotal;
-                                  } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
-                                    productsTotal -= itemTotal;
+                                  } else if (itemNameLower.includes('% off') || itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
+                                    percentDiscountTotal += itemTotal;
                                   } else {
                                     productsTotal += itemTotal;
                                   }
                                 });
                                 
-                                const subtotal = productsTotal - promotionalTotal;
+                                const subtotal = productsTotal;
                                 
                                 return (
                                   <>
@@ -499,8 +503,29 @@ export default function Estimates() {
                                       
                                       {customerDiscountTotal > 0 && (
                                         <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">DISCOUNT</span>
+                                          <span className="text-gray-600">CUSTOMER DISCOUNT</span>
                                           <span className="font-medium">-${customerDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {percentDiscountTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">PROMO - ITEMIZED</span>
+                                          <span className="font-medium">-${percentDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {taxCreditTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">TAX CREDIT</span>
+                                          <span className="font-medium">-${taxCreditTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {promotionalTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">PROMOTIONAL CREDIT</span>
+                                          <span className="font-medium">-${promotionalTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       )}
                                       
