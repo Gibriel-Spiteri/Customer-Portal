@@ -333,8 +333,8 @@ export default function Orders() {
               {/* Filters and Search - Mobile optimized */}
               <Card className="mb-4 sm:mb-6">
                 <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col gap-3">
-                    <div className="w-full">
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <div className="w-full md:flex-1">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
@@ -345,7 +345,7 @@ export default function Orders() {
                         />
                       </div>
                     </div>
-                    <div className="w-full">
+                    <div className="w-full md:w-56">
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="h-12 sm:h-10">
                           <Filter className="h-4 w-4 mr-2" />
