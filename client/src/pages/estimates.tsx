@@ -291,28 +291,6 @@ export default function Estimates() {
                 </>
               )}
 
-              {/* Data Synchronization Status - Collapsible */}
-              <Card className="mt-6">
-                <Collapsible open={!syncStatusCollapsed} onOpenChange={(open) => setSyncStatusCollapsed(!open)}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="cursor-pointer hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">Data Synchronization Status</CardTitle>
-                        {syncStatusCollapsed ? (
-                          <ChevronDown className="h-4 w-4 text-gray-500" />
-                        ) : (
-                          <ChevronUp className="h-4 w-4 text-gray-500" />
-                        )}
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent>
-                      <SyncStatusDetail />
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
 
               {/* Estimate Details Modal */}
               <Dialog open={!!selectedEstimate} onOpenChange={() => setSelectedEstimate(null)}>

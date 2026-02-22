@@ -627,29 +627,6 @@ export default function Orders() {
                 </Card>
               )}
 
-              {/* Summary Card - Mobile optimized */}
-              {filteredOrders.length > 0 && (
-                <Card className="mt-4 sm:mt-6">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div>
-                        <h3 className="font-medium text-gray-900">Summary</h3>
-                        <p className="text-sm text-gray-600">
-                          Showing {filteredOrders.length} of {orders?.length || 0} orders
-                        </p>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-sm text-gray-600">Total Value</p>
-                        <p className="text-xl sm:text-lg font-bold text-gray-900">
-                          {formatCurrency(
-                            filteredOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0).toString()
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Order Details Modal */}
               <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
