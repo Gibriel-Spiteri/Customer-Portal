@@ -302,10 +302,10 @@ export default function Orders() {
               {/* Filter buttons */}
               <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 mb-6 w-full">
                 {[
-                  { value: 'active', label: 'Active', count: viewCounts.active },
-                  { value: 'ready-for-delivery', label: 'Ready', count: viewCounts.readyForDelivery },
-                  { value: 'completed', label: 'Completed', count: viewCounts.completed },
-                  { value: 'all', label: 'All', count: viewCounts.all },
+                  { value: 'active', label: 'Active', count: viewCounts.active, activeBg: 'bg-blue-50', activeText: 'text-blue-700', activeBadgeBg: 'bg-blue-100', activeBadgeText: 'text-blue-700', activeBorder: 'ring-blue-200' },
+                  { value: 'ready-for-delivery', label: 'Ready', count: viewCounts.readyForDelivery, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
+                  { value: 'completed', label: 'Completed', count: viewCounts.completed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
+                  { value: 'all', label: 'All', count: viewCounts.all, activeBg: 'bg-gray-50', activeText: 'text-gray-700', activeBadgeBg: 'bg-gray-200', activeBadgeText: 'text-gray-700', activeBorder: 'ring-gray-200' },
                 ].map((filter) => (
                   <button
                     key={filter.value}
@@ -313,7 +313,7 @@ export default function Orders() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all",
                       activeView === filter.value
-                        ? "bg-white text-gray-900 shadow-sm"
+                        ? `${filter.activeBg} ${filter.activeText} shadow-sm ring-1 ${filter.activeBorder}`
                         : "text-gray-500 hover:text-gray-700"
                     )}
                   >
@@ -321,7 +321,7 @@ export default function Orders() {
                     <span className={cn(
                       "text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0",
                       activeView === filter.value
-                        ? "bg-blue-100 text-blue-700"
+                        ? `${filter.activeBadgeBg} ${filter.activeBadgeText}`
                         : "bg-gray-200 text-gray-500"
                     )}>
                       {filter.count}
