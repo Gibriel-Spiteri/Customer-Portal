@@ -374,71 +374,157 @@ export default function Estimates() {
                               Line Items
                             </h3>
                             <div className="space-y-2">
-                              {selectedEstimate.items
-                                .filter(item => {
-                                  // Filter out items with $0.00 amount
-                                  const amount = parseFloat(item.amount || 0);
-                                  return Math.abs(amount) > 0.01; // Keep items with amount greater than 1 cent
-                                })
-                                .map((item, index) => {
-                                  const quantity = parseFloat(item.quantity || 0);
-                                  const rate = parseFloat(item.rate || 0);
+                              {(() => {
+                                const allItems = selectedEstimate.items || [];
+                                
+                                const displayItems = allItems.filter(item => {
+                                  const itemName = item.itemName || '';
+                                  const itemNameLower = itemName.toLowerCase();
                                   const amount = parseFloat(item.amount || 0);
                                   
-                                  // Always show absolute values (convert negatives to positive)
-                                  const displayQuantity = Math.abs(quantity);
-                                  const displayRate = Math.abs(rate);
-                                  const displayAmount = Math.abs(amount);
+                                  const isTaxItem = itemName.includes('NY_') || 
+                                                   itemNameLower.includes('ny_suffolk') ||
+                                                   itemNameLower.includes('ny_bhdl') ||
+                                                   itemNameLower.includes('ny_ny') ||
+                                                   (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                                   
-                                  return (
-                                    <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
-                                      <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                          <h4 className="font-medium text-gray-900">
-                                            {item.itemName || item.name}
-                                          </h4>
-                                          {item.description && (
-                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                                          )}
+                                  return Math.abs(amount) > 0.01 && !isTaxItem;
+                                });
+                                
+                                let productsTotal = 0;
+                                let shippingTotal = 0;
+                                let customerDiscountTotal = 0;
+                                let promotionalTotal = 0;
+                                
+                                displayItems.forEach(item => {
+                                  const qty = Math.abs(parseFloat(item.quantity || 0));
+                                  const rate = Math.abs(parseFloat(item.rate || 0));
+                                  const amount = parseFloat(item.amount || 0);
+                                  const itemNameLower = (item.itemName || '').toLowerCase();
+                                  
+                                  const itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
+                                  
+                                  if (itemNameLower === 'customer discount') {
+                                    customerDiscountTotal = itemTotal;
+                                  } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                                    shippingTotal += itemTotal;
+                                  } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                    promotionalTotal += itemTotal;
+                                  } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
+                                    productsTotal -= itemTotal;
+                                  } else {
+                                    productsTotal += itemTotal;
+                                  }
+                                });
+                                
+                                const subtotal = productsTotal - promotionalTotal;
+                                
+                                return (
+                                  <>
+                                    {displayItems.map((item, index) => {
+                                      const quantity = parseFloat(item.quantity || 0);
+                                      const rate = parseFloat(item.rate || 0);
+                                      const amount = parseFloat(item.amount || 0);
+                                      const itemNameLower = (item.itemName || '').toLowerCase();
+                                      
+                                      const displayQuantity = Math.abs(quantity);
+                                      const displayRate = Math.abs(rate);
+                                      
+                                      let displayAmount = displayQuantity > 0 
+                                        ? displayQuantity * displayRate 
+                                        : Math.abs(amount);
+                                      
+                                      let bgColor = "bg-gray-50";
+                                      let textColor = "text-gray-900";
+                                      let descColor = "text-gray-600";
+                                      let isNegative = false;
+                                      
+                                      if (itemNameLower === 'customer discount') {
+                                        bgColor = "bg-yellow-50";
+                                        textColor = "text-yellow-900";
+                                        descColor = "text-yellow-700";
+                                        isNegative = true;
+                                      } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                                        bgColor = "bg-blue-50";
+                                        textColor = "text-blue-900";
+                                        descColor = "text-blue-700";
+                                      } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                        bgColor = "bg-green-50";
+                                        textColor = "text-green-900";
+                                        descColor = "text-green-700";
+                                        isNegative = true;
+                                      } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
+                                        bgColor = "bg-green-50";
+                                        textColor = "text-green-900";
+                                        descColor = "text-green-700";
+                                        isNegative = amount > 0;
+                                      }
+                                      
+                                      return (
+                                        <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <h4 className={`font-medium ${textColor}`}>
+                                                {item.itemName || item.name}
+                                              </h4>
+                                              {item.description && 
+                                                !item.description.toLowerCase().includes('click print for description') && (
+                                                <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
+                                              )}
+                                            </div>
+                                            <div className="text-right ml-4 w-24">
+                                              <p className={`font-semibold ${textColor}`}>
+                                                {isNegative ? '-' : ''}${displayAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                              </p>
+                                              {displayQuantity > 0 && (
+                                                <p className={`text-sm ${descColor}`}>
+                                                  {displayQuantity} × ${displayRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="text-right ml-4">
-                                          <p className="font-semibold text-gray-900">
-                                            ${displayAmount.toFixed(2)}
-                                          </p>
-                                          <p className="text-sm text-gray-600">
-                                            {displayQuantity} × ${displayRate.toFixed(2)}
-                                          </p>
+                                      );
+                                    })}
+                                    
+                                    {/* Estimate Summary */}
+                                    <div className="mt-4 pt-4 border-t-2 border-gray-300 space-y-2 bg-gray-50 p-4 rounded-lg">
+                                      <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
+                                      
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">SUBTOTAL</span>
+                                        <span className="font-medium">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                      </div>
+                                      
+                                      {customerDiscountTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">DISCOUNT</span>
+                                          <span className="font-medium">-${customerDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
+                                      )}
+                                      
+                                      {selectedEstimate.tax && parseFloat(selectedEstimate.tax) > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">TAX</span>
+                                          <span className="font-medium">${parseFloat(selectedEstimate.tax).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {shippingTotal > 0 && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-gray-600">SHIPPING CHARGES</span>
+                                          <span className="font-medium">${shippingTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-300">
+                                        <span>TOTAL</span>
+                                        <span>${parseFloat(selectedEstimate.amount || selectedEstimate.totalAmount || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                     </div>
-                                  );
-                                })}
-                              
-                              {/* Estimate Totals */}
-                              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                                {selectedEstimate.subtotal && (
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Subtotal</span>
-                                    <span>{formatCurrency(selectedEstimate.subtotal)}</span>
-                                  </div>
-                                )}
-                                {selectedEstimate.tax && parseFloat(selectedEstimate.tax) > 0 && (
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Tax</span>
-                                    <span>{formatCurrency(selectedEstimate.tax)}</span>
-                                  </div>
-                                )}
-                                {selectedEstimate.shipping && parseFloat(selectedEstimate.shipping) > 0 && (
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Shipping</span>
-                                    <span>{formatCurrency(selectedEstimate.shipping)}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between text-base font-semibold pt-2 border-t">
-                                  <span>Total</span>
-                                  <span>{formatCurrency(selectedEstimate.amount || selectedEstimate.totalAmount || '0', selectedEstimate.currency)}</span>
-                                </div>
-                              </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </>
