@@ -36,14 +36,14 @@ const navigation: NavigationItem[] = [
     icon: Calculator,
   },
   {
-    name: 'Support',
-    href: '/support',
-    icon: HelpCircle,
-  },
-  {
     name: 'Consumers Cash',
     href: '/consumers-cash',
     icon: Star,
+  },
+  {
+    name: 'Support',
+    href: '/support',
+    icon: HelpCircle,
   },
   {
     name: 'Account Settings',
