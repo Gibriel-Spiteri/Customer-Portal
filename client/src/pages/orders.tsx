@@ -641,14 +641,15 @@ export default function Orders() {
                                   const itemNameLower = itemName.toLowerCase();
                                   const amount = parseFloat(item.amount || 0);
                                   
-                                  // Exclude tax items and zero amounts
+                                  // Exclude tax items, shipping items, and zero amounts
                                   const isTaxItem = itemName.includes('NY_') || 
                                                    itemNameLower.includes('ny_suffolk') ||
                                                    itemNameLower.includes('ny_bhdl') ||
                                                    itemNameLower.includes('ny_ny') ||
                                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
+                                  const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
                                   
-                                  return Math.abs(amount) > 0.01 && !isTaxItem;
+                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
                                 });
                                 
                                 // Calculate totals for summary section

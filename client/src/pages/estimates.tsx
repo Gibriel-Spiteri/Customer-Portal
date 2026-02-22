@@ -387,8 +387,9 @@ export default function Estimates() {
                                                    itemNameLower.includes('ny_bhdl') ||
                                                    itemNameLower.includes('ny_ny') ||
                                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
+                                  const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
                                   
-                                  return Math.abs(amount) > 0.01 && !isTaxItem;
+                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
                                 });
                                 
                                 let productsTotal = 0;
