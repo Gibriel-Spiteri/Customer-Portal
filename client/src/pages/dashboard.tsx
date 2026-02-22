@@ -319,8 +319,60 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Two-Panel Section: Recent Sales Orders & Consumers Cash Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Three-Panel Section: Recent Estimates, Recent Sales Orders & Consumers Cash Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Estimates Panel */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <CalculatorIcon className="h-5 w-5 text-orange-500" />
+                Recent Estimates
+              </CardTitle>
+              <Link href="/estimates">
+                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-2">
+                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {estimatesLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : estimatesData && estimatesData.length > 0 ? (
+              <div className="space-y-2">
+                {estimatesData.slice(0, 5).map((estimate) => (
+                  <Link key={estimate.id} href="/estimates">
+                    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-1.5 bg-orange-50 rounded-md shrink-0">
+                          <FileText className="h-4 w-4 text-orange-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">#{estimate.documentNumber}</p>
+                          <p className="text-xs text-gray-500">{formatDate(estimate.date)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm font-semibold">{formatCurrency(estimate.total, estimate.currency)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <CalculatorIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No recent estimates</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Recent Sales Orders Panel */}
         <Card>
           <CardHeader className="pb-3">
