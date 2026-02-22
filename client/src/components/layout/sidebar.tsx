@@ -26,24 +26,24 @@ const navigation: NavigationItem[] = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Estimates',
-    href: '/estimates',
-    icon: Calculator,
-  },
-  {
     name: 'Sales Orders',
     href: '/orders',
     icon: ShoppingCart,
   },
   {
-    name: 'Consumers Cash',
-    href: '/consumers-cash',
-    icon: Star,
+    name: 'Estimates',
+    href: '/estimates',
+    icon: Calculator,
   },
   {
     name: 'Support',
     href: '/support',
     icon: HelpCircle,
+  },
+  {
+    name: 'Consumers Cash',
+    href: '/consumers-cash',
+    icon: Star,
   },
   {
     name: 'Account Settings',
