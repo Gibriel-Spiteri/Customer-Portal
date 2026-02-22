@@ -1799,7 +1799,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const estimate = await m2m.getEstimateDetails(estimateId);
       
       // Verify customer has access to this estimate
-      if (req.user.netsuiteCustomerId && estimate.customerId !== req.user.netsuiteCustomerId) {
+      const estimateCustomerId = String(estimate.customerid || estimate.customerId || '');
+      const userCustomerId = String(req.user.netsuiteCustomerId || '');
+      if (userCustomerId && estimateCustomerId && estimateCustomerId !== userCustomerId) {
         return res.status(403).json({ message: 'Access denied to this estimate' });
       }
       
