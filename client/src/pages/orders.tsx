@@ -300,7 +300,7 @@ export default function Orders() {
               </div>
 
               {/* Mobile-friendly view selector */}
-              <div className="mb-6 block sm:hidden">
+              <div className="mb-6 block md:hidden">
                 <Select value={activeView} onValueChange={setActiveView}>
                   <SelectTrigger className="w-full">
                     <div className="flex items-center gap-2">
@@ -350,7 +350,7 @@ export default function Orders() {
               </div>
 
               {/* Desktop filter buttons - hidden on mobile */}
-              <div className="hidden sm:grid grid-cols-4 gap-2 mb-6">
+              <div className="hidden md:grid grid-cols-4 gap-2 mb-6">
                 {[
                   { value: 'active', label: 'Active', count: viewCounts.active, color: 'blue' },
                   { value: 'ready-for-delivery', label: 'Ready for Delivery', count: viewCounts.readyForDelivery, color: 'orange' },
