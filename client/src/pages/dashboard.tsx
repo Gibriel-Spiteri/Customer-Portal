@@ -331,8 +331,8 @@ export default function Dashboard() {
                 Recent Estimates
               </CardTitle>
               <Link href="/estimates">
-                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-2">
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-1">
+                  View All
                 </Button>
               </Link>
             </div>
@@ -385,8 +385,8 @@ export default function Dashboard() {
                 Recent Sales Orders
               </CardTitle>
               <Link href="/orders">
-                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-2">
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-1">
+                  View All
                 </Button>
               </Link>
             </div>
@@ -439,8 +439,8 @@ export default function Dashboard() {
                 Consumers Cash Summary
               </CardTitle>
               <Link href="/consumers-cash">
-                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-2">
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-1">
+                  View All
                 </Button>
               </Link>
             </div>
