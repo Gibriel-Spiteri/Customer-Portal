@@ -224,29 +224,6 @@ export default function Dashboard() {
 
       {/* Quick Access Summary Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {/* Sales Orders Card */}
-        <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
-            <Link href="/orders">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-100 rounded-full">
-                  <ShoppingCart className="h-7 w-7 text-orange-600" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900">Sales Orders</h3>
-                  <p className="text-sm text-gray-600">
-                    {isLoading ? (
-                      <Skeleton className="h-4 w-20" />
-                    ) : (
-                      `${dashboardData?.totalCounts?.activeOrders || dashboardData?.recentOrders?.length || 0} active orders`
-                    )}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-
         {/* Estimates Card */}
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:shadow-md transition-shadow">
           <CardContent className="p-5">
@@ -262,6 +239,29 @@ export default function Dashboard() {
                       <Skeleton className="h-4 w-20" />
                     ) : (
                       `${dashboardData?.totalCounts?.activeEstimates || dashboardData?.recentEstimates?.length || 0} active quotes`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Sales Orders Card */}
+        <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <Link href="/orders">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 rounded-full">
+                  <ShoppingCart className="h-7 w-7 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">Sales Orders</h3>
+                  <p className="text-sm text-gray-600">
+                    {isLoading ? (
+                      <Skeleton className="h-4 w-20" />
+                    ) : (
+                      `${dashboardData?.totalCounts?.activeOrders || dashboardData?.recentOrders?.length || 0} active orders`
                     )}
                   </p>
                 </div>
