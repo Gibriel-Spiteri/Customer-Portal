@@ -235,47 +235,29 @@ export default function Support() {
               </div>
 
               {/* Contact Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-2 gap-3 mb-8">
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <Phone className="h-8 w-8 mx-auto mb-4 netsuite-blue" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Phone Support</h3>
-                      <p className="text-gray-600 mb-4">
-                        Speak directly with our support team
-                      </p>
-                      <p className="font-medium text-netsuite-blue">1-800-NETSUITE</p>
-                      <p className="text-sm text-gray-500">Mon-Fri, 8AM-6PM EST</p>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-5 w-5 netsuite-blue shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Phone</h3>
+                        <p className="text-sm font-medium text-netsuite-blue">631-563-3200</p>
+                        <p className="text-xs text-gray-500">Mon-Fri, 9AM-5PM EST</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <Mail className="h-8 w-8 mx-auto mb-4 netsuite-blue" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Support</h3>
-                      <p className="text-gray-600 mb-4">
-                        Send us an email for non-urgent issues
-                      </p>
-                      <p className="font-medium text-netsuite-blue">support@company.com</p>
-                      <p className="text-sm text-gray-500">Response within 24 hours</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-4 netsuite-blue" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Live Chat</h3>
-                      <p className="text-gray-600 mb-4">
-                        Chat with our support agents
-                      </p>
-                      <Button variant="outline" className="mt-2">
-                        Start Chat
-                      </Button>
-                      <p className="text-sm text-gray-500 mt-2">Available 24/7</p>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 netsuite-blue shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Email</h3>
+                        <p className="text-sm font-medium text-netsuite-blue">support@ckbmail.com</p>
+                        <p className="text-xs text-gray-500">Response within 48 hours</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
