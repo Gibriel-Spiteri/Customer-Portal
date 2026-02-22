@@ -375,9 +375,6 @@ export default function ConsumersCash() {
                         <span className="font-semibold text-lg">
                           {formatCurrency(rebate.amount)}
                         </span>
-                        <Badge className={getStatusColor(rebate.status)}>
-                          {rebate.status}
-                        </Badge>
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -411,6 +408,9 @@ export default function ConsumersCash() {
                       )}
                     </div>
                   </div>
+                  <Badge className={`${getStatusColor(rebate.status)} shrink-0 ml-2`}>
+                    {rebate.status}
+                  </Badge>
                 </div>
               ))}
             </div>
