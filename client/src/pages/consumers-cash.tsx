@@ -217,15 +217,15 @@ export default function ConsumersCash() {
   return (
     <MobileLayout>
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Consumers Cash</h1>
-            <p className="mt-1 text-gray-600">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Consumers Cash</h1>
+            <p className="mt-1 text-sm sm:text-base text-gray-600">
               Your CRD rebate rewards and transaction history
             </p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2 sm:space-x-3">
             <DataBadge freshness="live" />
             <Button
               onClick={handleDownloadCSV}
@@ -233,8 +233,8 @@ export default function ConsumersCash() {
               size="sm"
               disabled={isLoading || !data?.rebates?.length}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download CSV
+              <Download className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Download</span> CSV
             </Button>
             <Button
               onClick={handleRefresh}
@@ -243,11 +243,11 @@ export default function ConsumersCash() {
               size="sm"
             >
               {isRefreshing ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                <RefreshCw className="h-4 w-4 animate-spin sm:mr-2" />
               ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 sm:mr-2" />
               )}
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
           </div>
         </div>
@@ -277,59 +277,59 @@ export default function ConsumersCash() {
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(data?.summary.totalAvailable || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Ready to use</p>
-          </CardContent>
-        </Card>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Available Balance</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600 hidden sm:block" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold text-green-600">
+                  {formatCurrency(data?.summary.totalAvailable || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground hidden sm:block">Ready to use</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Redeemed</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(data?.summary.totalRedeemed || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Already used</p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Redeemed</CardTitle>
+                <DollarSign className="h-4 w-4 text-blue-600 hidden sm:block" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold text-blue-600">
+                  {formatCurrency(data?.summary.totalRedeemed || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground hidden sm:block">Already used</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Rebate Level</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.summary.customerRebateRate || '10'}%</div>
-            <p className="text-xs text-muted-foreground">Active rate</p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Rebate Level</CardTitle>
+                <TrendingUp className="h-4 w-4 text-purple-600 hidden sm:block" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold">{data?.summary.customerRebateRate || '10'}%</div>
+                <p className="text-xs text-muted-foreground hidden sm:block">Active rate</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">12-Month Qualifying Sales</CardTitle>
-            <TrendingUp className="h-4 w-4 text-indigo-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-indigo-600">
-              {formatCurrency(data?.summary.qualifyingSales || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {data?.summary.qualifyingSales ? 'Qualifying purchases' : 'No qualifying sales'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">12-Mo Sales</CardTitle>
+                <TrendingUp className="h-4 w-4 text-indigo-600 hidden sm:block" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-lg sm:text-2xl font-bold text-indigo-600">
+                  {formatCurrency(data?.summary.qualifyingSales || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  {data?.summary.qualifyingSales ? 'Qualifying purchases' : 'No qualifying sales'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
       {/* Rebate History */}
       <Card>
@@ -360,57 +360,50 @@ export default function ConsumersCash() {
             </div>
           ) : (
             <>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {paginatedRebates.map((rebate) => (
                 <div
                   key={rebate.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1">
+                  <div className="flex items-start justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
                       {getStatusIcon(rebate.status)}
+                      <span className="font-semibold text-base sm:text-lg">
+                        {formatCurrency(rebate.amount)}
+                      </span>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-lg">
-                          {formatCurrency(rebate.amount)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(rebate.date)}
-                        </span>
-                        
-                        {rebate.salesOrder && (
-                          <span className="flex items-center gap-1">
-                            <ShoppingCart className="h-3 w-3" />
-                            Order: {rebate.salesOrder}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {rebate.expirationDate && (
-                        <div className="text-sm">
-                          {rebate.status === 'Earned' ? (
-                            <span className="text-orange-600 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              Expires: {formatDate(rebate.expirationDate)}
-                            </span>
-                          ) : rebate.status === 'Expired' ? (
-                            <span className="text-gray-400 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              Expired: {formatDate(rebate.expirationDate)}
-                            </span>
-                          ) : null}
-                        </div>
-                      )}
-                    </div>
+                    <Badge className={`${getStatusColor(rebate.status)} shrink-0`}>
+                      {rebate.status}
+                    </Badge>
                   </div>
-                  <Badge className={`${getStatusColor(rebate.status)} shrink-0 ml-2`}>
-                    {rebate.status}
-                  </Badge>
+                      
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-600 ml-0 sm:ml-7">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(rebate.date)}
+                    </span>
+                        
+                    {rebate.salesOrder && (
+                      <span className="flex items-center gap-1">
+                        <ShoppingCart className="h-3 w-3" />
+                        Order: {rebate.salesOrder}
+                      </span>
+                    )}
+                        
+                    {rebate.expirationDate && rebate.status === 'Earned' && (
+                      <span className="text-orange-600 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Expires: {formatDate(rebate.expirationDate)}
+                      </span>
+                    )}
+                    {rebate.expirationDate && rebate.status === 'Expired' && (
+                      <span className="text-gray-400 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Expired: {formatDate(rebate.expirationDate)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
