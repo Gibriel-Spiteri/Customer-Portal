@@ -366,7 +366,7 @@ export default function ConsumersCash() {
                   key={rebate.id}
                   className="p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-start justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       {getStatusIcon(rebate.status)}
                       <span className="font-semibold text-base sm:text-lg">
@@ -377,32 +377,32 @@ export default function ConsumersCash() {
                       {rebate.status}
                     </Badge>
                   </div>
-                      
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-600 ml-0 sm:ml-7">
-                    <span className="flex items-center gap-1">
+
+                  <div className="text-xs sm:text-sm text-gray-500 space-y-1 pl-7">
+                    <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(rebate.date)}
-                    </span>
-                        
-                    {rebate.salesOrder && (
-                      <span className="flex items-center gap-1">
-                        <ShoppingCart className="h-3 w-3" />
-                        Order: {rebate.salesOrder}
-                      </span>
-                    )}
-                        
-                    {rebate.expirationDate && rebate.status === 'Earned' && (
-                      <span className="text-orange-600 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Expires: {formatDate(rebate.expirationDate)}
-                      </span>
-                    )}
-                    {rebate.expirationDate && rebate.status === 'Expired' && (
-                      <span className="text-gray-400 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Expired: {formatDate(rebate.expirationDate)}
-                      </span>
-                    )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      {rebate.salesOrder ? (
+                        <span className="flex items-center gap-1">
+                          <ShoppingCart className="h-3 w-3" />
+                          {rebate.salesOrder}
+                        </span>
+                      ) : <span />}
+                      {rebate.expirationDate && rebate.status === 'Earned' && (
+                        <span className="text-orange-600 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Expires: {formatDate(rebate.expirationDate)}
+                        </span>
+                      )}
+                      {rebate.expirationDate && rebate.status === 'Expired' && (
+                        <span className="text-gray-400 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Expired: {formatDate(rebate.expirationDate)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
