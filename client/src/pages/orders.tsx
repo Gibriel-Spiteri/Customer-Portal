@@ -486,139 +486,111 @@ export default function Orders() {
               )}
 
               {/* Orders List */}
-              <div className="space-y-4">
-                {isLoading ? (
-                  // Loading Skeletons
-                  [...Array(5)].map((_, i) => (
-                    <Card key={i}>
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="space-y-3">
-                          <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
-                            <div className="space-y-2">
-                              <Skeleton className="h-5 w-32" />
-                              <Skeleton className="h-4 w-24" />
-                            </div>
-                            <div className="space-y-2">
-                              <Skeleton className="h-6 w-24" />
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Skeleton className="h-6 w-20" />
-                            <Skeleton className="h-6 w-16" />
-                          </div>
-                          <Skeleton className="h-10 w-full sm:w-32" />
+              {isLoading ? (
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="space-y-1 p-4">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-4 py-3">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-6 w-16" />
+                          <Skeleton className="h-8 w-20" />
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => (
-                    <Card key={order.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-4 sm:p-6">
-                        {/* Mobile-first layout */}
-                        <div className="space-y-3">
-                          {/* Order info and amount - stacked on mobile, side by side on larger screens */}
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                            <div className="space-y-1">
-                              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : filteredOrders.length > 0 ? (
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order #</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
+                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filteredOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {order.orderNumber}
-                              </h3>
-                              <p className="text-sm text-gray-600">
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {order.memo || '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {formatDate(order.orderDate)}
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-start sm:items-end space-y-2">
-                              <p className="text-xl font-bold text-gray-900">
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                                 {formatCurrency(order.totalAmount, order.currency)}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {/* Status badges - responsive layout */}
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className={`${getStatusColor(order.status)} px-3 py-1`}>
-                              {getStatusIcon(order.status)}
-                              <span className="ml-1.5 capitalize">{order.status}</span>
-                            </Badge>
-                            <DataBadge 
-                              freshness={order.dataFreshness}
-                              lastSync={order.lastSyncAt}
-                            />
-                          </div>
-
-                          {/* View Details button - full width on mobile */}
-                          <div className="pt-2">
-                            <Button 
-                              variant="outline" 
-                              size="default"
-                              className="w-full sm:w-auto"
-                              onClick={async () => {
-                                // Open modal immediately with basic order info
-                                setSelectedOrder(order);
-                                setLoadingOrderDetails(true);
-                                // Clear cached build details when switching orders
-                                setCabinetBuildDetails({});
-                                setVisibleBuildDetails({});
-                                
-                                // Fetch full order details in background
-                                try {
-                                  const response = await fetch(`/api/orders/${order.id}`, {
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
+                                  <span className="capitalize text-xs">{order.status}</span>
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={async () => {
+                                    setSelectedOrder(order);
+                                    setLoadingOrderDetails(true);
+                                    setCabinetBuildDetails({});
+                                    setVisibleBuildDetails({});
+                                    try {
+                                      const response = await fetch(`/api/orders/${order.id}`, {
+                                        headers: {
+                                          'Authorization': `Bearer ${token}`
+                                        }
+                                      });
+                                      if (response.ok) {
+                                        const orderWithDetails = await response.json();
+                                        setSelectedOrder(orderWithDetails);
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to fetch order details:', error);
+                                    } finally {
+                                      setLoadingOrderDetails(false);
                                     }
-                                  });
-                                  if (response.ok) {
-                                    const orderWithDetails = await response.json();
-                                    console.log('Order details fetched:', orderWithDetails);
-                                    console.log('Line items count:', orderWithDetails.items?.length || 0);
-                                    // Update with complete details
-                                    setSelectedOrder(orderWithDetails);
-                                  } else {
-                                    console.error('Failed to fetch order details, status:', response.status);
-                                    const errorText = await response.text();
-                                    console.error('Error response:', errorText);
-                                  }
-                                } catch (error) {
-                                  console.error('Failed to fetch order details:', error);
-                                } finally {
-                                  setLoadingOrderDetails(false);
-                                }
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-
-                        {order.shippingAddress && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <span className="font-medium text-gray-500">Shipping Address:</span>
-                            <p className="text-sm text-gray-900 mt-1">
-                              {JSON.stringify(order.shippingAddress)}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <Card>
-                    <CardContent className="p-4 sm:p-6">
-                      <div className="text-center py-6 sm:py-8">
-                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
-                        <p className="text-sm sm:text-base text-gray-600">
-                          {searchTerm || statusFilter !== 'all' 
-                            ? 'No orders match your current filters.'
-                            : 'You don\'t have any orders yet.'
-                          }
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="text-center py-6 sm:py-8">
+                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
+                      <p className="text-sm sm:text-base text-gray-600">
+                        {searchTerm || statusFilter !== 'all' 
+                          ? 'No orders match your current filters.'
+                          : 'You don\'t have any orders yet.'
+                        }
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Summary Card - Mobile optimized */}
               {filteredOrders.length > 0 && (

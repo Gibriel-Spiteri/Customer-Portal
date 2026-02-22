@@ -145,141 +145,115 @@ export default function Estimates() {
 
 
               {/* Estimates List */}
-              <div className="space-y-4">
-                {isLoading ? (
-                  // Loading Skeletons
-                  [...Array(5)].map((_, i) => (
-                    <Card key={i}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="space-y-2">
-                            <Skeleton className="h-5 w-32" />
-                            <Skeleton className="h-4 w-24" />
-                          </div>
-                          <div className="space-y-2">
-                            <Skeleton className="h-5 w-20" />
-                            <Skeleton className="h-6 w-16" />
-                          </div>
+              {isLoading ? (
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="space-y-1 p-4">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-4 py-3">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-40 flex-1" />
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-6 w-16" />
+                          <Skeleton className="h-8 w-20" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : error ? (
-                  <Card className="border-red-200 bg-red-50">
-                    <CardContent className="text-center py-8">
-                      <div className="text-red-800">
-                        Failed to load estimates. Please try again.
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : estimates.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-8">
-                      <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-500">No estimates found</p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        Your estimates will appear here once created in NetSuite
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  estimates.map((estimate) => (
-                    <Card key={estimate.id}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {estimate.estimateNumber}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              Estimate Date: {formatDate(estimate.estimateDate)}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-semibold text-gray-900">
-                              {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1 justify-end">
-                              <Badge variant="secondary" className={getStatusColor(estimate.status)}>
-                                {estimate.status.charAt(0).toUpperCase() + estimate.status.slice(1)}
-                              </Badge>
-                              <DataBadge 
-                                freshness={estimate.dataFreshness || 'live'} 
-                                lastSync={estimate.lastSyncAt || new Date().toISOString()} 
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-500">Job ID:</span>
-                            <p className="text-gray-900">{estimate.memo || '-'}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-500">End User:</span>
-                            <p className="text-gray-900">{estimate.tagFor || '-'}</p>
-                          </div>
-                          <div className="flex justify-end items-end">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={async () => {
-                                // Open modal immediately with basic estimate info
-                                setSelectedEstimate(estimate);
-                                setLoadingEstimateDetails(true);
-                                
-                                // Fetch full estimate details in background
-                                try {
-                                  const response = await fetch(`/api/estimates/${estimate.id}`, {
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : error ? (
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="text-center py-8">
+                    <div className="text-red-800">
+                      Failed to load estimates. Please try again.
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : estimates.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Calculator className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500">No estimates found</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Your estimates will appear here once created in NetSuite
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">All Estimates</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Estimate ID</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
+                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                            <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {estimates.map((estimate) => (
+                            <tr key={estimate.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {estimate.estimateNumber}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {estimate.memo || '-'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {formatDate(estimate.estimateDate)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                                {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Badge variant="secondary" className={getStatusColor(estimate.status)}>
+                                  {estimate.status.charAt(0).toUpperCase() + estimate.status.slice(1)}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={async () => {
+                                    setSelectedEstimate(estimate);
+                                    setLoadingEstimateDetails(true);
+                                    try {
+                                      const response = await fetch(`/api/estimates/${estimate.id}`, {
+                                        headers: {
+                                          'Authorization': `Bearer ${token}`
+                                        }
+                                      });
+                                      if (response.ok) {
+                                        const estimateWithDetails = await response.json();
+                                        setSelectedEstimate(estimateWithDetails);
+                                      }
+                                    } catch (error) {
+                                      console.error('Failed to fetch estimate details:', error);
+                                    } finally {
+                                      setLoadingEstimateDetails(false);
                                     }
-                                  });
-                                  if (response.ok) {
-                                    const estimateWithDetails = await response.json();
-                                    console.log('Estimate details fetched:', estimateWithDetails);
-                                    console.log('Line items count:', estimateWithDetails.items?.length || 0);
-                                    // Update with complete details
-                                    setSelectedEstimate(estimateWithDetails);
-                                  } else {
-                                    console.error('Failed to fetch estimate details, status:', response.status);
-                                    const errorText = await response.text();
-                                    console.error('Error response:', errorText);
-                                  }
-                                } catch (error) {
-                                  console.error('Failed to fetch estimate details:', error);
-                                } finally {
-                                  setLoadingEstimateDetails(false);
-                                }
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-
-                        {estimate.expiryDate && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <div className="flex items-center text-sm">
-                              <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                              <span className="text-gray-600">
-                                Expires: {formatDate(estimate.expiryDate)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Data Synchronization Status - Collapsible */}
               <Card className="mt-6">
