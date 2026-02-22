@@ -235,43 +235,37 @@ export default function Support() {
               </div>
 
               {/* Contact Information */}
-              <div className="grid grid-cols-3 gap-3 mb-8">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 netsuite-blue shrink-0" />
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Phone</h3>
-                        <p className="text-sm font-medium text-netsuite-blue">631-563-3200</p>
-                        <p className="text-xs text-gray-500">Mon-Fri, 9AM-5PM EST</p>
-                      </div>
+              <div className="flex gap-3 mb-8">
+                <Card className="flex-1 min-w-0">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 netsuite-blue shrink-0" />
+                      <h3 className="text-xs font-semibold text-gray-900">Phone</h3>
                     </div>
+                    <p className="text-xs font-medium text-netsuite-blue mt-1">631-563-3200</p>
+                    <p className="text-[10px] text-gray-500">Mon-Fri, 9AM-5PM EST</p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 netsuite-blue shrink-0" />
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Email</h3>
-                        <p className="text-sm font-medium text-netsuite-blue">support@ckbmail.com</p>
-                        <p className="text-xs text-gray-500">Response within 48 hours</p>
-                      </div>
+                <Card className="flex-1 min-w-0">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 netsuite-blue shrink-0" />
+                      <h3 className="text-xs font-semibold text-gray-900">Email</h3>
                     </div>
+                    <p className="text-xs font-medium text-netsuite-blue mt-1 truncate">support@ckbmail.com</p>
+                    <p className="text-[10px] text-gray-500">Response within 48 hours</p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <MessageSquare className="h-5 w-5 netsuite-blue shrink-0" />
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Live Chat</h3>
-                        <p className="text-sm font-medium text-netsuite-blue">Start Chat</p>
-                        <p className="text-xs text-gray-500">Available 24/7</p>
-                      </div>
+                <Card className="flex-1 min-w-0">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 netsuite-blue shrink-0" />
+                      <h3 className="text-xs font-semibold text-gray-900">Live Chat</h3>
                     </div>
+                    <p className="text-xs font-medium text-netsuite-blue mt-1">Start Chat</p>
+                    <p className="text-[10px] text-gray-500">Available 24/7</p>
                   </CardContent>
                 </Card>
               </div>
