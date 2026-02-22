@@ -95,18 +95,18 @@ interface DashboardData {
 
 interface EstimateData {
   id: string;
-  documentNumber: string;
-  date: string;
-  expirationDate: string;
+  estimateNumber: string;
   status: string;
-  total: string;
-  subtotal: string;
-  tax: string;
-  shipping: string;
-  memo: string;
-  customerName: string;
-  location: string;
+  amount: string;
   currency: string;
+  estimateDate: string;
+  expiryDate: string;
+  description: string;
+  memo: string;
+  tagFor: string;
+  customerName: string;
+  dataFreshness: 'live' | 'cached';
+  lastSyncAt: string;
 }
 
 interface CRDRebatesResponse {
@@ -354,12 +354,12 @@ export default function Dashboard() {
                           <FileText className="h-4 w-4 text-orange-500" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">#{estimate.documentNumber}</p>
-                          <p className="text-xs text-gray-500">{formatDate(estimate.date)}</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">#{estimate.estimateNumber}</p>
+                          <p className="text-xs text-gray-500">{formatDate(estimate.estimateDate)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-sm font-semibold">{formatCurrency(estimate.total, estimate.currency)}</span>
+                        <span className="text-sm font-semibold">{formatCurrency(estimate.amount, estimate.currency)}</span>
                       </div>
                     </div>
                   </Link>
