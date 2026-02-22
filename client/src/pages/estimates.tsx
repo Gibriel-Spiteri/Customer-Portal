@@ -114,6 +114,10 @@ export default function Estimates() {
     });
   };
 
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  };
+
   if (!user) {
     return null;
   }
@@ -190,8 +194,8 @@ export default function Estimates() {
                         <thead>
                           <tr className="border-b border-gray-200">
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Estimate ID</th>
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
                             <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
@@ -226,10 +230,10 @@ export default function Estimates() {
                                 {estimate.estimateNumber}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {estimate.memo || '-'}
+                                {estimate.tagFor ? toTitleCase(estimate.tagFor) : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {estimate.tagFor || '-'}
+                                {estimate.memo ? toTitleCase(estimate.memo) : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {formatDate(estimate.estimateDate)}

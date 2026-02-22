@@ -256,6 +256,10 @@ export default function Orders() {
   
   const filteredOrders = getFilteredOrdersByView(activeView);
 
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  };
+
   if (!user) {
     return <div>Please log in to view your orders</div>;
   }
@@ -510,8 +514,8 @@ export default function Orders() {
                         <thead>
                           <tr className="border-b border-gray-200">
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order #</th>
-                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
+                            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
                             <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
                             <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
@@ -548,10 +552,10 @@ export default function Orders() {
                                 {order.orderNumber}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {order.memo || '-'}
+                                {order.tagFor ? toTitleCase(order.tagFor) : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {order.tagFor || '-'}
+                                {order.memo ? toTitleCase(order.memo) : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {formatDate(order.orderDate)}
