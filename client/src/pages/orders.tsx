@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { useSync } from "@/contexts/sync-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
+import { cn } from "@/lib/utils";
 import { DataBadge } from "@/components/data-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -348,40 +349,35 @@ export default function Orders() {
                 </Select>
               </div>
 
-              {/* Desktop tabs - hidden on mobile */}
-              <div className="hidden sm:block mb-6">
-                <Tabs value={activeView} onValueChange={setActiveView}>
-                  <TabsList className="w-full overflow-x-auto flex justify-start">
-                    <TabsTrigger value="active" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <Package className="h-4 w-4 text-blue-500" />
-                      <span>Active</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.active}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="ready-for-delivery" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <Truck className="h-4 w-4 text-orange-500" />
-                      <span>Ready for Delivery</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.readyForDelivery}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="completed" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Completed</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.completed}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="all" className="flex items-center gap-1 min-w-fit px-3 py-2">
-                      <Package className="h-4 w-4 text-gray-500" />
-                      <span>All</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1">
-                        {viewCounts.all}
-                      </Badge>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+              {/* Desktop filter buttons - hidden on mobile */}
+              <div className="hidden sm:grid grid-cols-4 gap-2 mb-6">
+                {[
+                  { value: 'active', label: 'Active', count: viewCounts.active, color: 'blue' },
+                  { value: 'ready-for-delivery', label: 'Ready for Delivery', count: viewCounts.readyForDelivery, color: 'orange' },
+                  { value: 'completed', label: 'Completed', count: viewCounts.completed, color: 'green' },
+                  { value: 'all', label: 'All Orders', count: viewCounts.all, color: 'gray' },
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setActiveView(filter.value)}
+                    className={cn(
+                      "flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all border",
+                      activeView === filter.value
+                        ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                        : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                    )}
+                  >
+                    <span>{filter.label}</span>
+                    <span className={cn(
+                      "text-xs font-semibold px-1.5 py-0.5 rounded-full",
+                      activeView === filter.value
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-500"
+                    )}>
+                      {filter.count}
+                    </span>
+                  </button>
+                ))}
               </div>
 
               {/* Filters and Search - Mobile optimized */}
