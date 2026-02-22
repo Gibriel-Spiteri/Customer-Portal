@@ -457,7 +457,7 @@ export default function Dashboard() {
                 {/* Available Balance & Redeemed on same line */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3 text-center">
-                    <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Available Balance</p>
+                    <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Available</p>
                     <p className="text-lg font-bold text-green-800 mt-0.5">{formatCurrency(crdData.summary.totalAvailable)}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-center">
