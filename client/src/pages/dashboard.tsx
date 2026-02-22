@@ -326,7 +326,7 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-orange-500" />
+                <ShoppingCart className="h-5 w-5 text-blue-500" />
                 Recent Sales Orders
               </CardTitle>
               <Link href="/orders">
@@ -349,8 +349,8 @@ export default function Dashboard() {
                   <Link key={order.id} href="/orders">
                     <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-1.5 bg-orange-50 rounded-md shrink-0">
-                          <Package className="h-4 w-4 text-orange-500" />
+                        <div className="p-1.5 bg-blue-50 rounded-md shrink-0">
+                          <Package className="h-4 w-4 text-blue-500" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">#{order.orderNumber}</p>
