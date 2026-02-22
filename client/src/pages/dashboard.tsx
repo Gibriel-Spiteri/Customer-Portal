@@ -14,7 +14,7 @@ import {
   Download,
   Phone,
   ArrowRight,
-  Coins,
+  DollarSign,
   HeadphonesIcon,
   CalculatorIcon
 } from "lucide-react";
@@ -248,7 +248,7 @@ export default function Dashboard() {
                   <HeadphonesIcon className="h-7 w-7 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Support Cases</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Support</h3>
                   <p className="text-sm text-gray-600">
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
@@ -268,7 +268,7 @@ export default function Dashboard() {
             <Link href="/consumers-cash">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-green-100 rounded-full">
-                  <Coins className="h-7 w-7 text-green-600" />
+                  <DollarSign className="h-7 w-7 text-green-600" />
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900">Consumers Cash</h3>
