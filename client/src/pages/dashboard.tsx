@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { 
   CreditCard, 
   ShoppingCart, 
@@ -16,7 +17,13 @@ import {
   ArrowRight,
   DollarSign,
   HeadphonesIcon,
-  CalculatorIcon
+  CalculatorIcon,
+  Calendar,
+  Package,
+  Wallet,
+  CheckCircle,
+  Clock,
+  XCircle
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -101,6 +108,25 @@ interface EstimateData {
   currency: string;
 }
 
+interface CRDRebatesResponse {
+  rebates: Array<{
+    id: string;
+    date: string;
+    amount: string;
+    type: string;
+    reversed: boolean;
+    salesOrder: string;
+    expirationDate: string | null;
+    status: 'Earned' | 'Redeemed' | 'Expired' | 'Return' | 'Accommodation' | 'Unknown';
+  }>;
+  summary: {
+    totalAvailable: string;
+    totalExpired: string;
+    totalRedeemed: string;
+    totalRebates: number;
+  };
+}
+
 export default function Dashboard() {
   const { user, token } = useAuth();
 
@@ -112,6 +138,11 @@ export default function Dashboard() {
   // Fetch estimates from NetSuite
   const { data: estimatesData, isLoading: estimatesLoading } = useQuery<EstimateData[]>({
     queryKey: ['/api/estimates?limit=5'],
+    enabled: !!token,
+  });
+
+  const { data: crdData, isLoading: crdLoading } = useQuery<CRDRebatesResponse>({
+    queryKey: ['/api/crd-rebates'],
     enabled: !!token,
   });
 
@@ -288,8 +319,153 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Two-Panel Section: Recent Sales Orders & Consumers Cash Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Sales Orders Panel */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-orange-500" />
+                Recent Sales Orders
+              </CardTitle>
+              <Link href="/orders">
+                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-2">
+                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
+              <div className="space-y-2">
+                {dashboardData.recentOrders.slice(0, 5).map((order) => (
+                  <Link key={order.id} href="/orders">
+                    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-1.5 bg-orange-50 rounded-md shrink-0">
+                          <Package className="h-4 w-4 text-orange-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">#{order.orderNumber}</p>
+                          <p className="text-xs text-gray-500">{formatDate(order.orderDate)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm font-semibold">{formatCurrency(order.totalAmount, order.currency)}</span>
+                        <Badge className={`text-xs ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No recent orders</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
+        {/* Consumers Cash Summary Panel */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-500" />
+                Consumers Cash Summary
+              </CardTitle>
+              <Link href="/consumers-cash">
+                <Button variant="ghost" size="sm" className="text-sm text-blue-600 hover:text-blue-700 px-2">
+                  View All <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {crdLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-20 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+              </div>
+            ) : crdData?.summary ? (
+              <div className="space-y-4">
+                {/* Available Balance Highlight */}
+                <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Available Balance</p>
+                      <p className="text-2xl font-bold text-green-800 mt-0.5">{formatCurrency(crdData.summary.totalAvailable)}</p>
+                    </div>
+                    <div className="p-2.5 bg-green-100 rounded-full">
+                      <Wallet className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                </div>
 
+                {/* Stats Row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <CheckCircle className="h-4 w-4 text-blue-500 mx-auto mb-1" />
+                    <p className="text-xs text-gray-500">Redeemed</p>
+                    <p className="text-sm font-semibold text-gray-900">{formatCurrency(crdData.summary.totalRedeemed)}</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <XCircle className="h-4 w-4 text-red-400 mx-auto mb-1" />
+                    <p className="text-xs text-gray-500">Expired</p>
+                    <p className="text-sm font-semibold text-gray-900">{formatCurrency(crdData.summary.totalExpired)}</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <TrendingUp className="h-4 w-4 text-purple-500 mx-auto mb-1" />
+                    <p className="text-xs text-gray-500">Total</p>
+                    <p className="text-sm font-semibold text-gray-900">{crdData.summary.totalRebates}</p>
+                  </div>
+                </div>
+
+                {/* Recent Rebates */}
+                {crdData.rebates.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Recent Activity</p>
+                    <div className="space-y-1.5">
+                      {crdData.rebates.slice(0, 3).map((rebate) => (
+                        <div key={rebate.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 border border-gray-100">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${
+                              rebate.status === 'Earned' ? 'bg-green-400' :
+                              rebate.status === 'Redeemed' ? 'bg-blue-400' :
+                              rebate.status === 'Expired' ? 'bg-red-400' : 'bg-gray-400'
+                            }`} />
+                            <span className="text-xs text-gray-500">{formatDate(rebate.date)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{formatCurrency(rebate.amount)}</span>
+                            <Badge variant="outline" className="text-xs">{rebate.status}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <DollarSign className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No rebate data available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
 
 
