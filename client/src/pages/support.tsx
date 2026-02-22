@@ -235,7 +235,7 @@ export default function Support() {
               </div>
 
               {/* Contact Information */}
-              <div className="grid grid-cols-2 gap-3 mb-8">
+              <div className="grid grid-cols-3 gap-3 mb-8">
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -257,6 +257,19 @@ export default function Support() {
                         <h3 className="text-sm font-semibold text-gray-900">Email</h3>
                         <p className="text-sm font-medium text-netsuite-blue">support@ckbmail.com</p>
                         <p className="text-xs text-gray-500">Response within 48 hours</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <MessageSquare className="h-5 w-5 netsuite-blue shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Live Chat</h3>
+                        <p className="text-sm font-medium text-netsuite-blue">Start Chat</p>
+                        <p className="text-xs text-gray-500">Available 24/7</p>
                       </div>
                     </div>
                   </CardContent>
