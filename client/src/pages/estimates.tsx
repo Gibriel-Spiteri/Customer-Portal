@@ -397,7 +397,7 @@ export default function Estimates() {
                                 let customerDiscountTotal = 0;
                                 let promotionalTotal = 0;
                                 
-                                displayItems.forEach(item => {
+                                allItems.forEach(item => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
                                   const rate = Math.abs(parseFloat(item.rate || 0));
                                   const amount = parseFloat(item.amount || 0);

@@ -658,7 +658,7 @@ export default function Orders() {
                                 let customerDiscountTotal = 0;
                                 let promotionalTotal = 0;
                                 
-                                displayItems.forEach(item => {
+                                allItems.forEach(item => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
                                   const rate = Math.abs(parseFloat(item.rate || 0));
                                   const amount = parseFloat(item.amount || 0);
@@ -673,10 +673,8 @@ export default function Orders() {
                                   } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
                                     promotionalTotal += itemTotal;
                                   } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
-                                    // Percentage discounts reduce the products total
                                     productsTotal -= itemTotal;
                                   } else {
-                                    // Regular products
                                     productsTotal += itemTotal;
                                   }
                                 });
