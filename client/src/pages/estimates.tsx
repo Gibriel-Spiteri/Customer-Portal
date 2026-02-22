@@ -328,32 +328,21 @@ export default function Estimates() {
                         </div>
                       </div>
 
-                      {/* Expiry Date */}
-                      {selectedEstimate.expiryDate && (
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Expires On</h3>
-                          <p className="text-base flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                            {formatDate(selectedEstimate.expiryDate)}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Job ID and End User */}
+                      {/* End User and Job ID */}
                       {(selectedEstimate.memo || selectedEstimate.tagFor) && (
                         <>
                           <Separator />
                           <div className="grid grid-cols-2 gap-4">
-                            {selectedEstimate.memo && (
-                              <div>
-                                <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
-                                <p className="text-base">{selectedEstimate.memo}</p>
-                              </div>
-                            )}
                             {selectedEstimate.tagFor && (
                               <div>
                                 <h3 className="text-sm font-medium text-gray-500 mb-1">End User</h3>
                                 <p className="text-base">{selectedEstimate.tagFor}</p>
+                              </div>
+                            )}
+                            {selectedEstimate.memo && (
+                              <div>
+                                <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
+                                <p className="text-base">{selectedEstimate.memo}</p>
                               </div>
                             )}
                           </div>
