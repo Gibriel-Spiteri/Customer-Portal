@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
   ShoppingCart, 
-  HelpCircle,
-  Star,
+  HeadphonesIcon,
+  DollarSign,
   User,
   Bug
 } from "lucide-react";
@@ -25,13 +25,13 @@ const bottomNavItems = [
   {
     name: 'Support',
     href: '/support',
-    icon: HelpCircle,
+    icon: HeadphonesIcon,
     label: 'Support'
   },
   {
     name: 'Consumers Cash',
     href: '/consumers-cash',
-    icon: Star,
+    icon: DollarSign,
     label: 'Cash'
   },
   {
