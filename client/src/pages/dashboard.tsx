@@ -454,28 +454,15 @@ export default function Dashboard() {
               </div>
             ) : crdData?.summary ? (
               <div className="space-y-4">
-                {/* Available Balance Highlight */}
-                <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Available Balance</p>
-                      <p className="text-2xl font-bold text-green-800 mt-0.5">{formatCurrency(crdData.summary.totalAvailable)}</p>
-                    </div>
-                    <div className="p-2.5 bg-green-100 rounded-full">
-                      <Wallet className="h-6 w-6 text-green-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats Row */}
+                {/* Available Balance & Redeemed on same line */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-                    <p className="text-xs text-gray-500">Redeemed</p>
-                    <p className="text-sm font-semibold text-gray-900">{formatCurrency(crdData.summary.totalRedeemed)}</p>
+                  <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3 text-center">
+                    <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Available Balance</p>
+                    <p className="text-lg font-bold text-green-800 mt-0.5">{formatCurrency(crdData.summary.totalAvailable)}</p>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-                    <p className="text-xs text-gray-500">Total</p>
-                    <p className="text-sm font-semibold text-gray-900">{crdData.summary.totalRebates}</p>
+                  <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-center">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Redeemed</p>
+                    <p className="text-lg font-bold text-gray-900 mt-0.5">{formatCurrency(crdData.summary.totalRedeemed)}</p>
                   </div>
                 </div>
 
