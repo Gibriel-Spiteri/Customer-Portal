@@ -210,8 +210,7 @@ export default function Orders() {
       case 'ready-for-delivery':
         viewFiltered = viewFiltered.filter(order => 
           order.status === 'partially fulfilled' || 
-          order.status === 'pending billing' ||
-          (order.status === 'fully billed' && !order.deliveryDate)
+          order.status === 'pending billing'
         );
         break;
         
@@ -257,8 +256,7 @@ export default function Orders() {
       ).length,
       readyForDelivery: orders.filter(order => 
         order.status === 'partially fulfilled' || 
-        order.status === 'pending billing' ||
-        (order.status === 'fully billed' && !order.deliveryDate)
+        order.status === 'pending billing'
       ).length,
       completed: orders.filter(order => 
         order.status === 'closed' || 
