@@ -1,7 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
-import { Header } from "@/components/layout/header";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileLayout } from "@/components/layout/mobile-layout";
 import { DataBadge } from "@/components/data-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -164,65 +163,37 @@ export default function AccountSettings() {
   // Show loading state while checking authentication
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto">
-            <div className="py-6">
-              <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
-                    <h2 className="text-xl font-semibold text-gray-700">Loading...</h2>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
+      <MobileLayout>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+            <h2 className="text-xl font-semibold text-gray-700">Loading...</h2>
+          </CardContent>
+        </Card>
+      </MobileLayout>
     );
   }
 
-  // Check if user is not authenticated
   if (!user || !token) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto">
-            <div className="py-6">
-              <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold text-gray-700 mb-2">Authentication Required</h2>
-                    <p className="text-gray-500 mb-6">Please log in to view your account settings</p>
-                    <Button onClick={() => window.location.href = '/login'}>
-                      Go to Login
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
+      <MobileLayout>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Authentication Required</h2>
+            <p className="text-gray-500 mb-6">Please log in to view your account settings</p>
+            <Button onClick={() => window.location.href = '/login'}>
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </MobileLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="flex">
-        <Sidebar />
-        
-        <main className="flex-1 overflow-y-auto">
-          <div className="py-6">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+    <MobileLayout>
+      <div className="max-w-4xl mx-auto">
               {/* Header Section */}
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
@@ -471,10 +442,7 @@ export default function AccountSettings() {
                 {/* Password Change */}
                 <ChangePassword />
               </div>
-            </div>
-          </div>
-        </main>
       </div>
-    </div>
+    </MobileLayout>
   );
 }
