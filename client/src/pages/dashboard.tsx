@@ -355,7 +355,9 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">#{estimate.estimateNumber}</p>
-                          <p className="text-xs text-gray-500">{formatDate(estimate.estimateDate)}</p>
+                          {estimate.tagFor && (
+                            <p className="text-xs text-gray-500 truncate">{estimate.tagFor}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
