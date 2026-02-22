@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
   ShoppingCart, 
+  CalculatorIcon,
   HeadphonesIcon,
   DollarSign,
-  User,
-  Bug
+  User
 } from "lucide-react";
 
 const bottomNavItems = [
@@ -14,13 +14,19 @@ const bottomNavItems = [
     name: 'Dashboard',
     href: '/',
     icon: LayoutDashboard,
-    label: 'Home'
+    label: 'Dashboard'
   },
   {
     name: 'Sales Orders',
     href: '/orders',
     icon: ShoppingCart,
     label: 'Orders'
+  },
+  {
+    name: 'Estimates',
+    href: '/estimates',
+    icon: CalculatorIcon,
+    label: 'Estimates'
   },
   {
     name: 'Support',
@@ -35,16 +41,10 @@ const bottomNavItems = [
     label: 'Cash'
   },
   {
-    name: 'Profile',
+    name: 'Account',
     href: '/account',
     icon: User,
     label: 'Account'
-  },
-  {
-    name: 'Debug Info',
-    href: '/debug',
-    icon: Bug,
-    label: 'Debug'
   },
 ];
 
