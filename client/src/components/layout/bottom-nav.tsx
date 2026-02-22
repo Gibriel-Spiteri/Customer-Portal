@@ -29,10 +29,10 @@ const bottomNavItems = [
     label: 'Support'
   },
   {
-    name: 'Loyalty Program',
-    href: '/loyalty',
+    name: 'Consumers Cash',
+    href: '/consumers-cash',
     icon: Star,
-    label: 'Loyalty'
+    label: 'Cash'
   },
   {
     name: 'Profile',
