@@ -14,7 +14,7 @@ const bottomNavItems = [
     name: 'Dashboard',
     href: '/',
     icon: LayoutDashboard,
-    label: 'Dashboard'
+    label: 'Home'
   },
   {
     name: 'Sales Orders',
