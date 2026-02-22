@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { useSync } from "@/contexts/sync-context";
+import { useLocation } from "wouter";
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { cn } from "@/lib/utils";
 import { DataBadge } from "@/components/data-badge";
@@ -30,7 +31,8 @@ import {
   ShoppingCart,
   AlertCircle,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  HeadphonesIcon
 } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
@@ -69,6 +71,7 @@ interface Order {
 
 export default function Orders() {
   const { user, token } = useAuth();
+  const [, navigate] = useLocation();
   const { triggerLiveSync } = useSync();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -521,18 +524,34 @@ export default function Orders() {
               <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center justify-between">
-                      <span>Order Details</span>
-                      {selectedOrder && (
-                        <Badge className={getStatusColor(selectedOrder.status)}>
-                          {getStatusIcon(selectedOrder.status)}
-                          <span className="ml-1 capitalize">{selectedOrder.status}</span>
-                        </Badge>
-                      )}
-                    </DialogTitle>
-                    <DialogDescription>
-                      Order #{selectedOrder?.orderNumber}
-                    </DialogDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <DialogTitle className="flex items-center gap-2">
+                          <span>Order Details</span>
+                          {selectedOrder && (
+                            <Badge className={getStatusColor(selectedOrder.status)}>
+                              {getStatusIcon(selectedOrder.status)}
+                              <span className="ml-1 capitalize">{selectedOrder.status}</span>
+                            </Badge>
+                          )}
+                        </DialogTitle>
+                        <DialogDescription>
+                          Order #{selectedOrder?.orderNumber}
+                        </DialogDescription>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 text-purple-600 border-purple-200 hover:bg-purple-50"
+                        onClick={() => {
+                          setSelectedOrder(null);
+                          navigate('/support');
+                        }}
+                      >
+                        <HeadphonesIcon className="h-4 w-4 mr-1.5" />
+                        Submit Case
+                      </Button>
+                    </div>
                   </DialogHeader>
                   
                   {selectedOrder && (
