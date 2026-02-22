@@ -299,77 +299,27 @@ export default function Orders() {
                 </div>
               </div>
 
-              {/* Mobile-friendly view selector */}
-              <div className="mb-6 block md:hidden">
-                <Select value={activeView} onValueChange={setActiveView}>
-                  <SelectTrigger className="w-full">
-                    <div className="flex items-center gap-2">
-                      {activeView === 'active' && <Package className="h-4 w-4 text-blue-500" />}
-                      {activeView === 'ready-for-delivery' && <Truck className="h-4 w-4 text-orange-500" />}
-                      {activeView === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                      {activeView === 'all' && <Package className="h-4 w-4 text-gray-500" />}
-                      <span>
-                        {activeView === 'active' && `Active (${viewCounts.active})`}
-                        {activeView === 'ready-for-delivery' && `Ready for Delivery (${viewCounts.readyForDelivery})`}
-                        {activeView === 'completed' && `Completed (${viewCounts.completed})`}
-                        {activeView === 'all' && `All Orders (${viewCounts.all})`}
-                      </span>
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-blue-500" />
-                        <span>Active</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.active}</Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ready-for-delivery">
-                      <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-orange-500" />
-                        <span>Ready for Delivery</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.readyForDelivery}</Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>Completed</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.completed}</Badge>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="all">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-gray-500" />
-                        <span>All Orders</span>
-                        <Badge variant="secondary" className="ml-auto">{viewCounts.all}</Badge>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Desktop filter buttons - hidden on mobile */}
-              <div className="hidden md:grid grid-cols-4 gap-2 mb-6">
+              {/* Filter buttons */}
+              <div className="grid grid-cols-4 gap-2 mb-6">
                 {[
-                  { value: 'active', label: 'Active', count: viewCounts.active, color: 'blue' },
-                  { value: 'ready-for-delivery', label: 'Ready for Delivery', count: viewCounts.readyForDelivery, color: 'orange' },
-                  { value: 'completed', label: 'Completed', count: viewCounts.completed, color: 'green' },
-                  { value: 'all', label: 'All Orders', count: viewCounts.all, color: 'gray' },
+                  { value: 'active', label: 'Active', count: viewCounts.active },
+                  { value: 'ready-for-delivery', label: 'Ready', count: viewCounts.readyForDelivery },
+                  { value: 'completed', label: 'Completed', count: viewCounts.completed },
+                  { value: 'all', label: 'All', count: viewCounts.all },
                 ].map((filter) => (
                   <button
                     key={filter.value}
                     onClick={() => setActiveView(filter.value)}
                     className={cn(
-                      "flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all border",
+                      "flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-sm font-medium transition-all border",
                       activeView === filter.value
                         ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
                         : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                     )}
                   >
-                    <span>{filter.label}</span>
+                    <span className="truncate">{filter.label}</span>
                     <span className={cn(
-                      "text-xs font-semibold px-1.5 py-0.5 rounded-full",
+                      "text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0",
                       activeView === filter.value
                         ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-500"
