@@ -38,7 +38,7 @@ const bottomNavItems = [
     name: 'Profile',
     href: '/account',
     icon: User,
-    label: 'Profile'
+    label: 'Account'
   },
   {
     name: 'Debug Info',
