@@ -782,7 +782,7 @@ export class NetSuiteM2M {
         BUILTIN.DF(supportcase.status) AS statustext,
         BUILTIN.DF(supportcase.company) AS companyname,
         BUILTIN.DF(supportcase.custevent_related_salesorder) AS relatedsalesordernumber,
-        employee.entityid || ' ' || employee.firstname || ' ' || employee.lastname AS assignedname,
+        employee.firstname || ' ' || employee.lastname AS assignedname,
         supportcase.custevent_svrcjpr_tag_for AS caseenduser,
         supportcase.custevent_svrcjpr_memo AS casejobid
       FROM 
