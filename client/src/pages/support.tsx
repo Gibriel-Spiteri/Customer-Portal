@@ -613,17 +613,45 @@ export default function Support() {
                   
                   {selectedTicket && (
                     <div className="space-y-6">
-                      {/* Subject and Category */}
+                      {/* End User / Job ID row */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm text-gray-500">End User</span>
+                          <p className="font-medium text-gray-900">{selectedTicket.endUser || '—'}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500">Job ID</span>
+                          <p className="font-medium text-gray-900">{selectedTicket.jobId || '—'}</p>
+                        </div>
+                      </div>
+
+                      <hr className="border-gray-200" />
+
+                      {/* Created / Assigned To row */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm text-gray-500">Created:</span>
+                          <div className="flex items-center mt-1">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            <span className="font-medium text-gray-900">{new Date(selectedTicket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500">Assigned To:</span>
+                          <div className="flex items-center mt-1">
+                            <User className="h-4 w-4 mr-2 text-gray-400" />
+                            <span className="font-medium text-gray-900">{selectedTicket.assignedTo || '—'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <hr className="border-gray-200" />
+
+                      {/* Subject */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        <h3 className="text-lg font-semibold text-gray-900">
                           Subject: {selectedTicket.subject}
                         </h3>
-                        {selectedTicket.category && (
-                          <Badge variant="outline">
-                            <Tag className="h-3 w-3 mr-1" />
-                            {selectedTicket.category}
-                          </Badge>
-                        )}
                       </div>
 
                       {/* Detail */}
@@ -637,31 +665,6 @@ export default function Support() {
                           </div>
                         </div>
                       )}
-
-
-
-                      {/* Metadata */}
-                      <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <span className="font-medium">Created:</span>
-                          <span className="ml-2">{new Date(selectedTicket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                          <span className="font-medium">Last Updated:</span>
-                          <span className="ml-2">{new Date(selectedTicket.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                        </div>
-
-                        {selectedTicket.assignedTo && (
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2 text-gray-400" />
-                            <span className="font-medium">Assigned To:</span>
-                            <span className="ml-2">{selectedTicket.assignedTo}</span>
-                          </div>
-                        )}
-                      </div>
 
                       {/* Messages Section */}
                       {(caseMessages.length > 0 || loadingMessages) && (
