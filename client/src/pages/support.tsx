@@ -355,9 +355,6 @@ export default function Support() {
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
                       <CardTitle>Support Cases</CardTitle>
-                      <Badge variant="outline" className="text-xs">
-                        Synced from NetSuite
-                      </Badge>
                     </div>
                     
                     {/* Status Filter */}
