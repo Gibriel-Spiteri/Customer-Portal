@@ -641,30 +641,24 @@ export default function Support() {
 
 
                       {/* Metadata */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
+                        <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <div>
-                            <span className="font-medium">Created:</span>
-                            <span className="ml-2">{formatDate(selectedTicket.createdAt)}</span>
-                          </div>
+                          <span className="font-medium">Created:</span>
+                          <span className="ml-2">{new Date(selectedTicket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                         </div>
                         
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center">
                           <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                          <div>
-                            <span className="font-medium">Last Updated:</span>
-                            <span className="ml-2">{formatDate(selectedTicket.updatedAt)}</span>
-                          </div>
+                          <span className="font-medium">Last Updated:</span>
+                          <span className="ml-2">{new Date(selectedTicket.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                         </div>
 
                         {selectedTicket.assignedTo && (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center">
                             <User className="h-4 w-4 mr-2 text-gray-400" />
-                            <div>
-                              <span className="font-medium">Assigned To:</span>
-                              <span className="ml-2">{selectedTicket.assignedTo}</span>
-                            </div>
+                            <span className="font-medium">Assigned To:</span>
+                            <span className="ml-2">{selectedTicket.assignedTo}</span>
                           </div>
                         )}
                       </div>
