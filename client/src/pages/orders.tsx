@@ -356,11 +356,11 @@ export default function Orders() {
                     </button>
                   ))}
                 </div>
-                <div className="w-full md:w-64">
+                <div className="w-full md:w-80">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search orders..."
+                      placeholder="Search by SO number, Name or Job ID"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 h-12 text-base sm:text-sm sm:h-10"
