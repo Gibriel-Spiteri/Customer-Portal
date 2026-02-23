@@ -388,15 +388,8 @@ export default function Estimates() {
                                                    itemNameLower.includes('ny_ny') ||
                                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                                   const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
-                                  const isDiscountItem = itemNameLower === 'customer discount' ||
-                                                        itemNameLower.includes('% off') ||
-                                                        itemNameLower.includes('% discount') ||
-                                                        itemNameLower === 'discount' ||
-                                                        itemNameLower.includes('we pay the tax') ||
-                                                        itemNameLower.includes('we pay') ||
-                                                        itemNameLower.includes('credit');
                                   
-                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isDiscountItem;
+                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
                                 });
                                 
                                 let productsTotal = 0;
@@ -447,10 +440,27 @@ export default function Estimates() {
                                         ? displayQuantity * displayRate 
                                         : Math.abs(amount);
                                       
-                                      const bgColor = "bg-gray-50";
-                                      const textColor = "text-gray-900";
-                                      const descColor = "text-gray-600";
-                                      const isNegative = false;
+                                      let bgColor = "bg-gray-50";
+                                      let textColor = "text-gray-900";
+                                      let descColor = "text-gray-600";
+                                      let isNegative = false;
+                                      
+                                      if (itemNameLower === 'customer discount') {
+                                        bgColor = "bg-yellow-50";
+                                        textColor = "text-yellow-900";
+                                        descColor = "text-yellow-700";
+                                        isNegative = true;
+                                      } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
+                                        bgColor = "bg-green-50";
+                                        textColor = "text-green-900";
+                                        descColor = "text-green-700";
+                                        isNegative = true;
+                                      } else if (itemNameLower.includes('% off') || itemNameLower.includes('% discount') || itemNameLower === 'discount') {
+                                        bgColor = "bg-green-50";
+                                        textColor = "text-green-900";
+                                        descColor = "text-green-700";
+                                        isNegative = true;
+                                      }
                                       
                                       return (
                                         <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
