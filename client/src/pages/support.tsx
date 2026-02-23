@@ -430,9 +430,29 @@ export default function Support() {
                         {paginatedTickets.map((ticket) => (
                           <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {ticket.subject}
-                            </h3>
+                            <div className="flex items-center gap-4 text-sm font-medium text-gray-900 flex-wrap">
+                              {ticket.endUser && (
+                                <span>
+                                  <User className="inline h-3.5 w-3.5 mr-1 text-gray-500" />
+                                  End User: {ticket.endUser}
+                                </span>
+                              )}
+                              {ticket.jobId && (
+                                <span>
+                                  <Tag className="inline h-3.5 w-3.5 mr-1 text-gray-500" />
+                                  Job ID: {ticket.jobId}
+                                </span>
+                              )}
+                              {ticket.relatedSalesOrder && (
+                                <span>
+                                  <Tag className="inline h-3.5 w-3.5 mr-1 text-gray-500" />
+                                  Order #: {ticket.relatedSalesOrder.replace(/^(Sales Order\s*#?\s*|#)/i, '')}
+                                </span>
+                              )}
+                              {ticket.caseNumber && (
+                                <span>Case #{ticket.caseNumber}</span>
+                              )}
+                            </div>
                             <Badge className={getStatusColor(ticket.status)}>
                               {getStatusIcon(ticket.status)}
                               <span className="ml-1">
@@ -441,38 +461,18 @@ export default function Support() {
                             </Badge>
                           </div>
 
+                          <h3 className="text-base text-gray-700 mb-1">
+                            {ticket.subject}
+                          </h3>
+
                           {ticket.detail && (
-                            <div className="bg-gray-50 rounded p-3 mb-3">
-                              <p className="text-base text-gray-700 line-clamp-2">
-                                <span className="font-semibold">Detail: </span>
-                                {ticket.detail}
-                              </p>
-                            </div>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+                              {ticket.detail}
+                            </p>
                           )}
-                          <div className="flex items-center justify-between text-sm text-gray-500">
+                          <div className="flex items-center justify-between text-sm text-gray-400">
                             <div>
-                              {ticket.endUser && (
-                                <span className="font-medium text-gray-700">
-                                  <User className="inline h-3 w-3 mr-1" />
-                                  End User: {ticket.endUser}
-                                </span>
-                              )}
-                              {ticket.jobId && (
-                                <span className={ticket.endUser ? "ml-4" : ""}>
-                                  <Tag className="inline h-3 w-3 mr-1" />
-                                  Job ID: {ticket.jobId}
-                                </span>
-                              )}
-                              {ticket.relatedSalesOrder && (
-                                <span className={(ticket.endUser || ticket.jobId) ? "ml-4" : ""}>
-                                  <Tag className="inline h-3 w-3 mr-1" />
-                                  Order #: {ticket.relatedSalesOrder.replace(/^(Sales Order\s*#?\s*|#)/i, '')}
-                                </span>
-                              )}
-                              {ticket.caseNumber && (
-                                <span className={(ticket.endUser || ticket.jobId || ticket.relatedSalesOrder) ? "ml-4" : ""}>Case #{ticket.caseNumber}</span>
-                              )}
-                              <span className="ml-4">Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                              <span>Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                             </div>
                             <Button 
                               variant="ghost" 
