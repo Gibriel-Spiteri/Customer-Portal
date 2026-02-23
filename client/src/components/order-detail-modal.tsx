@@ -19,6 +19,8 @@ import {
   Paperclip,
   FileText,
   Download,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export interface OrderItem {
@@ -128,10 +130,12 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
   const [cabinetBuildDetails, setCabinetBuildDetails] = useState<any>({});
   const [visibleBuildDetails, setVisibleBuildDetails] = useState<Record<string, boolean>>({});
   const [loadingCabinetBuild, setLoadingCabinetBuild] = useState<string | null>(null);
+  const [discountsExpanded, setDiscountsExpanded] = useState(false);
 
   useEffect(() => {
     setCabinetBuildDetails({});
     setVisibleBuildDetails({});
+    setDiscountsExpanded(false);
   }, [order?.id]);
 
   const fetchCabinetBuildDetails = async (buildId: string, itemName: string) => {
@@ -247,6 +251,29 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     {(() => {
                       const allItems = order.items || [];
 
+                      const isDiscountItem = (name: string) => {
+                        const n = name.toLowerCase();
+                        return n === 'customer discount' ||
+                          n === 'discount' ||
+                          n.includes('% off') ||
+                          n.includes('% discount') ||
+                          n.includes('we pay the tax') ||
+                          n.includes('we pay') ||
+                          n.includes('credit');
+                      };
+
+                      const discountLineItems = allItems
+                        .filter(item => {
+                          const itemName = item.itemName || '';
+                          const amount = parseFloat(item.amount || '0');
+                          return Math.abs(amount) > 0.01 && isDiscountItem(itemName);
+                        })
+                        .map(item => ({
+                          name: item.itemName,
+                          description: item.description,
+                          amount: Math.abs(parseFloat(item.amount || '0')),
+                        }));
+
                       const displayItems = allItems.filter(item => {
                         const itemName = item.itemName || '';
                         const itemNameLower = itemName.toLowerCase();
@@ -258,34 +285,34 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                           itemNameLower.includes('ny_ny') ||
                           (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                         const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
+                        const isDiscount = isDiscountItem(itemName);
 
-                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
+                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isDiscount;
                       });
 
                       let productsTotal = 0;
                       let shippingTotal = 0;
 
+                      const isShippingItem = (name: string) => {
+                        const n = name.toLowerCase();
+                        return n.includes('delivered') || n.includes('ups') || n.includes('shipping');
+                      };
+                      const isTaxItem = (name: string) => {
+                        const n = name.toLowerCase();
+                        return n.includes('ny_') || (n.includes('tax') && !n.includes('we pay the tax'));
+                      };
+
                       allItems.forEach(item => {
                         const qty = Math.abs(parseFloat(String(item.quantity || 0)));
                         const rate = Math.abs(parseFloat(item.rate || '0'));
                         const amount = parseFloat(item.amount || '0');
-                        const itemNameLower = (item.itemName || '').toLowerCase();
+                        const itemName = item.itemName || '';
 
                         const itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
 
-                        if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                        if (isShippingItem(itemName)) {
                           shippingTotal += itemTotal;
-                        } else if (
-                          itemNameLower === 'customer discount' ||
-                          itemNameLower.includes('% off') ||
-                          itemNameLower.includes('% discount') ||
-                          itemNameLower === 'discount' ||
-                          itemNameLower.includes('we pay the tax') ||
-                          itemNameLower.includes('we pay') ||
-                          itemNameLower.includes('credit') ||
-                          itemNameLower.includes('ny_') ||
-                          (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'))
-                        ) {
+                        } else if (isDiscountItem(itemName) || isTaxItem(itemName)) {
                           // Skip
                         } else {
                           productsTotal += itemTotal;
@@ -310,27 +337,10 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                               ? displayQuantity * displayRate
                               : Math.abs(amount);
 
-                            let bgColor = "bg-gray-50";
-                            let textColor = "text-gray-900";
-                            let descColor = "text-gray-600";
-                            let isNegative = false;
-
-                            if (itemNameLower === 'customer discount') {
-                              bgColor = "bg-yellow-50";
-                              textColor = "text-yellow-900";
-                              descColor = "text-yellow-700";
-                              isNegative = true;
-                            } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
-                              bgColor = "bg-green-50";
-                              textColor = "text-green-900";
-                              descColor = "text-green-700";
-                              isNegative = true;
-                            } else if (itemNameLower.includes('% off') || itemNameLower.includes('% discount') || itemNameLower === 'discount') {
-                              bgColor = "bg-green-50";
-                              textColor = "text-green-900";
-                              descColor = "text-green-700";
-                              isNegative = true;
-                            }
+                            const bgColor = "bg-gray-50";
+                            const textColor = "text-gray-900";
+                            const descColor = "text-gray-600";
+                            const isNegative = false;
 
                             return (
                               <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
@@ -343,16 +353,6 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                       !item.description.toLowerCase().includes('click print for description') && (
                                         <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                       )}
-                                    {itemNameLower === 'customer discount' && (
-                                      <div className={`text-xs ${descColor} mt-2`}>
-                                        {item.discountPercent && (
-                                          <p>Discount Rate: {item.discountPercent}%</p>
-                                        )}
-                                        {item.itemDescription && (
-                                          <p>Details: {item.itemDescription}</p>
-                                        )}
-                                      </div>
-                                    )}
                                     {itemNameLower.includes('spcab') && (
                                       <div className="mt-2">
                                         <Button
@@ -519,9 +519,36 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                             </div>
 
                             {discountTotal > 0 && (
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">DISCOUNTS</span>
-                                <span className="font-medium">-${discountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <div>
+                                <div
+                                  className={`flex justify-between text-sm rounded px-1 -mx-1 py-0.5 ${discountLineItems.length > 0 ? 'cursor-pointer select-none hover:bg-gray-100' : ''}`}
+                                  onClick={() => discountLineItems.length > 0 && setDiscountsExpanded(!discountsExpanded)}
+                                >
+                                  <span className="text-gray-600 flex items-center gap-1">
+                                    DISCOUNTS
+                                    {discountLineItems.length > 0 && (
+                                      discountsExpanded
+                                        ? <ChevronUp className="h-3.5 w-3.5" />
+                                        : <ChevronDown className="h-3.5 w-3.5" />
+                                    )}
+                                  </span>
+                                  <span className="font-medium">-${discountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                {discountsExpanded && discountLineItems.length > 0 && (
+                                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
+                                    {discountLineItems.map((d, i) => (
+                                      <div key={`discount-${i}`} className="flex justify-between text-xs text-gray-500">
+                                        <span className="truncate mr-2">
+                                          {d.name}
+                                          {d.description && !d.description.toLowerCase().includes('click print') && (
+                                            <span className="text-gray-400 ml-1">- {d.description}</span>
+                                          )}
+                                        </span>
+                                        <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
 
