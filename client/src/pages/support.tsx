@@ -664,7 +664,7 @@ export default function Support() {
                       {/* Messages Section */}
                       {(caseMessages.length > 0 || loadingMessages) && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">Case Messages</h4>
+                          <h4 className="text-sm font-bold text-gray-700 mb-3">Case Messages</h4>
                           <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto space-y-3">
                             {loadingMessages ? (
                               <div className="flex items-center justify-center py-4">
