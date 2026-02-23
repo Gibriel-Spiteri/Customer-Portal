@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -35,7 +37,7 @@ import {
   Download,
   ChevronRight
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 
 interface CRDRebate {
@@ -63,6 +65,52 @@ interface CRDRebatesResponse {
   };
 }
 
+interface OrderItem {
+  id: string;
+  lineNumber: number;
+  itemName: string;
+  quantity: number;
+  rate: string;
+  amount: string;
+  description: string;
+}
+
+interface OrderFile {
+  fileId: string;
+  fileName: string;
+  fileDescription: string | null;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  createdDate: string;
+  lastModifiedDate: string;
+  messageSubject: string | null;
+  messageDate: string | null;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  status: string;
+  orderDate: string;
+  shipDate: string | null;
+  deliveryDate: string | null;
+  totalAmount: string;
+  subtotal?: string;
+  tax?: string;
+  shipping?: string;
+  discountTotal?: string;
+  currency: string;
+  shippingAddress: any;
+  trackingNumber: string | null;
+  memo?: string;
+  tagFor?: string;
+  items?: OrderItem[];
+  files?: OrderFile[];
+  dataFreshness: 'live' | 'cached';
+  lastSyncAt: string;
+}
+
 export default function ConsumersCash() {
   const { user, token } = useAuth();
   const { triggerLiveSync } = useSync();
@@ -71,6 +119,38 @@ export default function ConsumersCash() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number | 'all'>(25);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+
+  const handleSOClick = useCallback(async (soNumber: string) => {
+    if (!token) return;
+    setLoadingOrderDetails(true);
+    try {
+      const ordersRes = await fetch('/api/orders', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!ordersRes.ok) throw new Error('Failed to fetch orders');
+      const orders: Order[] = await ordersRes.json();
+      const match = orders.find(o => o.orderNumber === soNumber);
+      if (!match) {
+        toast({ title: "Order not found", description: `Could not find order ${soNumber}`, variant: "destructive" });
+        setLoadingOrderDetails(false);
+        return;
+      }
+      setSelectedOrder(match);
+      const detailRes = await fetch(`/api/orders/${match.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (detailRes.ok) {
+        setSelectedOrder(await detailRes.json());
+      }
+    } catch (error) {
+      console.error('Failed to fetch order:', error);
+      toast({ title: "Error", description: "Failed to load order details", variant: "destructive" });
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  }, [token, toast]);
   
   const { data, isLoading, error, refetch } = useQuery<CRDRebatesResponse>({
     queryKey: ['/api/crd-rebates'],
@@ -385,10 +465,13 @@ export default function ConsumersCash() {
                     </div>
                     <div className="flex items-center justify-between">
                       {rebate.salesOrder ? (
-                        <span className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSOClick(rebate.salesOrder); }}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                        >
                           <ShoppingCart className="h-3 w-3" />
                           {rebate.salesOrder}
-                        </span>
+                        </button>
                       ) : <span />}
                       {rebate.expirationDate && rebate.status === 'Earned' && (
                         <span className="text-orange-600 flex items-center gap-1">
@@ -470,6 +553,151 @@ export default function ConsumersCash() {
       </Card>
         </>
       )}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>Order #{selectedOrder?.orderNumber}</span>
+              {selectedOrder && (
+                <Badge className={
+                  selectedOrder.status === 'fully billed' || selectedOrder.status === 'closed' ? 'bg-green-100 text-green-800' :
+                  selectedOrder.status === 'pending fulfillment' ? 'bg-blue-100 text-blue-800' :
+                  selectedOrder.status === 'pending billing' ? 'bg-purple-100 text-purple-800' :
+                  selectedOrder.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }>
+                  <span className="capitalize">{selectedOrder.status}</span>
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Details for order #{selectedOrder?.orderNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingOrderDetails && !selectedOrder?.items ? (
+            <div className="space-y-4 py-4">
+              <div className="animate-pulse space-y-3">
+                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-12 bg-gray-200 rounded"></div>
+                <div className="h-12 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ) : selectedOrder && (
+            <div className="space-y-6">
+              {(selectedOrder.memo || selectedOrder.tagFor) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedOrder.tagFor && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">End User</h4>
+                      <p className="text-base">{selectedOrder.tagFor}</p>
+                    </div>
+                  )}
+                  {selectedOrder.memo && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">Job ID</h4>
+                      <p className="text-base">{selectedOrder.memo}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
+                  <p className="text-base flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                    {formatDate(selectedOrder.orderDate)}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
+                  <p className="text-lg font-semibold">{formatCurrency(selectedOrder.totalAmount)}</p>
+                </div>
+              </div>
+
+              {selectedOrder.items && selectedOrder.items.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Order Items
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200 bg-gray-50">
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">Item</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-600">Description</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-600">Qty</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-600">Rate</th>
+                            <th className="text-right py-2 px-3 font-medium text-gray-600">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedOrder.items.map((item) => (
+                            <tr key={item.id} className="border-b border-gray-100">
+                              <td className="py-2 px-3 font-medium">{item.itemName}</td>
+                              <td className="py-2 px-3 text-gray-600 max-w-[200px] truncate">{item.description || '-'}</td>
+                              <td className="py-2 px-3 text-right">{item.quantity}</td>
+                              <td className="py-2 px-3 text-right">{formatCurrency(item.rate)}</td>
+                              <td className="py-2 px-3 text-right font-medium">{formatCurrency(item.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          {selectedOrder.tax && parseFloat(selectedOrder.tax) > 0 && (
+                            <tr className="border-t border-gray-200">
+                              <td colSpan={4} className="py-2 px-3 text-right text-gray-600">Tax</td>
+                              <td className="py-2 px-3 text-right font-medium">{formatCurrency(selectedOrder.tax)}</td>
+                            </tr>
+                          )}
+                          <tr className="border-t-2 border-gray-300">
+                            <td colSpan={4} className="py-2 px-3 text-right font-semibold">Total</td>
+                            <td className="py-2 px-3 text-right font-semibold">{formatCurrency(selectedOrder.totalAmount)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {selectedOrder.files && selectedOrder.files.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <Download className="h-5 w-5 mr-2" />
+                      Files ({selectedOrder.files.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedOrder.files.map((file) => (
+                        <a
+                          key={file.fileId}
+                          href={file.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Download className="h-4 w-4 text-gray-400 shrink-0" />
+                            <span className="text-sm font-medium truncate">{file.fileName}</span>
+                          </div>
+                          <span className="text-xs text-gray-400 shrink-0 ml-2">{file.fileType}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MobileLayout>
   );
 }
