@@ -53,6 +53,8 @@ interface SupportTicket {
   category?: string;
   followUpDate?: string | null;
   relatedSalesOrder?: string | null;
+  endUser?: string | null;
+  jobId?: string | null;
   messages?: CaseMessage[];
 }
 
@@ -453,6 +455,18 @@ export default function Support() {
                                 <span className="font-medium text-gray-700">Case #{ticket.caseNumber}</span>
                               )}
                               <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                              {ticket.endUser && (
+                                <span className="ml-4">
+                                  <User className="inline h-3 w-3 mr-1" />
+                                  End User: {ticket.endUser}
+                                </span>
+                              )}
+                              {ticket.jobId && (
+                                <span className="ml-4">
+                                  <Tag className="inline h-3 w-3 mr-1" />
+                                  Job ID: {ticket.jobId}
+                                </span>
+                              )}
                               {ticket.relatedSalesOrder && (
                                 <span className="ml-4">
                                   <Tag className="inline h-3 w-3 mr-1" />
