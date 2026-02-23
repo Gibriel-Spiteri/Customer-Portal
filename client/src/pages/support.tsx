@@ -597,7 +597,7 @@ export default function Support() {
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
-                      <span>Case Details</span>
+                      <span>Case #{selectedTicket?.caseNumber}</span>
                       <div className="flex items-center gap-2">
                         {selectedTicket && (
                           <Badge className={getStatusColor(selectedTicket.status)}>
