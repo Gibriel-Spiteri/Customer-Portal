@@ -426,70 +426,30 @@ export default function Support() {
                     </div>
                   ) : filteredTickets && filteredTickets.length > 0 ? (
                     <>
-                      <div className="space-y-4">
-                        {paginatedTickets.map((ticket) => (
-                          <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-4 text-sm font-medium text-gray-900 flex-wrap">
-                              {ticket.endUser && (
-                                <span>
-                                  <User className="inline h-3.5 w-3.5 mr-1 text-gray-500" />
-                                  End User: {ticket.endUser}
-                                </span>
-                              )}
-                              {ticket.jobId && (
-                                <span>
-                                  <Tag className="inline h-3.5 w-3.5 mr-1 text-gray-500" />
-                                  Job ID: {ticket.jobId}
-                                </span>
-                              )}
-                              {ticket.relatedSalesOrder && (
-                                <span>
-                                  <Tag className="inline h-3.5 w-3.5 mr-1 text-gray-500" />
-                                  Order #: {ticket.relatedSalesOrder.replace(/^(Sales Order\s*#?\s*|#)/i, '')}
-                                </span>
-                              )}
-                              {ticket.caseNumber && (
-                                <span>Case #{ticket.caseNumber}</span>
-                              )}
-                            </div>
-                            <Badge className={getStatusColor(ticket.status)}>
-                              {getStatusIcon(ticket.status)}
-                              <span className="ml-1">
-                                {statusNames[ticket.status] || ticket.status}
-                              </span>
-                            </Badge>
-                          </div>
-
-                          <h3 className="text-base text-gray-700 mb-1">
-                            {ticket.subject}
-                          </h3>
-
-                          {ticket.detail && (
-                            <p className="text-sm text-gray-500 line-clamp-2 mb-2">
-                              {ticket.detail}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between text-sm text-gray-400">
-                            <div>
-                              <span>Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={async () => {
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b bg-gray-50">
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">End User</th>
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">Job ID</th>
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">Order #</th>
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">Case #</th>
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">Date</th>
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">Subject</th>
+                              <th className="text-left py-3 px-3 font-semibold text-gray-600">Status</th>
+                              <th className="py-3 px-3"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedTickets.map((ticket) => (
+                              <tr key={ticket.id} className="border-b hover:bg-gray-50 transition-colors cursor-pointer" onClick={async () => {
                                 setSelectedTicket(ticket);
                                 setLoadingMessages(true);
                                 setCaseMessages([]);
-                                
-                                // Fetch messages for this case
                                 try {
                                   const response = await fetch(`/api/support/tickets/${ticket.id}/messages`, {
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`,
-                                    },
+                                    headers: { 'Authorization': `Bearer ${token}` },
                                   });
-                                  
                                   if (response.ok) {
                                     const messages = await response.json();
                                     setCaseMessages(messages);
@@ -499,14 +459,27 @@ export default function Support() {
                                 } finally {
                                   setLoadingMessages(false);
                                 }
-                              }}
-                            >
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                              }}>
+                                <td className="py-3 px-3 font-medium text-gray-900">{ticket.endUser || '—'}</td>
+                                <td className="py-3 px-3 text-gray-700">{ticket.jobId || '—'}</td>
+                                <td className="py-3 px-3 text-gray-700">{ticket.relatedSalesOrder ? ticket.relatedSalesOrder.replace(/^(Sales Order\s*#?\s*|#)/i, '') : '—'}</td>
+                                <td className="py-3 px-3 text-gray-700">{ticket.caseNumber || '—'}</td>
+                                <td className="py-3 px-3 text-gray-500 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                <td className="py-3 px-3 text-gray-700 max-w-[250px] truncate" title={ticket.subject}>{ticket.subject}</td>
+                                <td className="py-3 px-3">
+                                  <Badge className={getStatusColor(ticket.status)}>
+                                    {getStatusIcon(ticket.status)}
+                                    <span className="ml-1">{statusNames[ticket.status] || ticket.status}</span>
+                                  </Badge>
+                                </td>
+                                <td className="py-3 px-3">
+                                  <Button variant="ghost" size="sm">View</Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
