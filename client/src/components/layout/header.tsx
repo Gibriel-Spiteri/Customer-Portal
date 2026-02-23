@@ -15,13 +15,14 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 export function Header() {
   const { user, logout } = useAuth();
 
-  const getInitials = (firstName: string, lastName: string, email?: string) => {
-    const first = firstName?.charAt(0) || '';
-    const last = lastName?.charAt(0) || '';
-    if (first || last) {
-      return (first + last).toUpperCase();
+  const getInitials = (companyName?: string, email?: string) => {
+    if (companyName) {
+      const words = companyName.trim().split(/\s+/);
+      if (words.length >= 2) {
+        return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+      }
+      return companyName.charAt(0).toUpperCase();
     }
-    // Fallback to email initial if no name
     return email?.charAt(0)?.toUpperCase() || 'U';
   };
 
@@ -64,13 +65,11 @@ export function Header() {
                   <Button variant="ghost" className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-netsuite-blue text-white text-sm">
-                        {getInitials(user.firstName, user.lastName, user.email)}
+                        {getInitials(user.companyName, user.email)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden md:block font-medium uppercase">
-                      {user.companyName || (user.firstName || user.lastName ? (
-                        `${user.firstName || ''} ${user.lastName || ''}`.trim()
-                      ) : 'Account')}
+                      {user.companyName || 'Account'}
                     </span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -78,14 +77,10 @@ export function Header() {
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium uppercase">
-                      {user.firstName || user.lastName ? (
-                        `${user.firstName || ''} ${user.lastName || ''}`.trim()
-                      ) : (
-                        user.companyName || 'Account'
-                      )}
+                      {user.companyName || 'Account'}
                     </p>
-                    {user.companyName && (
-                      <p className="text-xs text-gray-500">{user.companyName}</p>
+                    {user.email && (
+                      <p className="text-xs text-gray-500">{user.email}</p>
                     )}
                   </div>
                   <DropdownMenuSeparator />
