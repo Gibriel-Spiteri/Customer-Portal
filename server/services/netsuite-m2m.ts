@@ -790,7 +790,7 @@ export class NetSuiteM2M {
         LEFT JOIN employee ON supportcase.assigned = employee.id
       WHERE 
         supportcase.custevent_svcsjpr_customer = ${customerId}
-        AND BUILTIN.DF(supportcase.custevent_jprtype) = 'Customer Service'
+        AND supportcase.custevent_jprtype = 1
       ORDER BY 
         supportcase.createddate DESC
     `.trim();
