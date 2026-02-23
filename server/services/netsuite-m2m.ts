@@ -347,7 +347,6 @@ export class NetSuiteM2M {
         transaction.status,
         transaction.total,
         transaction.taxtotal AS tax,
-        transaction.discounttotal AS discounttotal,
         transaction.memo,
         transaction.custbody_tagfor AS tagfor,
         BUILTIN.DF(transaction.entity) AS customerName,
@@ -393,8 +392,21 @@ export class NetSuiteM2M {
       throw new Error(`Estimate ${estimateId} not found`);
     }
 
+    const discounttotal = linesResult.items.reduce((total: number, item: any) => {
+      const itemName = (item.itemname || '').toLowerCase();
+      const amount = parseFloat(item.amount || 0);
+      if (itemName === 'customer discount' || itemName === 'discount' ||
+          itemName.includes('% off') || itemName.includes('% discount') ||
+          itemName.includes('we pay the tax') || itemName.includes('we pay') ||
+          itemName.includes('credit')) {
+        return total + Math.abs(amount);
+      }
+      return total;
+    }, 0);
+
     return {
       ...mainResult.items[0],
+      discounttotal: discounttotal.toString(),
       items: linesResult.items
     };
   }
@@ -444,7 +456,6 @@ export class NetSuiteM2M {
         transaction.status,
         transaction.total,
         transaction.taxtotal AS tax,
-        transaction.discounttotal AS discounttotal,
         transaction.memo,
         transaction.custbody_tagfor AS tagFor,
         BUILTIN.DF(transaction.entity) AS customerName,
@@ -523,8 +534,21 @@ export class NetSuiteM2M {
       throw new Error(`Order ${orderId} not found`);
     }
 
+    const discounttotal = linesResult.items.reduce((total: number, item: any) => {
+      const itemName = (item.itemname || '').toLowerCase();
+      const amount = parseFloat(item.amount || 0);
+      if (itemName === 'customer discount' || itemName === 'discount' ||
+          itemName.includes('% off') || itemName.includes('% discount') ||
+          itemName.includes('we pay the tax') || itemName.includes('we pay') ||
+          itemName.includes('credit')) {
+        return total + Math.abs(amount);
+      }
+      return total;
+    }, 0);
+
     return {
       ...mainResult.items[0],
+      discounttotal: discounttotal.toString(),
       lineItems: linesResult.items,
       praDetails: praResult.items
     };
