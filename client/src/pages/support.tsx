@@ -201,12 +201,6 @@ export default function Support() {
 
   // Filter tickets based on selected status and search term
   const filteredTickets = tickets?.filter(ticket => {
-    const matchesStatus = statusFilter === 'all' ? true :
-      statusFilter === 'open' ? ['1', '2', '3', '4'].includes(ticket.status) :
-      ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
-    
-    if (!matchesStatus) return false;
-    
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       return (
@@ -217,7 +211,12 @@ export default function Support() {
         (ticket.subject && ticket.subject.toLowerCase().includes(term))
       );
     }
-    return true;
+    
+    const matchesStatus = statusFilter === 'all' ? true :
+      statusFilter === 'open' ? ['1', '2', '3', '4'].includes(ticket.status) :
+      ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
+    
+    return matchesStatus;
   }) || [];
 
   // Reset to page 1 when filter or search changes
