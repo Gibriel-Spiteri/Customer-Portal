@@ -478,7 +478,7 @@ export default function Dashboard() {
                             <span className="text-xs text-gray-500">{formatDate(rebate.date)}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium tabular-nums text-right w-20">{formatCurrency(rebate.amount)}</span>
+                            <span className="text-sm font-medium tabular-nums text-right min-w-[5.5rem]">{formatCurrency(rebate.amount)}</span>
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0">{rebate.status}</Badge>
                           </div>
                         </div>
