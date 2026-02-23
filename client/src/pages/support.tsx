@@ -153,7 +153,7 @@ export default function Support() {
       '2': 'bg-blue-100 text-blue-800',        // In Progress
       '3': 'bg-red-100 text-red-800',          // Escalated
       '4': 'bg-orange-100 text-orange-800',    // Re-Opened
-      '5': 'bg-gray-100 text-gray-800',        // Closed
+      '5': 'bg-green-100 text-green-800',       // Closed
       '6': 'bg-purple-100 text-purple-800',    // On Hold
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
