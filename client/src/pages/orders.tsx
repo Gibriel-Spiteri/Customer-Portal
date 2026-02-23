@@ -1063,8 +1063,7 @@ export default function Orders() {
                                   {file.fileUrl && (
                                     <a
                                       href={file.fileUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      download={file.fileName}
                                       className="shrink-0 ml-2"
                                     >
                                       <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
