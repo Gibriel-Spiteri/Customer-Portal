@@ -531,8 +531,38 @@ export default function Orders() {
                   
                   {selectedOrder && (
                     <div className="space-y-6">
-                      {/* Order Header Info */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* End User and Job ID */}
+                      {(selectedOrder.memo || selectedOrder.tagFor) && (
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedOrder.tagFor && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-500 mb-1">End User</h4>
+                              <p className="text-base">{selectedOrder.tagFor}</p>
+                            </div>
+                          )}
+                          {selectedOrder.memo && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-500 mb-1">Job ID</h4>
+                              <p className="text-base">{selectedOrder.memo}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Order Date, Amount, Status */}
+                      <Separator />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
+                          <p className="text-base flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            {formatDate(selectedOrder.orderDate)}
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
+                          <p className="text-lg font-semibold">{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</p>
+                        </div>
                         <div>
                           <h4 className="text-sm font-medium text-gray-500 mb-1">Status</h4>
                           <Badge className={getStatusColor(selectedOrder.status)}>
@@ -540,26 +570,6 @@ export default function Orders() {
                             <span className="ml-1 capitalize">{selectedOrder.status}</span>
                           </Badge>
                         </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-500 mb-1">Date</h4>
-                          <p className="text-base">{formatDate(selectedOrder.orderDate)}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-500 mb-1">Amount</h4>
-                          <p className="text-base font-semibold">{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</p>
-                        </div>
-                        {selectedOrder.memo && (
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-500 mb-1">Job ID</h4>
-                            <p className="text-base font-medium">{selectedOrder.memo}</p>
-                          </div>
-                        )}
-                        {selectedOrder.tagFor && (
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-500 mb-1">CRD End User</h4>
-                            <p className="text-base font-medium">{selectedOrder.tagFor}</p>
-                          </div>
-                        )}
                       </div>
 
                       {/* Shipping Information */}
