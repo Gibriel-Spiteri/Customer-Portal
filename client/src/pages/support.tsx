@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,12 +182,18 @@ export default function Support() {
     '6': 'On Hold (COR-CHECK PO)'
   };
 
-  // Get unique statuses from tickets
-  const getUniqueStatuses = () => {
-    if (!tickets) return [];
-    const statuses = new Set(tickets.map(ticket => ticket.status));
-    return Array.from(statuses).sort();
+  const getViewCounts = () => {
+    if (!tickets) return { open: 0, notStarted: 0, inProgress: 0, closed: 0, all: 0 };
+    return {
+      open: tickets.filter(t => ['1', '2', '3', '4'].includes(t.status)).length,
+      notStarted: tickets.filter(t => t.status === '1').length,
+      inProgress: tickets.filter(t => t.status === '2').length,
+      closed: tickets.filter(t => t.status === '5').length,
+      all: tickets.length,
+    };
   };
+
+  const viewCounts = getViewCounts();
 
   // Filter tickets based on selected status
   const filteredTickets = tickets?.filter(ticket => {
@@ -357,44 +364,37 @@ export default function Support() {
                       <CardTitle>Support Cases</CardTitle>
                     </div>
                     
-                    {/* Status Filter */}
+                    {/* Status Filter Tabs */}
                     {tickets && tickets.length > 0 && (
-                      <div className="flex items-center space-x-3">
-                        <span className="text-sm font-medium text-gray-600">Filter by status:</span>
-                        <Select
-                          value={statusFilter}
-                          onValueChange={setStatusFilter}
-                        >
-                          <SelectTrigger className="w-[200px]">
-                            <Filter className="h-4 w-4 mr-2" />
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="open">
-                              All Open ({tickets.filter(t => ['1', '2', '3', '4'].includes(t.status)).length})
-                            </SelectItem>
-                            <SelectItem value="1">
-                              Not Started ({tickets.filter(t => t.status === '1').length})
-                            </SelectItem>
-                            <SelectItem value="2">
-                              In Progress ({tickets.filter(t => t.status === '2').length})
-                            </SelectItem>
-                            <SelectItem value="5">
-                              Closed ({tickets.filter(t => t.status === '5').length})
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {statusFilter !== 'open' && statusFilter !== 'all' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setStatusFilter('open')}
-                            className="text-gray-500 hover:text-gray-700"
+                      <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 w-full">
+                        {[
+                          { value: 'open', label: 'Open', count: viewCounts.open, activeBg: 'bg-blue-50', activeText: 'text-blue-700', activeBadgeBg: 'bg-blue-100', activeBadgeText: 'text-blue-700', activeBorder: 'ring-blue-200' },
+                          { value: '1', label: 'Not Started', count: viewCounts.notStarted, activeBg: 'bg-yellow-50', activeText: 'text-yellow-700', activeBadgeBg: 'bg-yellow-100', activeBadgeText: 'text-yellow-700', activeBorder: 'ring-yellow-200' },
+                          { value: '2', label: 'In Progress', count: viewCounts.inProgress, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
+                          { value: '5', label: 'Closed', count: viewCounts.closed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
+                          { value: 'all', label: 'All', count: viewCounts.all, activeBg: 'bg-gray-50', activeText: 'text-gray-700', activeBadgeBg: 'bg-gray-200', activeBadgeText: 'text-gray-700', activeBorder: 'ring-gray-200' },
+                        ].map((filter) => (
+                          <button
+                            key={filter.value}
+                            onClick={() => setStatusFilter(filter.value)}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all",
+                              statusFilter === filter.value
+                                ? `${filter.activeBg} ${filter.activeText} shadow-sm ring-1 ${filter.activeBorder}`
+                                : "text-gray-500 hover:text-gray-700"
+                            )}
                           >
-                            <X className="h-4 w-4 mr-1" />
-                            Clear Filter
-                          </Button>
-                        )}
+                            <span className="truncate">{filter.label}</span>
+                            <span className={cn(
+                              "text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0",
+                              statusFilter === filter.value
+                                ? `${filter.activeBadgeBg} ${filter.activeBadgeText}`
+                                : "bg-gray-200 text-gray-500"
+                            )}>
+                              {filter.count}
+                            </span>
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
