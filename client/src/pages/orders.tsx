@@ -521,8 +521,14 @@ export default function Orders() {
               <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader className="pb-0">
-                    <DialogTitle className="text-xl font-bold">
-                      Order #{selectedOrder?.orderNumber}
+                    <DialogTitle className="flex items-center justify-between">
+                      <span>Order #{selectedOrder?.orderNumber}</span>
+                      {selectedOrder && (
+                        <Badge className={getStatusColor(selectedOrder.status)}>
+                          {getStatusIcon(selectedOrder.status)}
+                          <span className="ml-1 capitalize">{selectedOrder.status}</span>
+                        </Badge>
+                      )}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
                       Details for order #{selectedOrder?.orderNumber}
@@ -549,9 +555,9 @@ export default function Orders() {
                         </div>
                       )}
 
-                      {/* Order Date, Amount, Status */}
+                      {/* Order Date and Amount */}
                       <Separator />
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
                           <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
                           <p className="text-base flex items-center">
@@ -562,13 +568,6 @@ export default function Orders() {
                         <div>
                           <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
                           <p className="text-lg font-semibold">{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-500 mb-1">Status</h4>
-                          <Badge className={getStatusColor(selectedOrder.status)}>
-                            {getStatusIcon(selectedOrder.status)}
-                            <span className="ml-1 capitalize">{selectedOrder.status}</span>
-                          </Badge>
                         </div>
                       </div>
 
