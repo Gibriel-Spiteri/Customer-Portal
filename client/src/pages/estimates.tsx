@@ -311,7 +311,26 @@ export default function Estimates() {
                   
                   {selectedEstimate && (
                     <div className="space-y-6 mt-4">
+                      {/* End User and Job ID */}
+                      {(selectedEstimate.memo || selectedEstimate.tagFor) && (
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedEstimate.tagFor && (
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-500 mb-1">End User</h3>
+                              <p className="text-base">{selectedEstimate.tagFor}</p>
+                            </div>
+                          )}
+                          {selectedEstimate.memo && (
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
+                              <p className="text-base">{selectedEstimate.memo}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Estimate Summary */}
+                      <Separator />
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Estimate Date</h3>
@@ -327,27 +346,6 @@ export default function Estimates() {
                           </p>
                         </div>
                       </div>
-
-                      {/* End User and Job ID */}
-                      {(selectedEstimate.memo || selectedEstimate.tagFor) && (
-                        <>
-                          <Separator />
-                          <div className="grid grid-cols-2 gap-4">
-                            {selectedEstimate.tagFor && (
-                              <div>
-                                <h3 className="text-sm font-medium text-gray-500 mb-1">End User</h3>
-                                <p className="text-base">{selectedEstimate.tagFor}</p>
-                              </div>
-                            )}
-                            {selectedEstimate.memo && (
-                              <div>
-                                <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
-                                <p className="text-base">{selectedEstimate.memo}</p>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
 
                       {/* Estimate Items */}
                       {loadingEstimateDetails ? (
