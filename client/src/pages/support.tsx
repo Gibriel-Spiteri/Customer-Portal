@@ -81,7 +81,7 @@ export default function Support() {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('open');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -370,7 +370,6 @@ export default function Support() {
                     {tickets && tickets.length > 0 && (
                       <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 w-full">
                         {[
-                          { value: 'open', label: 'Open', count: viewCounts.open, activeBg: 'bg-blue-50', activeText: 'text-blue-700', activeBadgeBg: 'bg-blue-100', activeBadgeText: 'text-blue-700', activeBorder: 'ring-blue-200' },
                           { value: '1', label: 'Not Started', count: viewCounts.notStarted, activeBg: 'bg-yellow-50', activeText: 'text-yellow-700', activeBadgeBg: 'bg-yellow-100', activeBadgeText: 'text-yellow-700', activeBorder: 'ring-yellow-200' },
                           { value: '2', label: 'In Progress', count: viewCounts.inProgress, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
                           { value: '5', label: 'Closed', count: viewCounts.closed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
