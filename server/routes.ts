@@ -476,8 +476,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Custom login attempt for email:', email);
       
-      // In production, this would integrate with NetSuite's customer authentication API
-      // For now, authenticate against our database
       let user = await storage.getUserByEmail(email);
       
       if (!user) {
@@ -502,6 +500,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Fetch latest companyName from NetSuite and sync
+      try {
+        if (process.env.NETSUITE_CONSUMER_KEY && process.env.NETSUITE_CONSUMER_SECRET) {
+          const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+          const m2m = new NetSuiteM2M();
+          const customerData = await m2m.getCustomerAccount(customerId);
+          if (customerData.companyname && customerData.companyname !== user.companyName) {
+            await storage.updateUser(user.id, { companyName: customerData.companyname });
+            user = { ...user, companyName: customerData.companyname };
+            console.log(`Updated companyName for user ${user.id} to: ${customerData.companyname}`);
+          }
+        }
+      } catch (err: any) {
+        console.error('Could not sync companyName from NetSuite:', err.message);
+      }
+
       // Generate JWT token
       const token = jwt.sign(
         {
@@ -653,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = loginSchema.parse(req.body);
       
       // Verify credentials
-      const user = await storage.verifyPassword(email, password);
+      let user = await storage.verifyPassword(email, password);
       if (!user) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
@@ -692,6 +706,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               message: 'Your Account is on Contact Hold. Please contact support for assistance.',
               statusCode: 'CONTACT_HOLD'
             });
+          }
+
+          if (customerData.companyname && customerData.companyname !== user.companyName) {
+            await storage.updateUser(user.id, { companyName: customerData.companyname });
+            user = { ...user, companyName: customerData.companyname };
+            console.log(`Updated companyName for user ${user.id} to: ${customerData.companyname}`);
           }
         } catch (error) {
           console.error('Error checking customer status:', error);
@@ -733,21 +753,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/profile', authenticateToken, async (req, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
       
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
       
+      // Refresh companyName from NetSuite in real time
+      if (user.netsuiteCustomerId) {
+        try {
+          if (process.env.NETSUITE_CONSUMER_KEY && process.env.NETSUITE_CONSUMER_SECRET) {
+            const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+            const m2m = new NetSuiteM2M();
+            const customerData = await m2m.getCustomerAccount(user.netsuiteCustomerId);
+            if (customerData.companyname && customerData.companyname !== user.companyName) {
+              await storage.updateUser(user.id, { companyName: customerData.companyname });
+              user = { ...user, companyName: customerData.companyname };
+              console.log(`Profile: Updated companyName for user ${user.id} to: ${customerData.companyname}`);
+            }
+          }
+        } catch (err: any) {
+          console.error('Profile: Could not sync companyName from NetSuite:', err.message);
+        }
+      }
+
       res.json({
         id: user.id.toString(),
-        username: user.email, // Using email as username for backward compatibility
+        username: user.email,
         email: user.email,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         companyName: user.companyName || '',
         netsuiteCustomerId: user.netsuiteCustomerId,
-        isNetSuiteUser: !!user.netsuiteCustomerId, // Flag if user has NetSuite ID
+        isNetSuiteUser: !!user.netsuiteCustomerId,
       });
     } catch (error) {
       console.error('Profile fetch error:', error);
