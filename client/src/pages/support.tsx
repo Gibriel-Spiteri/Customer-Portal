@@ -437,7 +437,6 @@ export default function Support() {
                               <th className="text-left py-3 px-3 font-semibold text-gray-600">Date</th>
                               <th className="text-left py-3 px-3 font-semibold text-gray-600">Subject</th>
                               <th className="text-left py-3 px-3 font-semibold text-gray-600">Status</th>
-                              <th className="py-3 px-3"></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -471,9 +470,6 @@ export default function Support() {
                                     {getStatusIcon(ticket.status)}
                                     <span className="ml-1">{statusNames[ticket.status] || ticket.status}</span>
                                   </Badge>
-                                </td>
-                                <td className="py-3 px-3">
-                                  <Button variant="ghost" size="sm">View</Button>
                                 </td>
                               </tr>
                             ))}
