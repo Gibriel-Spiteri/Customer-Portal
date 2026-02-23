@@ -244,7 +244,7 @@ export default function Support() {
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900">Phone</h3>
-                        <p className="text-sm font-medium text-blue-600">631-563-3200</p>
+                        <p className="text-sm font-medium text-blue-600">631-563-3200 Extension 5</p>
                         <p className="text-xs text-gray-500">Mon-Fri, 9AM-5PM EST</p>
                       </div>
                     </div>
