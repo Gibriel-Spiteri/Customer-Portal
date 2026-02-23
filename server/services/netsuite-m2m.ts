@@ -782,11 +782,12 @@ export class NetSuiteM2M {
         BUILTIN.DF(supportcase.status) AS statustext,
         BUILTIN.DF(supportcase.company) AS companyname,
         BUILTIN.DF(supportcase.custevent_related_salesorder) AS relatedsalesordernumber,
-        BUILTIN.DF(supportcase.assigned) AS assignedname,
+        employee.entityid || ' ' || employee.firstname || ' ' || employee.lastname AS assignedname,
         supportcase.custevent_svrcjpr_tag_for AS caseenduser,
         supportcase.custevent_svrcjpr_memo AS casejobid
       FROM 
         supportcase
+        LEFT JOIN employee ON supportcase.assigned = employee.id
       WHERE 
         supportcase.custevent_svcsjpr_customer = ${customerId}
       ORDER BY 
