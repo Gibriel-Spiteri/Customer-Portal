@@ -567,6 +567,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Demo mode login - backdoor access for customer ${customerId}`);
       
+      let netsuiteCompanyName = customerConfig.companyName;
+      try {
+        if (process.env.NETSUITE_CONSUMER_KEY && process.env.NETSUITE_CONSUMER_SECRET) {
+          const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+          const m2m = new NetSuiteM2M();
+          const accountData = await m2m.getCustomerAccount(customerId);
+          if (accountData && accountData.companyname) {
+            netsuiteCompanyName = accountData.companyname;
+            console.log(`Fetched company name from NetSuite: ${netsuiteCompanyName}`);
+          }
+        }
+      } catch (err: any) {
+        console.log('Could not fetch company name from NetSuite:', err.message);
+      }
+
       // Try to get demo user first
       let user = await storage.getUserByEmail(`demo_${customerId}`);
       
@@ -587,27 +602,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             password: hashedPassword,
             firstName: customerConfig.firstName,
             lastName: customerConfig.lastName,
-            companyName: customerConfig.companyName,
+            companyName: netsuiteCompanyName,
             netsuiteCustomerId: customerId,
           });
           console.log(`Created new demo user with customer ID ${customerId}`);
         }
       } else {
         console.log('Using existing demo user:', user.username);
-        // Update last login
         await storage.updateUser(user.id, {
           lastLoginAt: new Date(),
+          companyName: netsuiteCompanyName,
         });
       }
 
-      // Create session with NetSuite customer info
       const sessionData = {
         userId: user.id,
         username: user.username,
         netsuiteCustomerId: customerId,
         isNetSuiteUser: true,
         customerCenterAccess: true,
-        companyName: customerConfig.companyName
+        companyName: netsuiteCompanyName
       };
 
       const token = jwt.sign(
@@ -624,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: user.email,
           firstName: customerConfig.firstName,
           lastName: `${customerConfig.lastName} (Customer ${customerId})`,
-          companyName: customerConfig.companyName,
+          companyName: netsuiteCompanyName,
           netsuiteCustomerId: customerId,
         },
       });
