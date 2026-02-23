@@ -451,28 +451,28 @@ export default function Support() {
                           )}
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div>
-                              {ticket.caseNumber && (
-                                <span className="font-medium text-gray-700">Case #{ticket.caseNumber}</span>
-                              )}
-                              <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                               {ticket.endUser && (
-                                <span className="ml-4">
+                                <span className="font-medium text-gray-700">
                                   <User className="inline h-3 w-3 mr-1" />
                                   End User: {ticket.endUser}
                                 </span>
                               )}
                               {ticket.jobId && (
-                                <span className="ml-4">
+                                <span className={ticket.endUser ? "ml-4" : ""}>
                                   <Tag className="inline h-3 w-3 mr-1" />
                                   Job ID: {ticket.jobId}
                                 </span>
                               )}
                               {ticket.relatedSalesOrder && (
-                                <span className="ml-4">
+                                <span className={(ticket.endUser || ticket.jobId) ? "ml-4" : ""}>
                                   <Tag className="inline h-3 w-3 mr-1" />
                                   Order #: {ticket.relatedSalesOrder.replace(/^(Sales Order\s*#?\s*|#)/i, '')}
                                 </span>
                               )}
+                              {ticket.caseNumber && (
+                                <span className={(ticket.endUser || ticket.jobId || ticket.relatedSalesOrder) ? "ml-4" : ""}>Case #{ticket.caseNumber}</span>
+                              )}
+                              <span className="ml-4">Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                             </div>
                             <Button 
                               variant="ghost" 
