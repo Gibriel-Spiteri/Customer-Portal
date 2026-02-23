@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   CreditCard, 
   ShoppingCart, 
@@ -130,6 +132,43 @@ interface CRDRebatesResponse {
 
 export default function Dashboard() {
   const { user, token } = useAuth();
+  const [selectedEstimate, setSelectedEstimate] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  const openEstimateDetail = async (estimate: any) => {
+    setSelectedEstimate(estimate);
+    setLoadingDetails(true);
+    try {
+      const response = await fetch(`/api/estimates/${estimate.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setSelectedEstimate(await response.json());
+      }
+    } catch (error) {
+      console.error('Failed to fetch estimate details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const openOrderDetail = async (order: any) => {
+    setSelectedOrder(order);
+    setLoadingDetails(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setSelectedOrder(await response.json());
+      }
+    } catch (error) {
+      console.error('Failed to fetch order details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   const { data: dashboardData, isLoading, error } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard'],
@@ -344,24 +383,26 @@ export default function Dashboard() {
             ) : estimatesData && estimatesData.length > 0 ? (
               <div className="space-y-2">
                 {estimatesData.slice(0, 5).map((estimate) => (
-                  <Link key={estimate.id} href={`/estimates?open=${estimate.id}`}>
-                    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-1.5 bg-orange-50 rounded-md shrink-0">
-                          <FileText className="h-4 w-4 text-orange-500" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">#{estimate.estimateNumber}</p>
-                          {estimate.tagFor && (
-                            <p className="text-xs text-gray-500 truncate">{estimate.tagFor}</p>
-                          )}
-                        </div>
+                  <div
+                    key={estimate.id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100"
+                    onClick={() => openEstimateDetail(estimate)}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-1.5 bg-orange-50 rounded-md shrink-0">
+                        <FileText className="h-4 w-4 text-orange-500" />
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-sm font-semibold">{formatCurrency(estimate.amount, estimate.currency)}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">#{estimate.estimateNumber}</p>
+                        {estimate.tagFor && (
+                          <p className="text-xs text-gray-500 truncate">{estimate.tagFor}</p>
+                        )}
                       </div>
                     </div>
-                  </Link>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm font-semibold">{formatCurrency(estimate.amount, estimate.currency)}</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -398,24 +439,26 @@ export default function Dashboard() {
             ) : dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
               <div className="space-y-2">
                 {dashboardData.recentOrders.slice(0, 5).map((order) => (
-                  <Link key={order.id} href={`/orders?open=${order.id}`}>
-                    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-1.5 bg-blue-50 rounded-md shrink-0">
-                          <Package className="h-4 w-4 text-blue-500" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">#{order.orderNumber}</p>
-                          {order.tagFor && (
-                            <p className="text-xs text-gray-500 truncate">{order.tagFor}</p>
-                          )}
-                        </div>
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100"
+                    onClick={() => openOrderDetail(order)}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-1.5 bg-blue-50 rounded-md shrink-0">
+                        <Package className="h-4 w-4 text-blue-500" />
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-sm font-semibold">{formatCurrency(order.totalAmount, order.currency)}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">#{order.orderNumber}</p>
+                        {order.tagFor && (
+                          <p className="text-xs text-gray-500 truncate">{order.tagFor}</p>
+                        )}
                       </div>
                     </div>
-                  </Link>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm font-semibold">{formatCurrency(order.totalAmount, order.currency)}</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -500,6 +543,233 @@ export default function Dashboard() {
 
 
 
+
+      {/* Estimate Details Modal */}
+      <Dialog open={!!selectedEstimate} onOpenChange={() => setSelectedEstimate(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Estimate Details</span>
+              {selectedEstimate && (
+                <Badge className={getStatusColor(selectedEstimate.status)}>
+                  {selectedEstimate.status?.charAt(0).toUpperCase() + selectedEstimate.status?.slice(1)}
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Estimate #{selectedEstimate?.estimateNumber}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedEstimate && (
+            <div className="space-y-6 mt-4">
+              {(selectedEstimate.memo || selectedEstimate.tagFor) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedEstimate.tagFor && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">End User</h3>
+                      <p className="text-base">{selectedEstimate.tagFor}</p>
+                    </div>
+                  )}
+                  {selectedEstimate.memo && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
+                      <p className="text-base">{selectedEstimate.memo}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Estimate Date</h3>
+                  <p className="text-base flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                    {formatDate(selectedEstimate.estimateDate)}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h3>
+                  <p className="text-lg font-semibold">
+                    {formatCurrency(selectedEstimate.amount || selectedEstimate.totalAmount || '0', selectedEstimate.currency)}
+                  </p>
+                </div>
+              </div>
+
+              {loadingDetails ? (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Line Items
+                    </h3>
+                    <div className="animate-pulse space-y-2">
+                      <div className="h-12 bg-gray-200 rounded"></div>
+                      <div className="h-12 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </>
+              ) : selectedEstimate.items && selectedEstimate.items.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Line Items
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedEstimate.items.map((item: any, index: number) => {
+                        const quantity = Math.abs(parseFloat(item.quantity || 0));
+                        const rate = Math.abs(parseFloat(item.rate || 0));
+                        const amount = parseFloat(item.amount || 0);
+                        const displayAmount = quantity > 0 ? quantity * rate : Math.abs(amount);
+                        return (
+                          <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{item.itemName}</h4>
+                                {item.description && !item.description.toLowerCase().includes('click print') && (
+                                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right ml-4 shrink-0">
+                                <p className="font-semibold text-gray-900">{formatCurrency(String(displayAmount), selectedEstimate.currency)}</p>
+                                {quantity > 0 && rate > 0 && (
+                                  <p className="text-xs text-gray-500">{quantity} × {formatCurrency(String(rate), selectedEstimate.currency)}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Order Details Modal */}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>Order #{selectedOrder?.orderNumber}</span>
+              {selectedOrder && (
+                <Badge className={getStatusColor(selectedOrder.status)}>
+                  <span className="capitalize">{selectedOrder.status}</span>
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Details for order #{selectedOrder?.orderNumber}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="space-y-6">
+              {(selectedOrder.memo || selectedOrder.tagFor) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedOrder.tagFor && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">End User</h4>
+                      <p className="text-base">{selectedOrder.tagFor}</p>
+                    </div>
+                  )}
+                  {selectedOrder.memo && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-1">Job ID</h4>
+                      <p className="text-base">{selectedOrder.memo}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
+                  <p className="text-base flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                    {formatDate(selectedOrder.orderDate)}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
+                  <p className="text-lg font-semibold">{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</p>
+                </div>
+              </div>
+
+              {loadingDetails ? (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Order Items
+                    </h3>
+                    <div className="animate-pulse space-y-2">
+                      <div className="h-12 bg-gray-200 rounded"></div>
+                      <div className="h-12 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </>
+              ) : selectedOrder.items && selectedOrder.items.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Order Items
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedOrder.items.filter((item: any) => {
+                        const itemName = item.itemName || '';
+                        const itemNameLower = itemName.toLowerCase();
+                        const amount = parseFloat(item.amount || 0);
+                        const isTaxItem = itemName.includes('NY_') || itemNameLower.includes('tax');
+                        const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
+                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
+                      }).map((item: any, index: number) => {
+                        const quantity = Math.abs(parseFloat(item.quantity || 0));
+                        const rate = Math.abs(parseFloat(item.rate || 0));
+                        const amount = parseFloat(item.amount || 0);
+                        const displayAmount = quantity > 0 ? quantity * rate : Math.abs(amount);
+                        const itemNameLower = (item.itemName || '').toLowerCase();
+                        const isDiscount = itemNameLower === 'customer discount' || itemNameLower.includes('% off') || itemNameLower.includes('credit') || itemNameLower.includes('we pay');
+                        return (
+                          <div key={index} className={`${isDiscount ? 'bg-green-50' : 'bg-gray-50'} p-3 rounded-lg`}>
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className={`font-medium ${isDiscount ? 'text-green-900' : 'text-gray-900'}`}>{item.itemName}</h4>
+                                {item.description && !item.description.toLowerCase().includes('click print') && (
+                                  <p className={`text-sm ${isDiscount ? 'text-green-700' : 'text-gray-600'} mt-1`}>{item.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right ml-4 shrink-0">
+                                <p className={`font-semibold ${isDiscount ? 'text-green-900' : 'text-gray-900'}`}>
+                                  {isDiscount ? '-' : ''}{formatCurrency(String(displayAmount), selectedOrder.currency)}
+                                </p>
+                                {quantity > 0 && rate > 0 && (
+                                  <p className="text-xs text-gray-500">{quantity} × {formatCurrency(String(rate), selectedOrder.currency)}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </MobileLayout>
   );

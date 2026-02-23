@@ -36,7 +36,7 @@ import {
   Download,
   ExternalLink
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -104,28 +104,6 @@ export default function Orders() {
     queryKey: ['/api/orders'],
     enabled: !!token,
   });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const openId = params.get('open');
-    if (openId && orders && orders.length > 0 && !selectedOrder) {
-      const order = orders.find((o) => o.id === openId);
-      if (order) {
-        setSelectedOrder(order);
-        setLoadingOrderDetails(true);
-        setCabinetBuildDetails({});
-        setVisibleBuildDetails({});
-        fetch(`/api/orders/${order.id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-          .then(res => res.ok ? res.json() : null)
-          .then(data => { if (data) setSelectedOrder(data); })
-          .catch(() => {})
-          .finally(() => setLoadingOrderDetails(false));
-        window.history.replaceState({}, '', '/orders');
-      }
-    }
-  }, [orders, token]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
