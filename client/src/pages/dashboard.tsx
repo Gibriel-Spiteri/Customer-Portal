@@ -468,8 +468,8 @@ export default function Dashboard() {
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Recent Activity</p>
                     <div className="space-y-1.5">
                       {crdData.rebates.slice(0, 3).map((rebate) => (
-                        <div key={rebate.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 border border-gray-100">
-                          <div className="flex items-center gap-2 min-w-0">
+                        <div key={rebate.id} className="grid grid-cols-3 items-center py-2 px-3 rounded-md hover:bg-gray-50 border border-gray-100">
+                          <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full shrink-0 ${
                               rebate.status === 'Earned' ? 'bg-green-400' :
                               rebate.status === 'Redeemed' ? 'bg-blue-400' :
@@ -477,8 +477,8 @@ export default function Dashboard() {
                             }`} />
                             <span className="text-xs text-gray-500">{formatDate(rebate.date)}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium tabular-nums text-right min-w-[5.5rem]">{formatCurrency(rebate.amount)}</span>
+                          <span className="text-sm font-medium tabular-nums text-right">{formatCurrency(rebate.amount)}</span>
+                          <div className="text-right">
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0">{rebate.status}</Badge>
                           </div>
                         </div>
