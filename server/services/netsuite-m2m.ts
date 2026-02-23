@@ -524,6 +524,18 @@ export class NetSuiteM2M {
         AND pra.custrecord_txnpra_pratype != '1'
     `.trim();
 
+    const [mainResult, linesResult, praResult] = await Promise.all([
+      this.executeSuiteQL(mainQuery, 1, 0),
+      this.executeSuiteQL(linesQuery, 100, 0),
+      this.executeSuiteQL(praQuery, 50, 0).catch((err) => { console.log('PRA query error:', err.message); return { items: [] }; })
+    ]);
+
+    if (mainResult.items.length === 0) {
+      throw new Error(`Order ${orderId} not found`);
+    }
+
+    const orderNumber = (mainResult.items[0].ordernumber || '').replace(/^SO/, '');
+
     const filesQuery = `
       SELECT 
         File.id AS fileId,
@@ -537,60 +549,20 @@ export class NetSuiteM2M {
       FROM 
         File
       WHERE 
-        File.id IN (
-          SELECT DISTINCT mf.file 
-          FROM MessageFile mf 
-          INNER JOIN Message m ON mf.message = m.id 
-          WHERE m.transaction = ${orderId}
-        )
+        File.name LIKE '${orderNumber}%'
       ORDER BY 
         File.createddate DESC
     `.trim();
 
-    const mediaFilesQuery = `
-      SELECT 
-        File.id AS fileId,
-        File.name AS fileName,
-        File.description AS fileDescription,
-        File.filetype AS fileType,
-        File.filesize AS fileSize,
-        File.url AS fileUrl,
-        File.createddate AS createdDate,
-        File.lastmodifieddate AS lastModifiedDate
-      FROM 
-        transactionLine tl
-      INNER JOIN 
-        File ON tl.item = File.id
-      WHERE 
-        tl.transaction = ${orderId}
-        AND tl.mainline = 'F'
-      ORDER BY 
-        File.createddate DESC
-    `.trim();
+    const filesResult = await this.executeSuiteQL(filesQuery, 100, 0).catch((err) => { 
+      console.log('Files query error:', err.message); 
+      return { items: [] }; 
+    });
 
-    const [mainResult, linesResult, praResult, filesResult, mediaFilesResult] = await Promise.all([
-      this.executeSuiteQL(mainQuery, 1, 0),
-      this.executeSuiteQL(linesQuery, 100, 0),
-      this.executeSuiteQL(praQuery, 50, 0).catch((err) => { console.log('PRA query error:', err.message); return { items: [] }; }),
-      this.executeSuiteQL(filesQuery, 100, 0).catch((err) => { console.log('Files query error:', err.message); return { items: [] }; }),
-      this.executeSuiteQL(mediaFilesQuery, 100, 0).catch((err) => { console.log('Media files query error:', err.message); return { items: [] }; })
-    ]);
-
-    if (mainResult.items.length === 0) {
-      throw new Error(`Order ${orderId} not found`);
+    console.log('Files query for order number', orderNumber, 'returned:', filesResult.items.length, 'items');
+    if (filesResult.items.length > 0) {
+      console.log('Files found:', filesResult.items.map((f: any) => f.filename));
     }
-
-    console.log('Files query returned:', filesResult.items.length, 'items');
-    console.log('Media files query returned:', mediaFilesResult.items.length, 'items');
-
-    const allFiles = [...filesResult.items];
-    const existingIds = new Set(allFiles.map((f: any) => f.fileid));
-    for (const file of mediaFilesResult.items) {
-      if (!existingIds.has(file.fileid)) {
-        allFiles.push(file);
-      }
-    }
-    console.log('Total unique files:', allFiles.length);
 
     const discounttotal = linesResult.items.reduce((total: number, item: any) => {
       const itemName = (item.itemname || '').toLowerCase();
@@ -609,7 +581,7 @@ export class NetSuiteM2M {
       discounttotal: discounttotal.toString(),
       lineItems: linesResult.items,
       praDetails: praResult.items,
-      files: allFiles
+      files: filesResult.items
     };
   }
 
