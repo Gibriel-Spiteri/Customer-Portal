@@ -75,15 +75,6 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium uppercase">
-                      {user.companyName || 'Account'}
-                    </p>
-                    {user.email && (
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    )}
-                  </div>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
                     <span>Account Settings</span>
