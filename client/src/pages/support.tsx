@@ -456,7 +456,7 @@ export default function Support() {
                               {ticket.relatedSalesOrder && (
                                 <span className="ml-4">
                                   <Tag className="inline h-3 w-3 mr-1" />
-                                  Sales Order: {ticket.relatedSalesOrder.replace('#', '')}
+                                  Order #: {ticket.relatedSalesOrder.replace(/^(Sales Order\s*#?\s*|#)/i, '')}
                                 </span>
                               )}
                             </div>
