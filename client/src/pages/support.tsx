@@ -452,16 +452,7 @@ export default function Support() {
                               {ticket.caseNumber && (
                                 <span className="font-medium text-gray-700">Case #{ticket.caseNumber}</span>
                               )}
-                              <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {formatDate(ticket.createdAt)}</span>
-                              {ticket.assignedTo && (
-                                <span className="ml-4">Assigned to: {ticket.assignedTo}</span>
-                              )}
-                              {ticket.followUpDate && (
-                                <span className="ml-4">
-                                  <Calendar className="inline h-3 w-3 mr-1" />
-                                  Follow up: {formatDate(ticket.followUpDate)}
-                                </span>
-                              )}
+                              <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                               {ticket.relatedSalesOrder && (
                                 <span className="ml-4">
                                   <Tag className="inline h-3 w-3 mr-1" />
