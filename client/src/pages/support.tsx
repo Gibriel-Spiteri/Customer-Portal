@@ -35,7 +35,8 @@ import {
   Tag,
   Filter,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Search
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -82,6 +83,7 @@ export default function Support() {
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('2');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -197,20 +199,31 @@ export default function Support() {
 
   const viewCounts = getViewCounts();
 
-  // Filter tickets based on selected status
+  // Filter tickets based on selected status and search term
   const filteredTickets = tickets?.filter(ticket => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'open') {
-      // Show open cases: Not Started (1), In Progress (2), Escalated (3), Re-Opened (4)
-      return ['1', '2', '3', '4'].includes(ticket.status);
+    const matchesStatus = statusFilter === 'all' ? true :
+      statusFilter === 'open' ? ['1', '2', '3', '4'].includes(ticket.status) :
+      ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
+    
+    if (!matchesStatus) return false;
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      return (
+        (ticket.endUser && ticket.endUser.toLowerCase().includes(term)) ||
+        (ticket.jobId && ticket.jobId.toLowerCase().includes(term)) ||
+        (ticket.relatedSalesOrder && ticket.relatedSalesOrder.toLowerCase().includes(term)) ||
+        (ticket.caseNumber && ticket.caseNumber.toLowerCase().includes(term)) ||
+        (ticket.subject && ticket.subject.toLowerCase().includes(term))
+      );
     }
-    return ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
+    return true;
   }) || [];
 
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when filter or search changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter]);
+  }, [statusFilter, searchTerm]);
 
   // Paginate the filtered tickets
   const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
@@ -366,9 +379,10 @@ export default function Support() {
                       <CardTitle>Support Cases</CardTitle>
                     </div>
                     
-                    {/* Status Filter Tabs */}
+                    {/* Status Filter Tabs and Search */}
                     {tickets && tickets.length > 0 && (
-                      <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 w-full">
+                      <div className="flex flex-col md:flex-row gap-3">
+                      <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 flex-1">
                         {[
                           { value: '1', label: 'Not Started', count: viewCounts.notStarted, activeBg: 'bg-yellow-50', activeText: 'text-yellow-700', activeBadgeBg: 'bg-yellow-100', activeBadgeText: 'text-yellow-700', activeBorder: 'ring-yellow-200' },
                           { value: '2', label: 'In Progress', count: viewCounts.inProgress, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
@@ -396,6 +410,18 @@ export default function Support() {
                             </span>
                           </button>
                         ))}
+                      </div>
+                      <div className="w-full md:w-80">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search by End User, Job ID, Order #..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 h-12 text-base sm:text-sm sm:h-10"
+                          />
+                        </div>
+                      </div>
                       </div>
                     )}
                   </div>
