@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { Header } from "@/components/layout/header";
@@ -82,6 +82,26 @@ export default function Estimates() {
       return failureCount < 3;
     }
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('open');
+    if (openId && estimates.length > 0 && !selectedEstimate) {
+      const estimate = estimates.find((e) => e.id === openId);
+      if (estimate) {
+        setSelectedEstimate(estimate);
+        setLoadingEstimateDetails(true);
+        fetch(`/api/estimates/${estimate.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => { if (data) setSelectedEstimate(data); })
+          .catch(() => {})
+          .finally(() => setLoadingEstimateDetails(false));
+        window.history.replaceState({}, '', '/estimates');
+      }
+    }
+  }, [estimates, token]);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {

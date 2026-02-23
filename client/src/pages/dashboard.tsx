@@ -25,7 +25,7 @@ import {
   Clock,
   XCircle
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface DashboardData {
   account: {
@@ -344,7 +344,7 @@ export default function Dashboard() {
             ) : estimatesData && estimatesData.length > 0 ? (
               <div className="space-y-2">
                 {estimatesData.slice(0, 5).map((estimate) => (
-                  <Link key={estimate.id} href="/estimates">
+                  <Link key={estimate.id} href={`/estimates?open=${estimate.id}`}>
                     <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="p-1.5 bg-orange-50 rounded-md shrink-0">
@@ -398,7 +398,7 @@ export default function Dashboard() {
             ) : dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
               <div className="space-y-2">
                 {dashboardData.recentOrders.slice(0, 5).map((order) => (
-                  <Link key={order.id} href="/orders">
+                  <Link key={order.id} href={`/orders?open=${order.id}`}>
                     <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="p-1.5 bg-blue-50 rounded-md shrink-0">
