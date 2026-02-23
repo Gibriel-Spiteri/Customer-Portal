@@ -524,10 +524,35 @@ export class NetSuiteM2M {
         AND pra.custrecord_txnpra_pratype != '1'
     `.trim();
 
-    const [mainResult, linesResult, praResult] = await Promise.all([
+    const filesQuery = `
+      SELECT 
+        File.id AS fileId,
+        File.name AS fileName,
+        File.description AS fileDescription,
+        File.filetype AS fileType,
+        File.filesize AS fileSize,
+        File.url AS fileUrl,
+        File.createddate AS createdDate,
+        File.lastmodifieddate AS lastModifiedDate,
+        Message.subject AS messageSubject,
+        Message.datetime AS messageDate
+      FROM 
+        Message
+      INNER JOIN 
+        MessageFile ON MessageFile.message = Message.id
+      INNER JOIN 
+        File ON File.id = MessageFile.file
+      WHERE 
+        Message.transaction = ${orderId}
+      ORDER BY 
+        File.createddate DESC
+    `.trim();
+
+    const [mainResult, linesResult, praResult, filesResult] = await Promise.all([
       this.executeSuiteQL(mainQuery, 1, 0),
       this.executeSuiteQL(linesQuery, 100, 0),
-      this.executeSuiteQL(praQuery, 50, 0).catch(() => ({ items: [] })) // Gracefully handle if PRA query fails
+      this.executeSuiteQL(praQuery, 50, 0).catch(() => ({ items: [] })),
+      this.executeSuiteQL(filesQuery, 100, 0).catch(() => ({ items: [] }))
     ]);
 
     if (mainResult.items.length === 0) {
@@ -550,7 +575,8 @@ export class NetSuiteM2M {
       ...mainResult.items[0],
       discounttotal: discounttotal.toString(),
       lineItems: linesResult.items,
-      praDetails: praResult.items
+      praDetails: praResult.items,
+      files: filesResult.items
     };
   }
 

@@ -32,7 +32,10 @@ import {
   AlertCircle,
   DollarSign,
   TrendingUp,
-  HeadphonesIcon
+  HeadphonesIcon,
+  Paperclip,
+  Download,
+  ExternalLink
 } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
@@ -46,6 +49,19 @@ interface OrderItem {
   rate: string;
   amount: string;
   description: string;
+}
+
+interface OrderFile {
+  fileId: string;
+  fileName: string;
+  fileDescription: string | null;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  createdDate: string;
+  lastModifiedDate: string;
+  messageSubject: string | null;
+  messageDate: string | null;
 }
 
 interface Order {
@@ -65,6 +81,7 @@ interface Order {
   memo?: string;
   tagFor?: string;
   items?: OrderItem[];
+  files?: OrderFile[];
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
 }
@@ -1012,13 +1029,64 @@ export default function Orders() {
                         </>
                       )}
 
+                      {/* Files Section */}
+                      {selectedOrder.files && selectedOrder.files.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold flex items-center">
+                              <Paperclip className="h-5 w-5 mr-2" />
+                              Files ({selectedOrder.files.length})
+                            </h3>
+                            <div className="space-y-2">
+                              {selectedOrder.files.map((file, index) => {
+                                const fileSizeKB = file.fileSize ? (file.fileSize / 1024).toFixed(1) : null;
+                                const fileSizeMB = file.fileSize && file.fileSize > 1048576 ? (file.fileSize / 1048576).toFixed(1) : null;
+                                const displaySize = fileSizeMB ? `${fileSizeMB} MB` : fileSizeKB ? `${fileSizeKB} KB` : '';
+
+                                return (
+                                  <div key={file.fileId || index} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <FileText className="h-5 w-5 text-blue-500 shrink-0" />
+                                      <div className="min-w-0">
+                                        <p className="font-medium text-gray-900 truncate">{file.fileName}</p>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                          {displaySize && <span>{displaySize}</span>}
+                                          {file.createdDate && (
+                                            <span>{new Date(file.createdDate).toLocaleDateString()}</span>
+                                          )}
+                                          {file.fileDescription && (
+                                            <span className="truncate">{file.fileDescription}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {file.fileUrl && (
+                                      <a
+                                        href={file.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="shrink-0 ml-2"
+                                      >
+                                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                          <Download className="h-4 w-4" />
+                                        </Button>
+                                      </a>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
                       {/* Action Buttons */}
                       <div className="flex justify-end space-x-3 pt-4">
                         <Button 
                           variant="outline" 
                           onClick={() => {
                             setSelectedOrder(null);
-                            // Clear cached build details when closing order
                             setCabinetBuildDetails({});
                             setVisibleBuildDetails({});
                           }}

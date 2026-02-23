@@ -1368,6 +1368,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           praType: pra.pratype,
           praDescription: pra.pradescription
         })) : [],
+        files: orderDetails.files ? orderDetails.files.map((file: any) => ({
+          fileId: file.fileid,
+          fileName: file.filename,
+          fileDescription: file.filedescription,
+          fileType: file.filetype,
+          fileSize: file.filesize,
+          fileUrl: file.fileurl,
+          createdDate: file.createddate,
+          lastModifiedDate: file.lastmodifieddate,
+          messageSubject: file.messagesubject,
+          messageDate: file.messagedate
+        })) : [],
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
       };
