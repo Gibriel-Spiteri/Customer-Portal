@@ -63,12 +63,7 @@ export function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-netsuite-blue text-white text-sm">
-                        {getInitials(user.companyName, user.email)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:block font-medium uppercase">
+                    <span className="font-medium uppercase">
                       {user.companyName || 'Account'}
                     </span>
                     <ChevronDown className="h-4 w-4" />
