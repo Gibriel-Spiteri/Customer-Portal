@@ -371,10 +371,7 @@ export default function Support() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="open">
-                              All Open Cases ({tickets.filter(t => ['1', '2', '3', '4'].includes(t.status)).length})
-                            </SelectItem>
-                            <SelectItem value="all">
-                              All Cases ({tickets.length})
+                              All Open ({tickets.filter(t => ['1', '2', '3', '4'].includes(t.status)).length})
                             </SelectItem>
                             <SelectItem value="1">
                               Not Started ({tickets.filter(t => t.status === '1').length})
@@ -382,17 +379,8 @@ export default function Support() {
                             <SelectItem value="2">
                               In Progress ({tickets.filter(t => t.status === '2').length})
                             </SelectItem>
-                            <SelectItem value="3">
-                              Escalated ({tickets.filter(t => t.status === '3').length})
-                            </SelectItem>
-                            <SelectItem value="4">
-                              Re-Opened ({tickets.filter(t => t.status === '4').length})
-                            </SelectItem>
                             <SelectItem value="5">
                               Closed ({tickets.filter(t => t.status === '5').length})
-                            </SelectItem>
-                            <SelectItem value="6">
-                              On Hold ({tickets.filter(t => t.status === '6').length})
                             </SelectItem>
                           </SelectContent>
                         </Select>
