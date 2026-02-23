@@ -605,7 +605,7 @@ export default function Support() {
                           <Badge className={getStatusColor(selectedTicket.status)}>
                             {getStatusIcon(selectedTicket.status)}
                             <span className="ml-1 capitalize">
-                              {selectedTicket.status.replace('_', ' ')}
+                              {statusNames[selectedTicket.status] || selectedTicket.status}
                             </span>
                           </Badge>
                         )}
