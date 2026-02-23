@@ -274,6 +274,11 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                           amount: Math.abs(parseFloat(item.amount || '0')),
                         }));
 
+                      const isNonLineItemDiscount = (name: string) => {
+                        const n = name.toLowerCase();
+                        return n === 'customer discount';
+                      };
+
                       const displayItems = allItems.filter(item => {
                         const itemName = item.itemName || '';
                         const itemNameLower = itemName.toLowerCase();
@@ -285,9 +290,8 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                           itemNameLower.includes('ny_ny') ||
                           (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                         const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
-                        const isDiscount = isDiscountItem(itemName);
 
-                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isDiscount;
+                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isNonLineItemDiscount(itemName);
                       });
 
                       let productsTotal = 0;
@@ -337,10 +341,17 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                               ? displayQuantity * displayRate
                               : Math.abs(amount);
 
-                            const bgColor = "bg-gray-50";
-                            const textColor = "text-gray-900";
-                            const descColor = "text-gray-600";
-                            const isNegative = false;
+                            let bgColor = "bg-gray-50";
+                            let textColor = "text-gray-900";
+                            let descColor = "text-gray-600";
+                            let isNegative = false;
+
+                            if (isDiscountItem(item.itemName || '')) {
+                              bgColor = "bg-green-50";
+                              textColor = "text-green-900";
+                              descColor = "text-green-700";
+                              isNegative = true;
+                            }
 
                             return (
                               <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
