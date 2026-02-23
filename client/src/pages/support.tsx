@@ -153,7 +153,7 @@ export default function Support() {
       '2': 'bg-blue-100 text-blue-800',        // In Progress
       '3': 'bg-red-100 text-red-800',          // Escalated
       '4': 'bg-orange-100 text-orange-800',    // Re-Opened
-      '5': 'bg-gray-100 text-gray-800',        // Closed
+      '5': 'bg-green-100 text-green-800',        // Closed
       '6': 'bg-purple-100 text-purple-800',    // On Hold
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
@@ -443,7 +443,7 @@ export default function Support() {
                             '2': 'border-l-blue-400 bg-blue-50/30',
                             '3': 'border-l-red-400 bg-red-50/30',
                             '4': 'border-l-orange-400 bg-orange-50/30',
-                            '5': 'border-l-gray-400 bg-gray-50/30',
+                            '5': 'border-l-green-400 bg-green-50/30',
                             '6': 'border-l-purple-400 bg-purple-50/30',
                           };
                           const cardStyle = borderColor[ticket.status] || 'border-l-gray-400 bg-gray-50/30';
