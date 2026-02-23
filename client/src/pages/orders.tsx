@@ -212,13 +212,21 @@ export default function Orders() {
     });
   };
 
-  // Filter orders based on active view
   const getFilteredOrdersByView = (viewType: string) => {
     if (!orders) return [];
     
     let viewFiltered = [...orders];
     
-    // Apply view-specific filtering
+    if (searchTerm) {
+      return viewFiltered.filter(order => {
+        const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (order.memo && order.memo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (order.tagFor && order.tagFor.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      });
+    }
+    
     switch (viewType) {
       case 'active':
         viewFiltered = viewFiltered.filter(order => 
@@ -247,11 +255,9 @@ export default function Orders() {
         break;
     }
     
-    // Apply search and status filters
     return viewFiltered.filter(order => {
-      const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      return matchesStatus;
     });
   };
   
