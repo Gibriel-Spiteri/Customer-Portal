@@ -32,7 +32,6 @@ import {
   AlertCircle,
   DollarSign,
   TrendingUp,
-  HeadphonesIcon,
   Paperclip,
   Download,
   ExternalLink
@@ -532,49 +531,33 @@ export default function Orders() {
                   
                   {selectedOrder && (
                     <div className="space-y-6">
-                      {/* Order Header Card */}
-                      <div className="rounded-lg border bg-gray-50 p-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <Badge className={getStatusColor(selectedOrder.status)}>
-                              {getStatusIcon(selectedOrder.status)}
-                              <span className="ml-1 capitalize">{selectedOrder.status}</span>
-                            </Badge>
-                            <span className="text-sm text-gray-500 flex items-center">
-                              <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-                              {formatDate(selectedOrder.orderDate)}
-                            </span>
-                            <span className="text-base font-semibold">
-                              {formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}
-                            </span>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 text-purple-600 border-purple-200 hover:bg-purple-50 w-fit"
-                            onClick={() => {
-                              setSelectedOrder(null);
-                              navigate('/support');
-                            }}
-                          >
-                            <HeadphonesIcon className="h-4 w-4 mr-1.5" />
-                            Submit Case
-                          </Button>
+                      {/* Order Header Info */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Status</h4>
+                          <Badge className={getStatusColor(selectedOrder.status)}>
+                            {getStatusIcon(selectedOrder.status)}
+                            <span className="ml-1 capitalize">{selectedOrder.status}</span>
+                          </Badge>
                         </div>
-                        {(selectedOrder.memo || selectedOrder.tagFor) && (
-                          <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3 pt-3 border-t border-gray-200">
-                            {selectedOrder.memo && (
-                              <div className="text-sm">
-                                <span className="text-gray-500">Job ID:</span>{" "}
-                                <span className="font-medium">{selectedOrder.memo}</span>
-                              </div>
-                            )}
-                            {selectedOrder.tagFor && (
-                              <div className="text-sm">
-                                <span className="text-gray-500">CRD End User:</span>{" "}
-                                <span className="font-medium">{selectedOrder.tagFor}</span>
-                              </div>
-                            )}
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Date</h4>
+                          <p className="text-base">{formatDate(selectedOrder.orderDate)}</p>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Amount</h4>
+                          <p className="text-base font-semibold">{formatCurrency(selectedOrder.totalAmount, selectedOrder.currency)}</p>
+                        </div>
+                        {selectedOrder.memo && (
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Job ID</h4>
+                            <p className="text-base font-medium">{selectedOrder.memo}</p>
+                          </div>
+                        )}
+                        {selectedOrder.tagFor && (
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">CRD End User</h4>
+                            <p className="text-base font-medium">{selectedOrder.tagFor}</p>
                           </div>
                         )}
                       </div>
