@@ -1949,8 +1949,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: caseItem.category,
           followUpDate: caseItem.followupdate || null,
           relatedSalesOrder: caseItem.relatedsalesordernumber || caseItem.relatedsalesorder || null,
-          endUser: caseItem.relatedordertagfor || null,
-          jobId: caseItem.relatedordermemo || null,
+          endUser: caseItem.caseenduser || null,
+          jobId: caseItem.casejobid || null,
           messages: [] // Will be populated if we can fetch messages separately
         };
       };
