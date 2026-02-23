@@ -207,9 +207,6 @@ export default function Dashboard() {
           Welcome back{user.firstName ? `, ${user.firstName}` : ''}
         </h1>
         <p className="mt-1 text-gray-600">
-          {user.companyName ? (
-            <span className="font-medium">{user.companyName} - </span>
-          ) : null}
           Here's what's happening with your account today.
         </p>
       </div>
