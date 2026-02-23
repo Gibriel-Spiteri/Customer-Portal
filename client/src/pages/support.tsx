@@ -437,8 +437,19 @@ export default function Support() {
                   ) : filteredTickets && filteredTickets.length > 0 ? (
                     <>
                       <div className="space-y-4">
-                        {paginatedTickets.map((ticket) => (
-                          <div key={ticket.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        {paginatedTickets.map((ticket) => {
+                          const borderColor: Record<string, string> = {
+                            '1': 'border-l-yellow-400 bg-yellow-50/30',
+                            '2': 'border-l-blue-400 bg-blue-50/30',
+                            '3': 'border-l-red-400 bg-red-50/30',
+                            '4': 'border-l-orange-400 bg-orange-50/30',
+                            '5': 'border-l-gray-400 bg-gray-50/30',
+                            '6': 'border-l-purple-400 bg-purple-50/30',
+                          };
+                          const cardStyle = borderColor[ticket.status] || 'border-l-gray-400 bg-gray-50/30';
+                          
+                          return (
+                          <div key={ticket.id} className={`border border-l-4 rounded-lg p-4 hover:shadow-md transition-all ${cardStyle}`}>
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
                               {ticket.subject}
@@ -452,7 +463,7 @@ export default function Support() {
                           </div>
 
                           {ticket.detail && (
-                            <div className="bg-gray-50 rounded p-3 mb-3">
+                            <div className="bg-white/70 rounded p-3 mb-3 border border-gray-100">
                               <p className="text-base text-gray-700 line-clamp-2">
                                 <span className="font-semibold">Detail: </span>
                                 {ticket.detail}
@@ -460,22 +471,22 @@ export default function Support() {
                             </div>
                           )}
                           <div className="flex items-center justify-between text-sm text-gray-500">
-                            <div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                               {ticket.caseNumber && (
                                 <span className="font-medium text-gray-700">Case #{ticket.caseNumber}</span>
                               )}
-                              <span className={ticket.caseNumber ? "ml-3" : ""}>Created: {formatDate(ticket.createdAt)}</span>
+                              <span>Created: {formatDate(ticket.createdAt)}</span>
                               {ticket.assignedTo && (
-                                <span className="ml-4">Assigned to: {ticket.assignedTo}</span>
+                                <span>Assigned to: {ticket.assignedTo}</span>
                               )}
                               {ticket.followUpDate && (
-                                <span className="ml-4">
+                                <span>
                                   <Calendar className="inline h-3 w-3 mr-1" />
                                   Follow up: {formatDate(ticket.followUpDate)}
                                 </span>
                               )}
                               {ticket.relatedSalesOrder && (
-                                <span className="ml-4">
+                                <span>
                                   <Tag className="inline h-3 w-3 mr-1" />
                                   SO: {ticket.relatedSalesOrder}
                                 </span>
@@ -512,7 +523,8 @@ export default function Support() {
                             </Button>
                           </div>
                         </div>
-                      ))}
+                          );
+                        })}
                     </div>
                     
                     {/* Pagination Controls */}
