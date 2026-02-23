@@ -651,7 +651,7 @@ export default function Support() {
                       <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                         <div>
                           <span className="text-sm text-gray-500">Subject</span>
-                          <p className="font-semibold text-gray-900">{selectedTicket.subject}</p>
+                          <p className="text-gray-900">{selectedTicket.subject}</p>
                         </div>
                         {selectedTicket.detail && (
                           <div>
