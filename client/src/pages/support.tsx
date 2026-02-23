@@ -607,11 +607,6 @@ export default function Support() {
                             </span>
                           </Badge>
                         )}
-                        {selectedTicket?.caseNumber && (
-                          <Badge variant="outline" className="text-sm">
-                            Case #{selectedTicket.caseNumber}
-                          </Badge>
-                        )}
                       </div>
                     </DialogTitle>
                   </DialogHeader>
