@@ -325,55 +325,49 @@ export default function Orders() {
                 </div>
               </div>
 
-              {/* Filter buttons */}
-              <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 mb-6 w-full">
-                {[
-                  { value: 'active', label: 'Active', count: viewCounts.active, activeBg: 'bg-blue-50', activeText: 'text-blue-700', activeBadgeBg: 'bg-blue-100', activeBadgeText: 'text-blue-700', activeBorder: 'ring-blue-200' },
-                  { value: 'ready-for-delivery', label: 'Ready', count: viewCounts.readyForDelivery, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
-                  { value: 'completed', label: 'Completed', count: viewCounts.completed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
-                  { value: 'all', label: 'All', count: viewCounts.all, activeBg: 'bg-gray-50', activeText: 'text-gray-700', activeBadgeBg: 'bg-gray-200', activeBadgeText: 'text-gray-700', activeBorder: 'ring-gray-200' },
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setActiveView(filter.value)}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all",
-                      activeView === filter.value
-                        ? `${filter.activeBg} ${filter.activeText} shadow-sm ring-1 ${filter.activeBorder}`
-                        : "text-gray-500 hover:text-gray-700"
-                    )}
-                  >
-                    <span className="truncate">{filter.label}</span>
-                    <span className={cn(
-                      "text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0",
-                      activeView === filter.value
-                        ? `${filter.activeBadgeBg} ${filter.activeBadgeText}`
-                        : "bg-gray-200 text-gray-500"
-                    )}>
-                      {filter.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Filters and Search - Mobile optimized */}
-              <Card className="mb-4 sm:mb-6">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="w-full sm:flex-1">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="Search orders..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 h-12 text-base sm:text-sm sm:h-10"
-                        />
-                      </div>
-                    </div>
+              {/* Filter buttons and Search */}
+              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
+                <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 w-full md:flex-1">
+                  {[
+                    { value: 'active', label: 'Active', count: viewCounts.active, activeBg: 'bg-blue-50', activeText: 'text-blue-700', activeBadgeBg: 'bg-blue-100', activeBadgeText: 'text-blue-700', activeBorder: 'ring-blue-200' },
+                    { value: 'ready-for-delivery', label: 'Ready', count: viewCounts.readyForDelivery, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
+                    { value: 'completed', label: 'Completed', count: viewCounts.completed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
+                    { value: 'all', label: 'All', count: viewCounts.all, activeBg: 'bg-gray-50', activeText: 'text-gray-700', activeBadgeBg: 'bg-gray-200', activeBadgeText: 'text-gray-700', activeBorder: 'ring-gray-200' },
+                  ].map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => setActiveView(filter.value)}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all",
+                        activeView === filter.value
+                          ? `${filter.activeBg} ${filter.activeText} shadow-sm ring-1 ${filter.activeBorder}`
+                          : "text-gray-500 hover:text-gray-700"
+                      )}
+                    >
+                      <span className="truncate">{filter.label}</span>
+                      <span className={cn(
+                        "text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0",
+                        activeView === filter.value
+                          ? `${filter.activeBadgeBg} ${filter.activeBadgeText}`
+                          : "bg-gray-200 text-gray-500"
+                      )}>
+                        {filter.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="w-full md:w-64">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search orders..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 h-12 text-base sm:text-sm sm:h-10"
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Error State */}
               {error && (
