@@ -68,11 +68,9 @@ export function Header() {
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden md:block font-medium uppercase">
-                      {user.firstName || user.lastName ? (
+                      {user.companyName || (user.firstName || user.lastName ? (
                         `${user.firstName || ''} ${user.lastName || ''}`.trim()
-                      ) : (
-                        user.companyName || 'Account'
-                      )}
+                      ) : 'Account')}
                     </span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
