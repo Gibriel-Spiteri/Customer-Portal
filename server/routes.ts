@@ -1959,6 +1959,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Fetching support cases for customer ID:', req.user.netsuiteCustomerId);
       const cases = await m2m.getCustomerCases(req.user.netsuiteCustomerId, null, 30);
       console.log(`Found ${cases.length} support cases from NetSuite`);
+      if (cases.length > 0) {
+        console.log('Sample case keys:', Object.keys(cases[0]));
+        console.log('Sample case data:', JSON.stringify(cases[0], null, 2));
+      }
       
       // Debug: Log unique statuses
       const uniqueStatuses = [...new Set(cases.map((c: any) => c.status))];
