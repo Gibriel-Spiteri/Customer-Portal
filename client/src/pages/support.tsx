@@ -647,24 +647,19 @@ export default function Support() {
 
                       <hr className="border-gray-200" />
 
-                      {/* Subject */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Subject: {selectedTicket.subject}
-                        </h3>
-                      </div>
-
-                      {/* Detail */}
-                      {selectedTicket.detail && (
+                      {/* Subject & Detail */}
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Detail</h4>
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-gray-600 whitespace-pre-wrap">
-                              {selectedTicket.detail}
-                            </p>
-                          </div>
+                          <span className="text-sm text-gray-500">Subject</span>
+                          <p className="font-semibold text-gray-900">{selectedTicket.subject}</p>
                         </div>
-                      )}
+                        {selectedTicket.detail && (
+                          <div>
+                            <span className="text-sm text-gray-500">Detail</span>
+                            <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.detail}</p>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Messages Section */}
                       {(caseMessages.length > 0 || loadingMessages) && (
