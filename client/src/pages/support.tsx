@@ -593,55 +593,6 @@ export default function Support() {
                 </CardContent>
               </Card>
 
-              {/* FAQ Section */}
-              <Card className="mt-8">
-                <CardHeader>
-                  <CardTitle>Frequently Asked Questions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        How often is my data synchronized with NetSuite?
-                      </h3>
-                      <p className="text-gray-600">
-                        Critical data like orders, payments, and account balances are synchronized in real-time. 
-                        Historical data and customer details are updated every 10 minutes using batch synchronization.
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        Why do I see "LIVE" and "CACHED" badges on data?
-                      </h3>
-                      <p className="text-gray-600">
-                        These badges indicate data freshness. "LIVE" means the data is synchronized in real-time, 
-                        while "CACHED" means the data is updated at regular intervals to optimize performance and reduce API usage.
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        What should I do if I notice data discrepancies?
-                      </h3>
-                      <p className="text-gray-600">
-                        If you notice any discrepancies between the portal and NetSuite, try refreshing the data using the refresh button. 
-                        If the issue persists, please create a support ticket with specific details about the discrepancy.
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-2">
-                        How can I download my invoices?
-                      </h3>
-                      <p className="text-gray-600">
-                        You can download individual invoices from the invoice details page, or use the bulk download feature 
-                        from the main invoices page to download multiple invoices at once.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Ticket Details Modal */}
               <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
