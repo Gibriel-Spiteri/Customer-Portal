@@ -371,25 +371,6 @@ export default function Orders() {
                         />
                       </div>
                     </div>
-                    <div className="w-full sm:w-56">
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="h-12 sm:h-10">
-                          <Filter className="h-4 w-4 mr-2" />
-                          <SelectValue placeholder="Filter by status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="pending approval">Pending Approval</SelectItem>
-                          <SelectItem value="pending fulfillment">Pending Fulfillment</SelectItem>
-                          <SelectItem value="pending billing">Pending Billing</SelectItem>
-                          <SelectItem value="partially fulfilled">Partially Fulfilled</SelectItem>
-                          <SelectItem value="fully billed">Fully Billed</SelectItem>
-                          <SelectItem value="closed">Closed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
