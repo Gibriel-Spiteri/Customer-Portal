@@ -354,7 +354,7 @@ export default function Support() {
                 <CardHeader>
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
-                      <CardTitle>Your Support Cases from NetSuite</CardTitle>
+                      <CardTitle>Support Cases</CardTitle>
                       <Badge variant="outline" className="text-xs">
                         Synced from NetSuite
                       </Badge>
