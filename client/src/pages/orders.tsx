@@ -551,7 +551,7 @@ export default function Orders() {
 
                       {/* Order Date, Amount, Status */}
                       <Separator />
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-3 gap-4">
                         <div>
                           <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
                           <p className="text-base flex items-center">
