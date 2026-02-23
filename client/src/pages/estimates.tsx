@@ -388,16 +388,19 @@ export default function Estimates() {
                                                    itemNameLower.includes('ny_ny') ||
                                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                                   const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
+                                  const isDiscountItem = itemNameLower === 'customer discount' ||
+                                                        itemNameLower.includes('% off') ||
+                                                        itemNameLower.includes('% discount') ||
+                                                        itemNameLower === 'discount' ||
+                                                        itemNameLower.includes('we pay the tax') ||
+                                                        itemNameLower.includes('we pay') ||
+                                                        itemNameLower.includes('credit');
                                   
-                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
+                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isDiscountItem;
                                 });
                                 
                                 let productsTotal = 0;
                                 let shippingTotal = 0;
-                                let customerDiscountTotal = 0;
-                                let promotionalTotal = 0;
-                                let taxCreditTotal = 0;
-                                let percentDiscountTotal = 0;
                                 
                                 allItems.forEach(item => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
@@ -407,21 +410,26 @@ export default function Estimates() {
                                   
                                   const itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
                                   
-                                  if (itemNameLower === 'customer discount') {
-                                    customerDiscountTotal = itemTotal;
-                                  } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                                  if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
                                     shippingTotal += itemTotal;
-                                  } else if (itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
-                                    taxCreditTotal += itemTotal;
-                                  } else if (itemNameLower.includes('credit')) {
-                                    promotionalTotal += itemTotal;
-                                  } else if (itemNameLower.includes('% off') || itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
-                                    percentDiscountTotal += itemTotal;
+                                  } else if (
+                                    itemNameLower === 'customer discount' ||
+                                    itemNameLower.includes('% off') ||
+                                    itemNameLower.includes('% discount') ||
+                                    itemNameLower === 'discount' ||
+                                    itemNameLower.includes('we pay the tax') ||
+                                    itemNameLower.includes('we pay') ||
+                                    itemNameLower.includes('credit') ||
+                                    itemNameLower.includes('ny_') ||
+                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'))
+                                  ) {
+                                    // Skip - handled by discountTotal from NetSuite
                                   } else {
                                     productsTotal += itemTotal;
                                   }
                                 });
                                 
+                                const discountTotal = Math.abs(parseFloat(selectedEstimate.discountTotal || '0'));
                                 const subtotal = productsTotal;
                                 
                                 return (
@@ -439,31 +447,10 @@ export default function Estimates() {
                                         ? displayQuantity * displayRate 
                                         : Math.abs(amount);
                                       
-                                      let bgColor = "bg-gray-50";
-                                      let textColor = "text-gray-900";
-                                      let descColor = "text-gray-600";
-                                      let isNegative = false;
-                                      
-                                      if (itemNameLower === 'customer discount') {
-                                        bgColor = "bg-yellow-50";
-                                        textColor = "text-yellow-900";
-                                        descColor = "text-yellow-700";
-                                        isNegative = true;
-                                      } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
-                                        bgColor = "bg-blue-50";
-                                        textColor = "text-blue-900";
-                                        descColor = "text-blue-700";
-                                      } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
-                                        bgColor = "bg-green-50";
-                                        textColor = "text-green-900";
-                                        descColor = "text-green-700";
-                                        isNegative = true;
-                                      } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
-                                        bgColor = "bg-green-50";
-                                        textColor = "text-green-900";
-                                        descColor = "text-green-700";
-                                        isNegative = amount > 0;
-                                      }
+                                      const bgColor = "bg-gray-50";
+                                      const textColor = "text-gray-900";
+                                      const descColor = "text-gray-600";
+                                      const isNegative = false;
                                       
                                       return (
                                         <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
@@ -501,31 +488,10 @@ export default function Estimates() {
                                         <span className="font-medium">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                       
-                                      {customerDiscountTotal > 0 && (
+                                      {discountTotal > 0 && (
                                         <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">CUSTOMER DISCOUNT</span>
-                                          <span className="font-medium">-${customerDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </div>
-                                      )}
-                                      
-                                      {percentDiscountTotal > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">PROMO - ITEMIZED</span>
-                                          <span className="font-medium">-${percentDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </div>
-                                      )}
-                                      
-                                      {taxCreditTotal > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">TAX CREDIT</span>
-                                          <span className="font-medium">-${taxCreditTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </div>
-                                      )}
-                                      
-                                      {promotionalTotal > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">PROMOTIONAL CREDIT</span>
-                                          <span className="font-medium">-${promotionalTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                          <span className="text-gray-600">DISCOUNTS</span>
+                                          <span className="font-medium">-${discountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       )}
                                       

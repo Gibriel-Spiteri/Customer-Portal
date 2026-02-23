@@ -1334,6 +1334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAmount: orderDetails.total || '0.00',
         subtotal: orderDetails.subtotal || '0.00',
         tax: orderDetails.tax || '0.00',
+        discountTotal: orderDetails.discounttotal || '0',
         shipping: orderDetails.shipping || '0.00',
         currency: 'USD',
         shippingAddress: orderDetails.shippingaddress,
@@ -1814,6 +1815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAmount: estimate.total || '0',
         subtotal: estimate.total || '0', // Use total as subtotal since subtotal not available
         tax: estimate.tax || '0',
+        discountTotal: estimate.discounttotal || '0',
         shipping: '0', // Shipping not available in SuiteQL
         currency: estimate.currency || 'USD',
         estimateDate: estimate.date || estimate.trandate,

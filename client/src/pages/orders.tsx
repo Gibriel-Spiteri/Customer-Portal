@@ -641,24 +641,27 @@ export default function Orders() {
                                   const itemNameLower = itemName.toLowerCase();
                                   const amount = parseFloat(item.amount || 0);
                                   
-                                  // Exclude tax items, shipping items, and zero amounts
+                                  // Exclude tax items, shipping items, discount items, and zero amounts
                                   const isTaxItem = itemName.includes('NY_') || 
                                                    itemNameLower.includes('ny_suffolk') ||
                                                    itemNameLower.includes('ny_bhdl') ||
                                                    itemNameLower.includes('ny_ny') ||
                                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                                   const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
+                                  const isDiscountItem = itemNameLower === 'customer discount' ||
+                                                        itemNameLower.includes('% off') ||
+                                                        itemNameLower.includes('% discount') ||
+                                                        itemNameLower === 'discount' ||
+                                                        itemNameLower.includes('we pay the tax') ||
+                                                        itemNameLower.includes('we pay') ||
+                                                        itemNameLower.includes('credit');
                                   
-                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
+                                  return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isDiscountItem;
                                 });
                                 
                                 // Calculate totals for summary section
                                 let productsTotal = 0;
                                 let shippingTotal = 0;
-                                let customerDiscountTotal = 0;
-                                let promotionalTotal = 0;
-                                let taxCreditTotal = 0;
-                                let percentDiscountTotal = 0;
                                 
                                 allItems.forEach(item => {
                                   const qty = Math.abs(parseFloat(item.quantity || 0));
@@ -668,21 +671,26 @@ export default function Orders() {
                                   
                                   const itemTotal = qty > 0 ? qty * rate : Math.abs(amount);
                                   
-                                  if (itemNameLower === 'customer discount') {
-                                    customerDiscountTotal = itemTotal;
-                                  } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
+                                  if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
                                     shippingTotal += itemTotal;
-                                  } else if (itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
-                                    taxCreditTotal += itemTotal;
-                                  } else if (itemNameLower.includes('credit')) {
-                                    promotionalTotal += itemTotal;
-                                  } else if (itemNameLower.includes('% off') || itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
-                                    percentDiscountTotal += itemTotal;
+                                  } else if (
+                                    itemNameLower === 'customer discount' ||
+                                    itemNameLower.includes('% off') ||
+                                    itemNameLower.includes('% discount') ||
+                                    itemNameLower === 'discount' ||
+                                    itemNameLower.includes('we pay the tax') ||
+                                    itemNameLower.includes('we pay') ||
+                                    itemNameLower.includes('credit') ||
+                                    itemNameLower.includes('ny_') ||
+                                    (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'))
+                                  ) {
+                                    // Skip discount/tax items - handled by discountTotal from NetSuite
                                   } else {
                                     productsTotal += itemTotal;
                                   }
                                 });
                                 
+                                const discountTotal = Math.abs(parseFloat(selectedOrder.discountTotal || '0'));
                                 const subtotal = productsTotal;
                                 
                                 return (
@@ -702,37 +710,10 @@ export default function Orders() {
                                         ? displayQuantity * displayRate 
                                         : Math.abs(amount);
                                       
-                                      // Determine item type and styling
-                                      let bgColor = "bg-gray-50";
-                                      let textColor = "text-gray-900";
-                                      let descColor = "text-gray-600";
-                                      let isNegative = false;
-                                      
-                                      if (itemNameLower === 'customer discount') {
-                                        // Customer Discount - Yellow
-                                        bgColor = "bg-yellow-50";
-                                        textColor = "text-yellow-900";
-                                        descColor = "text-yellow-700";
-                                        isNegative = true;
-                                      } else if (itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping')) {
-                                        // Shipping - Blue
-                                        bgColor = "bg-blue-50";
-                                        textColor = "text-blue-900";
-                                        descColor = "text-blue-700";
-                                      } else if (itemNameLower.includes('credit') || itemNameLower.includes('we pay the tax') || itemNameLower.includes('we pay')) {
-                                        // Promotional credits - Green
-                                        bgColor = "bg-green-50";
-                                        textColor = "text-green-900";
-                                        descColor = "text-green-700";
-                                        isNegative = true;
-                                      } else if (itemNameLower.includes('% discount') || (itemNameLower === 'discount')) {
-                                        // Percentage discounts - Green
-                                        bgColor = "bg-green-50";
-                                        textColor = "text-green-900";
-                                        descColor = "text-green-700";
-                                        isNegative = amount > 0; // Show as negative if positive in NetSuite
-                                      }
-                                      // Everything else is a regular product (gray)
+                                      const bgColor = "bg-gray-50";
+                                      const textColor = "text-gray-900";
+                                      const descColor = "text-gray-600";
+                                      const isNegative = false;
                                       
                                       return (
                                         <div key={`item-${item.id || index}`} className={`${bgColor} p-3 rounded-lg`}>
@@ -942,34 +923,6 @@ export default function Orders() {
                                             </div>
                                           </div>
                                           
-                                          {/* Display PRA details if available - moved outside main flex */}
-                                          {itemNameLower === 'customer discount' && selectedOrder.praDetails && selectedOrder.praDetails.length > 0 && (
-                                            <div className="mt-2 pt-2 border-t border-yellow-200">
-                                              <div className="space-y-1">
-                                                {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
-                                                  const discountAmount = Math.abs(parseFloat(pra.discountRate || 0));
-                                                  const displayPercent = pra.praCode === '372' ? ' • 5% Off' : '';
-                                                  
-                                                  return (
-                                                    <div key={praIndex} className="flex justify-between items-start pl-2 border-l-2 border-yellow-300">
-                                                      <div className="flex-1">
-                                                        <p className="font-medium text-yellow-700">
-                                                          {pra.praDescription || 'Promotional Adjustment'}
-                                                          {displayPercent && <span className="text-xs">{displayPercent}</span>}
-                                                        </p>
-                                                      </div>
-                                                      <div className="text-right ml-4 w-24">
-                                                        <p className="text-sm font-medium text-yellow-700">
-                                                          ${discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                        </p>
-                                                      </div>
-                                                    </div>
-                                                  );
-                                                })}
-                                              </div>
-                                              <p className="italic text-xs text-yellow-600 mt-2">This discount includes all promotional adjustments and account-specific pricing.</p>
-                                            </div>
-                                          )}
                                         </div>
                                       );
                                     })}
@@ -984,58 +937,11 @@ export default function Orders() {
                                         <span className="font-medium">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                       
-                                      {/* DISCOUNT - Broken out by PRA type */}
-                                      {customerDiscountTotal > 0 && (
-                                        selectedOrder.praDetails && selectedOrder.praDetails.length > 0 ? (
-                                          <>
-                                            {selectedOrder.praDetails.map((pra: any, praIndex: number) => {
-                                              const praAmount = Math.abs(parseFloat(pra.discountRate || 0));
-                                              const praTypeId = pra.praType || pra.pratype;
-                                              let praLabel = pra.praDescription || pra.pradescription || 'DISCOUNT';
-                                              if (praTypeId === '3') praLabel = 'CRD REBATE REDEMPTION';
-                                              else if (praTypeId === '2') praLabel = 'HEADER DISCOUNT';
-                                              else if (praTypeId === '1') praLabel = 'PROMO - ITEMIZED';
-                                              else if (praTypeId === '4') praLabel = 'PROMO - NOT ITEMIZED';
-                                              else if (praTypeId === '5') praLabel = pra.pradescription || pra.praDescription || 'PROMOTIONAL';
-                                              
-                                              if (praAmount <= 0) return null;
-                                              return (
-                                                <div key={praIndex} className="flex justify-between text-sm">
-                                                  <span className="text-gray-600">{praLabel}</span>
-                                                  <span className="font-medium">-${praAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                                </div>
-                                              );
-                                            })}
-                                          </>
-                                        ) : (
-                                          <div className="flex justify-between text-sm">
-                                            <span className="text-gray-600">DISCOUNT</span>
-                                            <span className="font-medium">-${customerDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                          </div>
-                                        )
-                                      )}
-                                      
-                                      {/* PERCENTAGE DISCOUNTS (e.g. 5% Off) */}
-                                      {percentDiscountTotal > 0 && (
+                                      {/* DISCOUNTS - from NetSuite discounttotal */}
+                                      {discountTotal > 0 && (
                                         <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">PROMO - ITEMIZED</span>
-                                          <span className="font-medium">-${percentDiscountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </div>
-                                      )}
-                                      
-                                      {/* TAX CREDITS (We Pay The Tax) */}
-                                      {taxCreditTotal > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">TAX CREDIT</span>
-                                          <span className="font-medium">-${taxCreditTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </div>
-                                      )}
-                                      
-                                      {/* OTHER PROMOTIONAL CREDITS */}
-                                      {promotionalTotal > 0 && (
-                                        <div className="flex justify-between text-sm">
-                                          <span className="text-gray-600">PROMOTIONAL CREDIT</span>
-                                          <span className="font-medium">-${promotionalTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                          <span className="text-gray-600">DISCOUNTS</span>
+                                          <span className="font-medium">-${discountTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
                                       )}
                                       
