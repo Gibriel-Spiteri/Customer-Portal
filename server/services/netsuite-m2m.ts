@@ -385,14 +385,9 @@ export class NetSuiteM2M {
         BUILTIN.DF(transaction.currency) AS currency,
         transaction.exchangerate,
         transaction.createddate,
-        transaction.lastmodifieddate,
-        transaction.salesrep,
-        BUILTIN.DF(transaction.salesrep) AS salesRepName,
-        employee.custentity_preferred_name AS salesRepPreferredName
+        transaction.lastmodifieddate
       FROM 
         transaction
-      LEFT JOIN
-        employee ON transaction.salesrep = employee.id
       WHERE 
         transaction.type = 'Estimate'
         AND transaction.id = ${estimateId}
@@ -427,6 +422,19 @@ export class NetSuiteM2M {
       throw new Error(`Estimate ${estimateId} not found`);
     }
 
+    let salesRepPreferredName = '';
+    try {
+      const txnRecord = await this.getRecordField('estimate', estimateId, ['salesRep']);
+      if (txnRecord && txnRecord.salesRep && txnRecord.salesRep.id) {
+        const empRecord = await this.getRecordField('employee', txnRecord.salesRep.id, ['custentity_preferred_name']);
+        if (empRecord && empRecord.custentity_preferred_name) {
+          salesRepPreferredName = empRecord.custentity_preferred_name;
+        }
+      }
+    } catch (err: any) {
+      console.log('Sales rep fetch error (estimate):', err.message);
+    }
+
     const discounttotal = linesResult.items.reduce((total: number, item: any) => {
       const itemName = (item.itemname || '').toLowerCase();
       const amount = parseFloat(item.amount || 0);
@@ -438,6 +446,7 @@ export class NetSuiteM2M {
 
     return {
       ...mainResult.items[0],
+      salesreppreferredname: salesRepPreferredName,
       discounttotal: discounttotal.toString(),
       items: linesResult.items
     };
@@ -496,14 +505,9 @@ export class NetSuiteM2M {
         transaction.shipdate,
         transaction.shipmethod,
         transaction.createddate,
-        transaction.lastmodifieddate,
-        transaction.salesrep,
-        BUILTIN.DF(transaction.salesrep) AS salesRepName,
-        employee.custentity_preferred_name AS salesRepPreferredName
+        transaction.lastmodifieddate
       FROM 
         transaction
-      LEFT JOIN
-        employee ON transaction.salesrep = employee.id
       WHERE 
         transaction.type = 'SalesOrd'
         AND transaction.id = ${orderId}
@@ -573,6 +577,19 @@ export class NetSuiteM2M {
       throw new Error(`Order ${orderId} not found`);
     }
 
+    let salesRepPreferredName = '';
+    try {
+      const txnRecord = await this.getRecordField('salesOrder', orderId, ['salesRep']);
+      if (txnRecord && txnRecord.salesRep && txnRecord.salesRep.id) {
+        const empRecord = await this.getRecordField('employee', txnRecord.salesRep.id, ['custentity_preferred_name']);
+        if (empRecord && empRecord.custentity_preferred_name) {
+          salesRepPreferredName = empRecord.custentity_preferred_name;
+        }
+      }
+    } catch (err: any) {
+      console.log('Sales rep fetch error (order):', err.message);
+    }
+
     const orderNumber = (mainResult.items[0].ordernumber || '').replace(/^SO/, '');
 
     const filesQuery = `
@@ -614,6 +631,7 @@ export class NetSuiteM2M {
 
     return {
       ...mainResult.items[0],
+      salesreppreferredname: salesRepPreferredName,
       discounttotal: discounttotal.toString(),
       lineItems: linesResult.items,
       praDetails: praResult.items,
