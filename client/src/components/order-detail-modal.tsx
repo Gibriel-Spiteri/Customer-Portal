@@ -281,7 +281,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     <AlertDialogHeader>
                       <AlertDialogTitle>Pay Balance Due</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will create an invoice for the remaining balance of {formatCurrency(order.balanceDue || '0', order.currency)} on order #{order.orderNumber}. The invoice will be sent to the customer via text message and email.
+                        This will create a payment request for the remaining balance of {formatCurrency(order.balanceDue || '0', order.currency)} on order #{order.orderNumber}. The request will be sent to you via text message and email.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
