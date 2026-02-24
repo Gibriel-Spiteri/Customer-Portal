@@ -90,6 +90,20 @@ interface OrderDetailModalProps {
   loadingOrderDetails?: boolean;
 }
 
+const mapNetSuiteStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'A': 'pending',
+    'B': 'pending approval',
+    'C': 'cancelled',
+    'D': 'partially fulfilled',
+    'E': 'pending billing',
+    'F': 'pending fulfillment',
+    'G': 'fully billed',
+    'H': 'closed',
+  };
+  return statusMap[status] || status.toLowerCase();
+};
+
 const getStatusIcon = (status: string) => {
   const icons: Record<string, JSX.Element> = {
     'pending': <Clock className="h-4 w-4" />,
@@ -190,9 +204,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
           <DialogTitle className="flex items-center justify-between">
             <span>Order #{order?.orderNumber}</span>
             {order && (
-              <Badge className={getStatusColor(order.status)}>
-                {getStatusIcon(order.status)}
-                <span className="ml-1 capitalize">{order.status}</span>
+              <Badge className={getStatusColor(mapNetSuiteStatus(order.status))}>
+                {getStatusIcon(mapNetSuiteStatus(order.status))}
+                <span className="ml-1 capitalize">{mapNetSuiteStatus(order.status)}</span>
               </Badge>
             )}
           </DialogTitle>
