@@ -69,6 +69,15 @@ export interface Order {
   tagFor?: string;
   items?: OrderItem[];
   files?: OrderFile[];
+  praDetails?: Array<{
+    praId: string;
+    praNumber: string;
+    praCode: string;
+    praCodeName: string;
+    discountRate: string;
+    praType: string;
+    praDescription: string;
+  }>;
   dataFreshness: 'live' | 'cached';
   lastSyncAt: string;
 }
@@ -267,16 +276,13 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                         return n === 'customer discount';
                       };
 
-                      const discountLineItems = allItems
-                        .filter(item => {
-                          const itemName = item.itemName || '';
-                          const amount = parseFloat(item.amount || '0');
-                          return Math.abs(amount) > 0.01 && isNonLineItemDiscount(itemName);
-                        })
-                        .map(item => ({
-                          name: item.itemName,
-                          description: item.description,
-                          amount: Math.abs(parseFloat(item.amount || '0')),
+                      const discountLineItems = (order.praDetails || [])
+                        .filter(pra => pra.praDescription)
+                        .map(pra => ({
+                          name: pra.praDescription,
+                          description: '',
+                          amount: 0,
+                          discountRate: pra.discountRate,
                         }));
 
                       const displayItems = allItems.filter(item => {
@@ -551,14 +557,11 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                 {discountsExpanded && discountLineItems.length > 0 && (
                                   <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
                                     {discountLineItems.map((d, i) => (
-                                      <div key={`discount-${i}`} className="flex justify-between text-xs text-gray-500">
-                                        <span className="truncate mr-2">
-                                          {d.name}
-                                          {d.description && !d.description.toLowerCase().includes('click print') && (
-                                            <span className="text-gray-400 ml-1">- {d.description}</span>
-                                          )}
-                                        </span>
-                                        <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                      <div key={`discount-${i}`} className="text-xs text-gray-500">
+                                        <span>{d.name}</span>
+                                        {d.discountRate && (
+                                          <span className="text-gray-400 ml-1">({d.discountRate}%)</span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
