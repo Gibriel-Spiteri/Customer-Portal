@@ -249,11 +249,11 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
-                <p className="text-lg font-semibold">{formatCurrency(order.totalAmount, order.currency)}</p>
+                <p className="text-lg">{formatCurrency(order.totalAmount, order.currency)}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
-                <p className="text-lg font-semibold">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
+                <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
               </div>
             </div>
 

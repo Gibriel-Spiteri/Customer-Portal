@@ -128,7 +128,7 @@ export function EstimateDetailModal({ estimate, loading, onClose }: EstimateDeta
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h3>
-                <p className="text-lg font-semibold">
+                <p className="text-lg">
                   {formatCurrency(estimate.amount || estimate.totalAmount || '0', estimate.currency)}
                 </p>
               </div>
