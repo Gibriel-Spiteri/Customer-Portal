@@ -228,7 +228,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
         {order && (
           <div className="space-y-6">
             {(order.memo || order.tagFor || order.salesRepPreferredName) && (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4">
                 {order.tagFor && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">End User</h4>
@@ -247,6 +247,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     <p className="text-base">{order.salesRepPreferredName}</p>
                   </div>
                 )}
+                <div></div>
               </div>
             )}
 
