@@ -425,6 +425,7 @@ export class NetSuiteM2M {
         transaction.shipmethod,
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
+        transaction.custbody_deposit_due,
         transaction.createddate,
         transaction.lastmodifieddate
       FROM 
@@ -460,6 +461,7 @@ export class NetSuiteM2M {
         transaction.entity AS customerId,
         transaction.shipdate,
         transaction.shipmethod,
+        transaction.custbody_deposit_due,
         transaction.createddate,
         transaction.lastmodifieddate
       FROM 

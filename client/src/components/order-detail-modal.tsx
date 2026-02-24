@@ -58,6 +58,7 @@ export interface Order {
   shipDate: string | null;
   deliveryDate: string | null;
   totalAmount: string;
+  balanceDue?: string;
   subtotal?: string;
   tax?: string;
   shipping?: string;
@@ -220,7 +221,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
             )}
 
             <Separator />
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${order.balanceDue && parseFloat(order.balanceDue) !== 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
                 <p className="text-base flex items-center">
@@ -232,6 +233,12 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
                 <p className="text-lg font-semibold">{formatCurrency(order.totalAmount, order.currency)}</p>
               </div>
+              {order.balanceDue && parseFloat(order.balanceDue) !== 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
+                  <p className="text-lg font-semibold">{formatCurrency(order.balanceDue, order.currency)}</p>
+                </div>
+              )}
             </div>
 
             {loadingOrderDetails && !order.items ? (
