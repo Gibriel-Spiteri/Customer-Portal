@@ -507,6 +507,7 @@ export class NetSuiteM2M {
         pra.custrecord_txnpra_pracode AS praCode,
         BUILTIN.DF(pra.custrecord_txnpra_pracode) AS praCodeName,
         pra.custrecord_txnpra_discrate AS discountRate,
+        pra.custrecord_txnpra_posted AS postedAmount,
         pra.custrecord_txnpra_pratype AS praType,
         CASE 
           WHEN pra.custrecord_txnpra_pracode = '11' THEN 'CRD REBATE REDEMPTION'

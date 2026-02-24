@@ -75,6 +75,7 @@ export interface Order {
     praCode: string;
     praCodeName: string;
     discountRate: string;
+    postedAmount: string;
     praType: string;
     praDescription: string;
   }>;
@@ -280,9 +281,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                         .filter(pra => pra.praDescription)
                         .map(pra => ({
                           name: pra.praDescription,
-                          description: '',
-                          amount: 0,
-                          discountRate: pra.discountRate,
+                          amount: Math.abs(parseFloat(pra.postedAmount || '0')),
                         }));
 
                       const displayItems = allItems.filter(item => {
@@ -557,8 +556,11 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                 {discountsExpanded && discountLineItems.length > 0 && (
                                   <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
                                     {discountLineItems.map((d, i) => (
-                                      <div key={`discount-${i}`} className="text-xs text-gray-500">
+                                      <div key={`discount-${i}`} className="flex justify-between text-xs text-gray-500">
                                         <span>{d.name}</span>
+                                        {d.amount > 0 && (
+                                          <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
