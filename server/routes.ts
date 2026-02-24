@@ -1324,15 +1324,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memo: item.memo || '',
         tagFor: item.tagfor || '',
         customerName: item.customername,
-        salesRepPreferredName: item.salesreppreferredname || '',
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
       });
       
       const orders = await m2m.getCustomerOrders(req.user.netsuiteCustomerId, limit);
-      
 
-      
       const transformed = orders.map(transformOrder);
       res.json(transformed);
     } catch (error: any) {

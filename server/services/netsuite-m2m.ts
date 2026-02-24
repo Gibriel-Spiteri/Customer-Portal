@@ -470,12 +470,9 @@ export class NetSuiteM2M {
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
         transaction.createddate,
-        transaction.lastmodifieddate,
-        employee.custentity_preferred_name AS salesRepPreferredName
+        transaction.lastmodifieddate
       FROM 
         transaction
-      LEFT JOIN
-        employee ON transaction.salesrep = employee.id
       WHERE 
         transaction.type = 'SalesOrd'
         AND transaction.entity = ${customerId}
@@ -486,6 +483,39 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+  }
+
+  async getSalesRepNamesForOrders(orderIds: string[]): Promise<Record<string, string>> {
+    const result: Record<string, string> = {};
+    const empCache: Record<string, string> = {};
+
+    const batchSize = 5;
+    for (let i = 0; i < orderIds.length; i += batchSize) {
+      const batch = orderIds.slice(i, i + batchSize);
+      const promises = batch.map(async (orderId) => {
+        try {
+          const txnRecord = await this.getRecordField('salesOrder', orderId, ['salesRep']);
+          if (txnRecord?.salesRep?.id) {
+            const empId = txnRecord.salesRep.id;
+            if (empCache[empId] !== undefined) {
+              result[orderId] = empCache[empId];
+              return;
+            }
+            const empRecord = await this.getRecordField('employee', empId, ['custentity_preferred_name']);
+            if (empRecord?.custentity_preferred_name) {
+              empCache[empId] = empRecord.custentity_preferred_name;
+              result[orderId] = empRecord.custentity_preferred_name;
+            } else {
+              empCache[empId] = '';
+            }
+          }
+        } catch (err: any) {
+          // skip silently for individual order failures
+        }
+      });
+      await Promise.all(promises);
+    }
+    return result;
   }
 
   /**
