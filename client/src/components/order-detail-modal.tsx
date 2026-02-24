@@ -215,7 +215,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
 
         {order && (
           <div className="space-y-6">
-            {(order.memo || order.tagFor || order.salesRepPreferredName || loadingOrderDetails) && (
+            {(order.memo || order.tagFor || order.salesRepPreferredName) && (
               <div className="grid grid-cols-3 gap-4">
                 {order.tagFor && (
                   <div>
@@ -229,14 +229,12 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     <p className="text-base">{order.memo}</p>
                   </div>
                 )}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-1">Sales Rep</h4>
-                  {loadingOrderDetails && !order.salesRepPreferredName ? (
-                    <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
-                  ) : (
-                    <p className="text-base">{order.salesRepPreferredName || '—'}</p>
-                  )}
-                </div>
+                {order.salesRepPreferredName && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Sales Person</h4>
+                    <p className="text-base">{order.salesRepPreferredName}</p>
+                  </div>
+                )}
               </div>
             )}
 
