@@ -395,10 +395,7 @@ export class NetSuiteM2M {
     const discounttotal = linesResult.items.reduce((total: number, item: any) => {
       const itemName = (item.itemname || '').toLowerCase();
       const amount = parseFloat(item.amount || 0);
-      if (itemName === 'customer discount' || itemName === 'discount' ||
-          itemName.includes('% off') || itemName.includes('% discount') ||
-          itemName.includes('we pay the tax') || itemName.includes('we pay') ||
-          itemName.includes('credit')) {
+      if (itemName === 'customer discount') {
         return total + Math.abs(amount);
       }
       return total;
@@ -567,10 +564,7 @@ export class NetSuiteM2M {
     const discounttotal = linesResult.items.reduce((total: number, item: any) => {
       const itemName = (item.itemname || '').toLowerCase();
       const amount = parseFloat(item.amount || 0);
-      if (itemName === 'customer discount' || itemName === 'discount' ||
-          itemName.includes('% off') || itemName.includes('% discount') ||
-          itemName.includes('we pay the tax') || itemName.includes('we pay') ||
-          itemName.includes('credit')) {
+      if (itemName === 'customer discount') {
         return total + Math.abs(amount);
       }
       return total;

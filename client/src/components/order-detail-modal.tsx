@@ -262,22 +262,22 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                           n.includes('credit');
                       };
 
+                      const isNonLineItemDiscount = (name: string) => {
+                        const n = name.toLowerCase();
+                        return n === 'customer discount';
+                      };
+
                       const discountLineItems = allItems
                         .filter(item => {
                           const itemName = item.itemName || '';
                           const amount = parseFloat(item.amount || '0');
-                          return Math.abs(amount) > 0.01 && isDiscountItem(itemName);
+                          return Math.abs(amount) > 0.01 && isNonLineItemDiscount(itemName);
                         })
                         .map(item => ({
                           name: item.itemName,
                           description: item.description,
                           amount: Math.abs(parseFloat(item.amount || '0')),
                         }));
-
-                      const isNonLineItemDiscount = (name: string) => {
-                        const n = name.toLowerCase();
-                        return n === 'customer discount';
-                      };
 
                       const displayItems = allItems.filter(item => {
                         const itemName = item.itemName || '';
@@ -316,8 +316,11 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
 
                         if (isShippingItem(itemName)) {
                           shippingTotal += itemTotal;
-                        } else if (isDiscountItem(itemName) || isTaxItem(itemName)) {
-                          // Skip
+                        } else if (isTaxItem(itemName) || isNonLineItemDiscount(itemName)) {
+                          // Skip tax items and non-line-item discounts (handled in DISCOUNTS section)
+                        } else if (isDiscountItem(itemName)) {
+                          // Line item discounts reduce the subtotal
+                          productsTotal -= itemTotal;
                         } else {
                           productsTotal += itemTotal;
                         }
