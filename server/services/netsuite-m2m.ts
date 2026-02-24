@@ -432,6 +432,7 @@ export class NetSuiteM2M {
       WHERE 
         transaction.type = 'SalesOrd'
         AND transaction.entity = ${customerId}
+        AND transaction.custbody_orig_salesorder IS NULL
       ORDER BY 
         transaction.trandate DESC
     `.trim();
