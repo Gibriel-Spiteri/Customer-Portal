@@ -35,6 +35,7 @@ interface DashboardData {
     totalAmount: string;
     currency: string;
     tagFor?: string;
+    memo?: string;
     dataFreshness: 'live' | 'cached';
     lastSyncAt: string;
   }>;
@@ -436,6 +437,7 @@ export default function Dashboard() {
                         totalAmount: order.totalAmount,
                         currency: order.currency,
                         tagFor: order.tagFor,
+                        memo: order.memo,
                         shipDate: null,
                         deliveryDate: null,
                         shippingAddress: null,

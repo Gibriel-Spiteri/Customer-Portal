@@ -1224,7 +1224,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalAmount: order.total || '0.00',
           currency: 'USD',
           orderDate: order.orderdate || order.trandate,
-          tagFor: order.tagfor || ''
+          tagFor: order.tagfor || '',
+          memo: order.memo || ''
         })),
         recentPayments: payments.slice(0, 5).map((payment: any) => ({
           id: payment.id,
