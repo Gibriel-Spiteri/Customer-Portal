@@ -277,12 +277,20 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                         return n === 'customer discount';
                       };
 
-                      const discountLineItems = (order.praDetails || [])
-                        .filter(pra => pra.praDescription)
-                        .map(pra => ({
-                          name: pra.praDescription,
-                          amount: Math.abs(parseFloat(pra.postedAmount || '0')),
-                        }));
+                      const customerDiscountAmount = allItems
+                        .filter(item => isNonLineItemDiscount(item.itemName || ''))
+                        .reduce((sum, item) => sum + Math.abs(parseFloat(item.amount || '0')), 0);
+
+                      const praItems = (order.praDetails || []).filter(pra => pra.praDescription);
+                      const totalPraRate = praItems.reduce((sum, pra) => sum + Math.abs(parseFloat(pra.discountRate || '0')), 0);
+
+                      const discountLineItems = praItems.map(pra => {
+                        const rate = Math.abs(parseFloat(pra.discountRate || '0'));
+                        const amount = praItems.length === 1
+                          ? customerDiscountAmount
+                          : (totalPraRate > 0 ? (rate / totalPraRate) * customerDiscountAmount : 0);
+                        return { name: pra.praDescription, amount };
+                      });
 
                       const displayItems = allItems.filter(item => {
                         const itemName = item.itemName || '';
@@ -557,10 +565,8 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                   <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
                                     {discountLineItems.map((d, i) => (
                                       <div key={`discount-${i}`} className="flex justify-between text-xs text-gray-500">
-                                        <span>{d.name}</span>
-                                        {d.amount > 0 && (
-                                          <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        )}
+                                        <span className="truncate mr-2">{d.name}</span>
+                                        <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                     ))}
                                   </div>
