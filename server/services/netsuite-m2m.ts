@@ -470,9 +470,12 @@ export class NetSuiteM2M {
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
         transaction.createddate,
-        transaction.lastmodifieddate
+        transaction.lastmodifieddate,
+        employee.custentity_preferred_name AS salesRepPreferredName
       FROM 
         transaction
+      LEFT JOIN
+        employee ON transaction.salesrep = employee.id
       WHERE 
         transaction.type = 'SalesOrd'
         AND transaction.entity = ${customerId}

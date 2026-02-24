@@ -1324,6 +1324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memo: item.memo || '',
         tagFor: item.tagfor || '',
         customerName: item.customername,
+        salesRepPreferredName: item.salesreppreferredname || '',
         dataFreshness: 'live' as const,
         lastSyncAt: new Date().toISOString()
       });
