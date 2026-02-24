@@ -566,7 +566,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                     {discountLineItems.map((d, i) => (
                                       <div key={`discount-${i}`} className="flex justify-between text-xs text-gray-500">
                                         <span className="truncate mr-2">{d.name}</span>
-                                        <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        {d.amount > 0 && (
+                                          <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
