@@ -369,7 +369,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                     <h4 className={`font-medium ${textColor}`}>
                                       {item.itemName}
                                     </h4>
-                                    {item.description &&
+                                    {!isDiscountItem(item.itemName || '') && item.description &&
                                       !item.description.toLowerCase().includes('click print for description') && (
                                         <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                       )}
@@ -559,9 +559,6 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                     {discountLineItems.map((d, i) => (
                                       <div key={`discount-${i}`} className="text-xs text-gray-500">
                                         <span>{d.name}</span>
-                                        {d.discountRate && (
-                                          <span className="text-gray-400 ml-1">({d.discountRate}%)</span>
-                                        )}
                                       </div>
                                     ))}
                                   </div>
