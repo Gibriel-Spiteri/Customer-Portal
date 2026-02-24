@@ -274,7 +274,7 @@ export class NetSuiteM2M {
   /**
    * Fetch estimates for a specific customer
    */
-  async getCustomerEstimates(customerId: string, limit: number = 20): Promise<any[]> {
+  async getCustomerEstimates(customerId: string, limit: number = 1000): Promise<any[]> {
     const query = `
       SELECT 
         transaction.id,
@@ -306,7 +306,7 @@ export class NetSuiteM2M {
   /**
    * Fetch all estimates (for testing/admin purposes)
    */
-  async getAllEstimates(limit: number = 20, offset: number = 0): Promise<SuiteQLResponse> {
+  async getAllEstimates(limit: number = 1000, offset: number = 0): Promise<SuiteQLResponse> {
     const query = `
       SELECT 
         transaction.id,
@@ -411,7 +411,7 @@ export class NetSuiteM2M {
   /**
    * Fetch customer sales orders
    */
-  async getCustomerOrders(customerId: string, limit: number = 20): Promise<any[]> {
+  async getCustomerOrders(customerId: string, limit: number = 1000): Promise<any[]> {
     const query = `
       SELECT DISTINCT
         transaction.id,
@@ -584,7 +584,7 @@ export class NetSuiteM2M {
   /**
    * Fetch customer invoices
    */
-  async getCustomerInvoices(customerId: string, limit: number = 20): Promise<any[]> {
+  async getCustomerInvoices(customerId: string, limit: number = 1000): Promise<any[]> {
     const query = `
       SELECT DISTINCT
         transaction.id,
@@ -614,7 +614,7 @@ export class NetSuiteM2M {
   /**
    * Fetch customer payments
    */
-  async getCustomerPayments(customerId: string, limit: number = 20): Promise<any[]> {
+  async getCustomerPayments(customerId: string, limit: number = 1000): Promise<any[]> {
     const query = `
       SELECT DISTINCT
         transaction.id,

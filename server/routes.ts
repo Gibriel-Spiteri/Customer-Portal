@@ -1281,7 +1281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders - Fetch from NetSuite using SuiteQL
   app.get('/api/orders', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 1000;
       
       // Check if NetSuite M2M is configured and user has customer ID
       if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
@@ -1447,7 +1447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payments - Fetch from NetSuite using SuiteQL
   app.get('/api/payments', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 1000;
       
       // Check if NetSuite M2M is configured and user has customer ID
       if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
@@ -1504,7 +1504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoices - Fetch from NetSuite using SuiteQL
   app.get('/api/invoices', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 1000;
       
       // Check if NetSuite M2M is configured and user has customer ID
       if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET || !req.user.netsuiteCustomerId) {
@@ -1782,7 +1782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Estimates - Fetch from NetSuite using SuiteQL
   app.get('/api/estimates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 1000;
       const offset = parseInt(req.query.offset as string) || 0;
       
       // Check if NetSuite M2M is configured
