@@ -1314,7 +1314,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderNumber: item.ordernumber || item.tranid,
         status: mapStatus(item.status),
         totalAmount: item.total || '0.00',
-        balanceDue: item.custbody_deposit_due || '0.00',
         currency: 'USD',
         orderDate: item.orderdate || item.trandate,
         shipDate: item.shipdate,
@@ -1371,7 +1370,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Fetch order details with line items from NetSuite
-      const orderDetails = await m2m.getOrderDetails(req.params.id);
+      const [orderDetails, recordFields] = await Promise.all([
+        m2m.getOrderDetails(req.params.id),
+        m2m.getRecordField('salesOrder', req.params.id, ['custbody_deposit_due'])
+      ]);
       
       // Log the raw data to understand what NetSuite is returning
       console.log('Raw NetSuite order data:', JSON.stringify(orderDetails, null, 2));
@@ -1385,7 +1387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipDate: orderDetails.shipdate,
         deliveryDate: null,
         totalAmount: orderDetails.total || '0.00',
-        balanceDue: orderDetails.custbody_deposit_due || '0.00',
+        balanceDue: recordFields?.custbody_deposit_due ?? '0.00',
         subtotal: orderDetails.subtotal || '0.00',
         tax: orderDetails.tax || '0.00',
         discountTotal: orderDetails.discounttotal || '0',

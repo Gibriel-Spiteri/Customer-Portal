@@ -240,6 +240,36 @@ export class NetSuiteM2M {
   }
 
   /**
+   * Fetch a specific field from a record via the REST Record API
+   */
+  async getRecordField(recordType: string, recordId: string, fields: string[]): Promise<any> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const fieldsParam = fields.join(',');
+      const url = `${this.apiBaseUrl}/record/v1/${recordType}/${recordId}?fields=${fieldsParam}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('NetSuite M2M: Record API call failed:', response.status, errorText);
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('NetSuite M2M: Error fetching record field:', error);
+      return null;
+    }
+  }
+
+  /**
    * Search for a customer by entityid (customer number)
    */
   async searchCustomerByEntityId(entityId: string): Promise<any | null> {
@@ -425,7 +455,6 @@ export class NetSuiteM2M {
         transaction.shipmethod,
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
-        transaction.custbody_deposit_due,
         transaction.createddate,
         transaction.lastmodifieddate
       FROM 
@@ -461,7 +490,6 @@ export class NetSuiteM2M {
         transaction.entity AS customerId,
         transaction.shipdate,
         transaction.shipmethod,
-        transaction.custbody_deposit_due,
         transaction.createddate,
         transaction.lastmodifieddate
       FROM 
