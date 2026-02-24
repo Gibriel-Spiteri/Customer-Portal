@@ -7,6 +7,17 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Clock,
   Package,
   CreditCard,
@@ -18,6 +29,7 @@ import {
   MapPin,
   ChevronDown,
   ChevronUp,
+  DollarSign,
 } from "lucide-react";
 
 export interface OrderItem {
@@ -239,7 +251,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
             )}
 
             <Separator />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end">
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
                 <p className="text-base flex items-center">
@@ -254,6 +266,28 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
                 <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
+              </div>
+              <div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" className="whitespace-nowrap">
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Pay Balance
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Pay Balance Due</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will create an invoice for the remaining balance of {formatCurrency(order.balanceDue || '0', order.currency)} on order #{order.orderNumber}. The invoice will be sent to the customer via text message and email.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction>Confirm</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
 
