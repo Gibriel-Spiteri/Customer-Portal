@@ -563,12 +563,10 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                 </div>
                                 {discountsExpanded && discountLineItems.length > 0 && (
                                   <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
-                                    {discountLineItems.map((d, i) => (
+                                    {discountLineItems.filter(d => d.amount > 0).map((d, i) => (
                                       <div key={`discount-${i}`} className="flex justify-between text-xs text-gray-500">
                                         <span className="truncate mr-2">{d.name}</span>
-                                        {d.amount > 0 && (
-                                          <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        )}
+                                        <span className="whitespace-nowrap">-${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       </div>
                                     ))}
                                   </div>
