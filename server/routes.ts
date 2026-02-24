@@ -1399,6 +1399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memo: orderDetails.memo,
         tagFor: orderDetails.tagfor || '',
         customerName: orderDetails.customername,
+        salesRepPreferredName: orderDetails.salesreppreferredname || '',
         items: orderDetails.lineItems ? orderDetails.lineItems.map((item: any) => ({
           id: item.lineid,
           lineNumber: item.linenumber,
@@ -1892,6 +1893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memo: estimate.memo || '',
         tagFor: estimate.tagfor || '',
         customerName: estimate.customername,
+        salesRepPreferredName: estimate.salesreppreferredname || '',
         location: estimate.location,
         shippingAddress: '', // Not available in SuiteQL
         billingAddress: '', // Not available in SuiteQL

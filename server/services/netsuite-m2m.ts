@@ -385,9 +385,14 @@ export class NetSuiteM2M {
         BUILTIN.DF(transaction.currency) AS currency,
         transaction.exchangerate,
         transaction.createddate,
-        transaction.lastmodifieddate
+        transaction.lastmodifieddate,
+        transaction.salesrep,
+        BUILTIN.DF(transaction.salesrep) AS salesRepName,
+        employee.custentity_preferred_name AS salesRepPreferredName
       FROM 
         transaction
+      LEFT JOIN
+        employee ON transaction.salesrep = employee.id
       WHERE 
         transaction.type = 'Estimate'
         AND transaction.id = ${estimateId}
@@ -491,9 +496,14 @@ export class NetSuiteM2M {
         transaction.shipdate,
         transaction.shipmethod,
         transaction.createddate,
-        transaction.lastmodifieddate
+        transaction.lastmodifieddate,
+        transaction.salesrep,
+        BUILTIN.DF(transaction.salesrep) AS salesRepName,
+        employee.custentity_preferred_name AS salesRepPreferredName
       FROM 
         transaction
+      LEFT JOIN
+        employee ON transaction.salesrep = employee.id
       WHERE 
         transaction.type = 'SalesOrd'
         AND transaction.id = ${orderId}

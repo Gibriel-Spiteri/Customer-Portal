@@ -68,6 +68,7 @@ export interface Order {
   trackingNumber: string | null;
   memo?: string;
   tagFor?: string;
+  salesRepPreferredName?: string;
   items?: OrderItem[];
   files?: OrderFile[];
   praDetails?: Array<{
@@ -217,8 +218,8 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
 
         {order && (
           <div className="space-y-6">
-            {(order.memo || order.tagFor) && (
-              <div className="grid grid-cols-2 gap-4">
+            {(order.memo || order.tagFor || order.salesRepPreferredName) && (
+              <div className="grid grid-cols-3 gap-4">
                 {order.tagFor && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">End User</h4>
@@ -229,6 +230,12 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Job ID</h4>
                     <p className="text-base">{order.memo}</p>
+                  </div>
+                )}
+                {order.salesRepPreferredName && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Sales Rep</h4>
+                    <p className="text-base">{order.salesRepPreferredName}</p>
                   </div>
                 )}
               </div>

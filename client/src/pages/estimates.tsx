@@ -60,6 +60,7 @@ interface Estimate {
   subtotal?: string;
   tax?: string;
   shipping?: string;
+  salesRepPreferredName?: string;
 }
 
 export default function Estimates() {
@@ -332,8 +333,8 @@ export default function Estimates() {
                   {selectedEstimate && (
                     <div className="space-y-6 mt-4">
                       {/* End User and Job ID */}
-                      {(selectedEstimate.memo || selectedEstimate.tagFor) && (
-                        <div className="grid grid-cols-2 gap-4">
+                      {(selectedEstimate.memo || selectedEstimate.tagFor || selectedEstimate.salesRepPreferredName) && (
+                        <div className="grid grid-cols-3 gap-4">
                           {selectedEstimate.tagFor && (
                             <div>
                               <h3 className="text-sm font-medium text-gray-500 mb-1">End User</h3>
@@ -344,6 +345,12 @@ export default function Estimates() {
                             <div>
                               <h3 className="text-sm font-medium text-gray-500 mb-1">Job ID</h3>
                               <p className="text-base">{selectedEstimate.memo}</p>
+                            </div>
+                          )}
+                          {selectedEstimate.salesRepPreferredName && (
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-500 mb-1">Sales Rep</h3>
+                              <p className="text-base">{selectedEstimate.salesRepPreferredName}</p>
                             </div>
                           )}
                         </div>
