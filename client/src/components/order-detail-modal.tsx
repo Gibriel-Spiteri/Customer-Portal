@@ -16,9 +16,6 @@ import {
   Calendar,
   ShoppingCart,
   MapPin,
-  Paperclip,
-  FileText,
-  Download,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -652,56 +649,6 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                 </div>
               </>
             )}
-
-            <Separator />
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold flex items-center">
-                <Paperclip className="h-5 w-5 mr-2" />
-                Files {order.files && order.files.length > 0 && `(${order.files.length})`}
-              </h3>
-              {order.files && order.files.length > 0 ? (
-                <div className="space-y-2">
-                  {order.files.map((file, index) => {
-                    const fileSizeKB = file.fileSize ? (file.fileSize / 1024).toFixed(1) : null;
-                    const fileSizeMB = file.fileSize && file.fileSize > 1048576 ? (file.fileSize / 1048576).toFixed(1) : null;
-                    const displaySize = fileSizeMB ? `${fileSizeMB} MB` : fileSizeKB ? `${fileSizeKB} KB` : '';
-
-                    return (
-                      <div key={file.fileId || index} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FileText className="h-5 w-5 text-blue-500 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{file.fileName}</p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              {displaySize && <span>{displaySize}</span>}
-                              {file.createdDate && (
-                                <span>{new Date(file.createdDate).toLocaleDateString()}</span>
-                              )}
-                              {file.fileDescription && (
-                                <span className="truncate">{file.fileDescription}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        {file.fileUrl && (
-                          <a
-                            href={file.fileUrl}
-                            download={file.fileName}
-                            className="shrink-0 ml-2"
-                          >
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </a>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No files attached to this order.</p>
-              )}
-            </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button variant="outline" onClick={handleClose}>
