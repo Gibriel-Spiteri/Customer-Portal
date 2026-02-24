@@ -228,7 +228,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
         {order && (
           <div className="space-y-6">
             {(order.memo || order.tagFor || order.salesRepPreferredName) && (
-              <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {order.tagFor && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">End User</h4>
@@ -247,49 +247,48 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     <p className="text-base">{order.salesRepPreferredName}</p>
                   </div>
                 )}
-                <div></div>
               </div>
             )}
 
             <Separator />
-            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end">
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
-                <p className="text-base flex items-center">
-                  <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                  {formatDate(order.orderDate)}
-                </p>
+            <div className="flex items-end gap-4">
+              <div className="grid grid-cols-3 gap-4 flex-1">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
+                  <p className="text-base flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                    {formatDate(order.orderDate)}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
+                  <p className="text-lg">{formatCurrency(order.totalAmount, order.currency)}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
+                  <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
-                <p className="text-lg">{formatCurrency(order.totalAmount, order.currency)}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
-                <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
-              </div>
-              <div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" className="whitespace-nowrap">
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      Pay Balance
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Pay Balance Due</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will create an invoice for the remaining balance of {formatCurrency(order.balanceDue || '0', order.currency)} on order #{order.orderNumber}. The invoice will be sent to the customer via text message and email.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction>Confirm</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" className="whitespace-nowrap flex-shrink-0">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Pay Balance
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Pay Balance Due</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will create an invoice for the remaining balance of {formatCurrency(order.balanceDue || '0', order.currency)} on order #{order.orderNumber}. The invoice will be sent to the customer via text message and email.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction>Confirm</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {loadingOrderDetails && !order.items ? (
