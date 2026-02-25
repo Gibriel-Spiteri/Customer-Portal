@@ -2636,29 +2636,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ success: false, message: 'Sales order ID is required' });
       }
 
-      const hasM2MConfig = process.env.NETSUITE_CONSUMER_KEY &&
-                           process.env.NETSUITE_CONSUMER_SECRET &&
-                           process.env.NETSUITE_CERTIFICATE_ID;
+      const suiteletUrl = `https://1212804.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=3543&deploy=2&compid=1212804&ns-at=AAEJ7tMQKcksB0knkDChjv954UdVt2fCHwUVHvBPyQ8kJFDimWM&soid=${salesOrderId}`;
 
-      if (!hasM2MConfig) {
-        return res.status(500).json({ success: false, message: 'NetSuite authentication not configured' });
-      }
-
-      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
-      const m2m = new NetSuiteM2M();
-      const accessToken = await m2m.getAccessToken();
-
-      const rawAccountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
-      const accountIdForUrl = rawAccountId.replace('_', '-').toLowerCase();
-      const suiteletUrl = `https://${accountIdForUrl}.restlets.api.netsuite.com/app/site/hosting/scriptlet.nl?script=customscript_CSInvoicepostSuitelet&deploy=customdeploy1&soid=${salesOrderId}`;
-
-      console.log(`Pay balance: Calling Suitelet for SO internal ID ${salesOrderId}`);
+      console.log(`Pay balance: Calling external Suitelet for SO internal ID ${salesOrderId}`);
 
       const response = await fetch(suiteletUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
         },
       });
 
