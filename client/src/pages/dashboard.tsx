@@ -235,7 +235,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.totalCounts?.activeEstimates || dashboardData?.recentEstimates?.length || 0} active quotes`
+                      `${dashboardData?.totalCounts?.activeEstimates ?? dashboardData?.recentEstimates?.length ?? 0} active quotes`
                     )}
                   </p>
                 </div>
@@ -258,7 +258,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.totalCounts?.activeOrders || dashboardData?.recentOrders?.length || 0} active orders`
+                      `${dashboardData?.totalCounts?.activeOrders ?? dashboardData?.recentOrders?.length ?? 0} active orders`
                     )}
                   </p>
                 </div>
@@ -306,7 +306,7 @@ export default function Dashboard() {
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
-                      `${dashboardData?.totalCounts?.openCases || 0} open cases`
+                      `${dashboardData?.totalCounts?.openCases ?? 0} open cases`
                     )}
                   </p>
                 </div>

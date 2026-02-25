@@ -1239,10 +1239,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Calculate metrics using mapped statuses (consistent with SO page)
-      const activeOrdersCount = allOrders.filter((order: any) => {
+      const activeOrders = allOrders.filter((order: any) => {
         const mapped = mapOrderStatus(order.status);
         return mapped !== 'closed' && mapped !== 'fully billed' && mapped !== 'cancelled';
-      }).length;
+      });
+      const activeOrdersCount = activeOrders.length;
       
       const activeEstimatesCount = allEstimates.filter((estimate: any) => 
         estimate.status && !['Closed', 'Voided', 'Rejected'].includes(estimate.status)
