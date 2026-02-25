@@ -2628,5 +2628,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/pay-balance', authenticateToken, async (req: any, res: any) => {
+    try {
+      const { salesOrderId } = req.body;
+
+      if (!salesOrderId) {
+        return res.status(400).json({ success: false, message: 'Sales order ID is required' });
+      }
+
+      const hasM2MConfig = process.env.NETSUITE_CONSUMER_KEY &&
+                           process.env.NETSUITE_CONSUMER_SECRET &&
+                           process.env.NETSUITE_CERTIFICATE_ID;
+
+      if (!hasM2MConfig) {
+        return res.status(500).json({ success: false, message: 'NetSuite authentication not configured' });
+      }
+
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const accessToken = await m2m.getAccessToken();
+
+      const rawAccountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
+      const accountIdForUrl = rawAccountId.replace('_', '-').toLowerCase();
+      const suiteletUrl = `https://${accountIdForUrl}.restlets.api.netsuite.com/app/site/hosting/scriptlet.nl?script=customscript_CSInvoicepostSuitelet&deploy=customdeploy1&soid=${salesOrderId}`;
+
+      console.log(`Pay balance: Calling Suitelet for SO internal ID ${salesOrderId}`);
+
+      const response = await fetch(suiteletUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      const responseText = await response.text();
+      console.log(`Pay balance: Suitelet response status ${response.status}:`, responseText);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        result = { rawResponse: responseText };
+      }
+
+      if (response.ok) {
+        res.json({ success: true, message: 'Payment request created successfully', data: result });
+      } else {
+        res.status(response.status).json({ success: false, message: 'Failed to create payment request', data: result });
+      }
+    } catch (error) {
+      console.error('Pay balance error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   return httpServer;
 }

@@ -166,6 +166,26 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
   const [visibleBuildDetails, setVisibleBuildDetails] = useState<Record<string, boolean>>({});
   const [loadingCabinetBuild, setLoadingCabinetBuild] = useState<string | null>(null);
   const [discountsExpanded, setDiscountsExpanded] = useState(false);
+  const [payingBalance, setPayingBalance] = useState(false);
+
+  const handlePayBalance = async () => {
+    if (!order) return;
+    setPayingBalance(true);
+    try {
+      const response = await apiRequest('POST', '/api/pay-balance', { salesOrderId: order.id });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: "Payment request created", description: "The payment request has been sent via text message and email." });
+      } else {
+        toast({ title: "Request failed", description: data.message || "Unable to create payment request. Please try again.", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Pay balance error:', error);
+      toast({ title: "Request failed", description: "Unable to create payment request. Please try again.", variant: "destructive" });
+    } finally {
+      setPayingBalance(false);
+    }
+  };
 
   useEffect(() => {
     setCabinetBuildDetails({});
@@ -286,7 +306,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction>Confirm</AlertDialogAction>
+                      <AlertDialogAction onClick={handlePayBalance} disabled={payingBalance}>
+                        {payingBalance ? 'Sending...' : 'Confirm'}
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
