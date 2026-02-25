@@ -174,8 +174,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
     try {
       const response = await apiRequest('POST', '/api/pay-balance', { salesOrderId: order.id });
       const data = await response.json();
-      if (data.success) {
-        toast({ title: "Payment request created", description: "The payment request has been sent via text message and email." });
+      if (data.success && data.paymentUrl) {
+        window.open(data.paymentUrl, '_blank');
+        toast({ title: "Payment page opened", description: "A new tab has been opened for you to complete your payment." });
       } else {
         toast({ title: "Request failed", description: data.message || "Unable to create payment request. Please try again.", variant: "destructive" });
       }

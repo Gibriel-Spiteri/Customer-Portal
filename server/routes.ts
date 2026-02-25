@@ -2685,30 +2685,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const suiteletUrl = `https://1212804.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=3543&deploy=2&compid=1212804&ns-at=AAEJ7tMQKcksB0knkDChjv954UdVt2fCHwUVHvBPyQ8kJFDimWM&soid=${salesOrderId}`;
 
-      console.log(`Pay balance: Calling external Suitelet for SO internal ID ${salesOrderId}`);
+      console.log(`Pay balance: Generated payment URL for SO internal ID ${salesOrderId}`);
 
-      const response = await fetch(suiteletUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      const responseText = await response.text();
-      console.log(`Pay balance: Suitelet response status ${response.status}:`, responseText);
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch {
-        result = { rawResponse: responseText };
-      }
-
-      if (response.ok) {
-        res.json({ success: true, message: 'Payment request created successfully', data: result });
-      } else {
-        res.status(response.status).json({ success: false, message: 'Failed to create payment request', data: result });
-      }
+      res.json({ success: true, paymentUrl: suiteletUrl });
     } catch (error) {
       console.error('Pay balance error:', error);
       res.status(500).json({
