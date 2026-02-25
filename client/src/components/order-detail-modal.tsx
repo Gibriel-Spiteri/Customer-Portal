@@ -285,7 +285,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                   <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
                   <p className="text-lg">{formatCurrency(order.totalAmount, order.currency)}</p>
                 </div>
-                {!loadingOrderDetails && (
+                {!loadingOrderDetails && mapNetSuiteStatus(order.status) !== 'fully billed' && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
                   <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
@@ -293,7 +293,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                 )}
               </div>
               <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                {!loadingOrderDetails && (
+                {!loadingOrderDetails && mapNetSuiteStatus(order.status) !== 'fully billed' && parseFloat(order.balanceDue || '0') > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button size="sm" className="whitespace-nowrap">
