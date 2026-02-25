@@ -343,7 +343,7 @@ export default function Orders() {
                                 onClick={() => handleOrderClick(order)}
                               >
                                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.orderNumber}</td>
-                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{order.tagFor ? toTitleCase(order.tagFor) : '-'}</td>
+                                <td className="px-4 py-4 text-sm text-gray-600 max-w-[180px]">{order.tagFor ? toTitleCase(order.tagFor) : '-'}</td>
                                 <td className="px-4 py-4 text-sm text-gray-600 truncate max-w-[200px]">{order.memo ? toTitleCase(order.memo) : '-'}</td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.orderDate)}</td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(order.totalAmount, order.currency)}</td>
