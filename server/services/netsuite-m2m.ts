@@ -590,7 +590,7 @@ export class NetSuiteM2M {
         pracode.custrecord_pra_external_desc AS praDescription
       FROM 
         customrecord_txnpra pra
-        LEFT JOIN customrecord_pracode pracode ON pra.custrecord_txnpra_pracode = pracode.id
+        LEFT JOIN customrecord_pra pracode ON pra.custrecord_txnpra_pracode = pracode.id
       WHERE 
         pra.custrecord_txnpra_txnid = ${orderId}
         AND pra.custrecord_txnpra_txntype = 'salesorder'
