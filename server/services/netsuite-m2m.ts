@@ -587,11 +587,7 @@ export class NetSuiteM2M {
         pra.custrecord_txnpra_discrate AS discountRate,
         pra.custrecord_txnpra_posted AS postedAmount,
         pra.custrecord_txnpra_pratype AS praType,
-        CASE 
-          WHEN pra.custrecord_txnpra_pracode = '11' THEN 'CRD REBATE REDEMPTION'
-          WHEN pra.custrecord_txnpra_pracode = '372' THEN 'Limited Time Spring Into Savings Promo'
-          ELSE BUILTIN.DF(pra.custrecord_txnpra_pracode)
-        END AS praDescription
+        pra.custrecord_pra_external_desc AS praDescription
       FROM 
         customrecord_txnpra pra
       WHERE 

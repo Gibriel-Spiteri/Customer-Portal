@@ -109,7 +109,7 @@ Preferred communication style: Simple, everyday language.
 - **NetSuite Integration**: Fetches actual promotional names from customrecord_txnpra table
 - **Clean UI Design**: Right-aligned amounts matching main discount total
 - **PRA Type Filtering**: Excludes PROMO-ITEMIZED types, showing only CRD Rebate Redemption and Non-Itemized Promotions
-- **Actual NetSuite Names**: Displays "CRD REBATE REDEMPTION" and "Limited Time Spring Into Savings Promo" as they appear in NetSuite
+- **Actual NetSuite Names**: Uses `custrecord_pra_external_desc` field from NetSuite for discount summary names
 
 ## Previous Features (Aug 14, 2025)
 
