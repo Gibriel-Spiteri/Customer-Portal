@@ -285,14 +285,12 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                   <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
                   <p className="text-lg">{formatCurrency(order.totalAmount, order.currency)}</p>
                 </div>
+                {!loadingOrderDetails && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-1">Balance Due</h4>
-                  {loadingOrderDetails ? (
-                    <div className="h-7 w-20 bg-gray-200 rounded animate-pulse"></div>
-                  ) : (
-                    <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
-                  )}
+                  <p className="text-lg">{formatCurrency(order.balanceDue || '0', order.currency)}</p>
                 </div>
+                )}
               </div>
               <div className="absolute right-0 top-1/2 -translate-y-1/2">
                 {!loadingOrderDetails && (
