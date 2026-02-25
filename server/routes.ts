@@ -666,64 +666,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
-      // Verify credentials
-      let user = await storage.verifyPassword(email, password);
-      if (!user) {
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+
+      const customerQuery = `
+        SELECT 
+          customer.id,
+          customer.email,
+          customer.entityid AS customerNumber,
+          customer.companyname,
+          customer.firstname,
+          customer.lastname,
+          customer.custentity_legpw AS legpw,
+          customer.custentity_customerstatus AS customerStatus
+        FROM 
+          customer
+        WHERE 
+          LOWER(customer.email) = LOWER('${email.replace(/'/g, "''")}')
+      `.trim();
+
+      let customerResult;
+      try {
+        customerResult = await m2m.executeSuiteQL(customerQuery, 10, 0);
+      } catch (nsError) {
+        console.error('NetSuite authentication query failed:', nsError);
+        return res.status(500).json({ message: 'Authentication service temporarily unavailable. Please try again later.' });
+      }
+
+      if (!customerResult.items || customerResult.items.length === 0) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Update last login
-      await storage.updateUser(user.id, {
-        updatedAt: new Date(),
-      });
+      const customer = customerResult.items[0];
+      const storedPassword = customer.legpw;
 
-      // Check customer status if user has NetSuite customer ID
-      if (user.netsuiteCustomerId) {
-        try {
-          const { NetSuiteM2M } = await import('./services/netsuite-m2m');
-          const m2m = new NetSuiteM2M();
-          const customerData = await m2m.getCustomerAccount(user.netsuiteCustomerId);
-          
-          const customerStatus = customerData.customerstatus;
-          console.log(`Customer status for NetSuite ID ${user.netsuiteCustomerId}: ${customerStatus}`);
-          
-          if (customerStatus === '2' || customerStatus === 2) {
-            return res.status(403).json({ 
-              message: 'Your Account is on Hold. Speak to a Store Manager for more information.',
-              statusCode: 'GLOBAL_HOLD'
-            });
-          }
-          
-          if (customerStatus === '3' || customerStatus === 3) {
-            return res.status(403).json({ 
-              message: 'Your Account has been discontinued.',
-              statusCode: 'DISCONTINUED'
-            });
-          }
-          
-          if (customerStatus === '7' || customerStatus === 7) {
-            return res.status(403).json({ 
-              message: 'Your Account is on Contact Hold. Please contact support for assistance.',
-              statusCode: 'CONTACT_HOLD'
-            });
-          }
+      if (!storedPassword || storedPassword !== password) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
 
-          if (customerData.companyname && customerData.companyname !== user.companyName) {
-            await storage.updateUser(user.id, { companyName: customerData.companyname });
-            user = { ...user, companyName: customerData.companyname };
-            console.log(`Updated companyName for user ${user.id} to: ${customerData.companyname}`);
-          }
-        } catch (error) {
-          console.error('Error checking customer status:', error);
-          // Continue login if status check fails - don't block access due to API errors
+      const customerId = String(customer.id);
+      const customerStatus = customer.customerstatus;
+      console.log(`NetSuite login: Customer ${customerId} (${email}), status: ${customerStatus}`);
+
+      if (customerStatus === '2' || customerStatus === 2) {
+        return res.status(403).json({ 
+          message: 'Your Account is on Hold. Speak to a Store Manager for more information.',
+          statusCode: 'GLOBAL_HOLD'
+        });
+      }
+      
+      if (customerStatus === '3' || customerStatus === 3) {
+        return res.status(403).json({ 
+          message: 'Your Account has been discontinued.',
+          statusCode: 'DISCONTINUED'
+        });
+      }
+      
+      if (customerStatus === '7' || customerStatus === 7) {
+        return res.status(403).json({ 
+          message: 'Your Account is on Contact Hold. Please contact support for assistance.',
+          statusCode: 'CONTACT_HOLD'
+        });
+      }
+
+      let user = await storage.getUserByNetSuiteCustomerId(customerId);
+
+      if (!user) {
+        user = await storage.getUserByEmail(email);
+      }
+
+      if (user) {
+        const updates: Partial<any> = { updatedAt: new Date() };
+        if (customer.companyname && customer.companyname !== user.companyName) {
+          updates.companyName = customer.companyname;
         }
+        if (customer.firstname && customer.firstname !== user.firstName) {
+          updates.firstName = customer.firstname;
+        }
+        if (customer.lastname && customer.lastname !== user.lastName) {
+          updates.lastName = customer.lastname;
+        }
+        if (user.netsuiteCustomerId !== customerId) {
+          updates.netsuiteCustomerId = customerId;
+        }
+        user = (await storage.updateUser(user.id, updates)) || user;
+      } else {
+        user = await storage.createUser({
+          email: email.toLowerCase(),
+          password: password,
+          netsuiteCustomerId: customerId,
+          firstName: customer.firstname || null,
+          lastName: customer.lastname || null,
+          companyName: customer.companyname || null,
+          isActive: true,
+        });
+        console.log(`Created local user ${user.id} for NetSuite customer ${customerId}`);
       }
 
       const token = jwt.sign(
         { 
           id: user.id, 
           email: user.email,
-          netsuiteCustomerId: user.netsuiteCustomerId
+          netsuiteCustomerId: customerId
         },
         JWT_SECRET,
         { expiresIn: '24h' }
@@ -737,7 +781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: user.firstName,
           lastName: user.lastName,
           companyName: user.companyName,
-          netsuiteCustomerId: user.netsuiteCustomerId
+          netsuiteCustomerId: customerId
         },
       });
     } catch (error) {
