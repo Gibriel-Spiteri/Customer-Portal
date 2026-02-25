@@ -697,10 +697,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      const customer = customerResult.items[0];
-      const storedPassword = customer.legpw;
+      console.log(`NetSuite login: Found ${customerResult.items.length} customers for email ${email}`);
+      customerResult.items.forEach((c: any, i: number) => {
+        console.log(`  Customer[${i}]: id=${c.id}, entityid=${c.customernumber}, legpw=${c.legpw ? '***set***' : '(empty)'}`);
+      });
 
-      if (!storedPassword || storedPassword !== password) {
+      const customer = customerResult.items.find((c: any) => c.legpw && c.legpw === password);
+      if (!customer) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
