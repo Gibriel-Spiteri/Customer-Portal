@@ -324,15 +324,15 @@ export default function Orders() {
                   <Card className="hidden md:block">
                     <CardContent className="p-0">
                       <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[900px]">
                           <thead>
                             <tr className="border-b border-gray-200">
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order #</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
-                              <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Order #</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">CRD End User</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Job ID</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Date</th>
+                              <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Amount</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[130px]">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
@@ -342,12 +342,12 @@ export default function Orders() {
                                 className="hover:bg-gray-50 transition-colors cursor-pointer"
                                 onClick={() => handleOrderClick(order)}
                               >
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.orderNumber}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{order.tagFor ? toTitleCase(order.tagFor) : '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{order.memo ? toTitleCase(order.memo) : '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.orderDate)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(order.totalAmount, order.currency)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{order.tagFor ? toTitleCase(order.tagFor) : '-'}</td>
+                                <td className="px-4 py-4 text-sm text-gray-600 truncate max-w-[200px]">{order.memo ? toTitleCase(order.memo) : '-'}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.orderDate)}</td>
+                                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(order.totalAmount, order.currency)}</td>
+                                <td className="px-4 py-4 whitespace-nowrap">
                                   <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
                                     <span className="capitalize text-xs">{order.status}</span>
                                   </Badge>
