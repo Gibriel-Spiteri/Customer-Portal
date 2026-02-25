@@ -1223,10 +1223,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       ]);
       
-      // Calculate metrics using all records for accurate counts
-      const activeOrdersCount = allOrders.filter((order: any) => 
-        ['A', 'B', 'D', 'E', 'F'].includes(order.status) // All non-closed, non-cancelled statuses
-      ).length;
+      // Map NetSuite status codes to friendly names (same logic as /api/orders)
+      const mapOrderStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+          'A': 'pending',
+          'B': 'pending approval',
+          'C': 'cancelled',
+          'D': 'partially fulfilled',
+          'E': 'pending billing',
+          'F': 'pending fulfillment',
+          'G': 'fully billed',
+          'H': 'closed',
+        };
+        return statusMap[status] || status.toLowerCase();
+      };
+      
+      // Calculate metrics using mapped statuses (consistent with SO page)
+      const activeOrdersCount = allOrders.filter((order: any) => {
+        const mapped = mapOrderStatus(order.status);
+        return mapped !== 'closed' && mapped !== 'fully billed' && mapped !== 'cancelled';
+      }).length;
       
       const activeEstimatesCount = allEstimates.filter((estimate: any) => 
         estimate.status && !['Closed', 'Voided', 'Rejected'].includes(estimate.status)
@@ -1237,9 +1253,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         supportCase.status !== '5' && supportCase.status !== 5
       ).length;
       
-      const pendingOrdersCount = allOrders.filter((order: any) => 
-        ['A', 'B', 'F'].includes(order.status) // Pending, Pending Approval, Pending Fulfillment
-      ).length;
+      const pendingOrdersCount = allOrders.filter((order: any) => {
+        const mapped = mapOrderStatus(order.status);
+        return mapped === 'pending' || mapped === 'pending approval' || mapped === 'pending fulfillment';
+      }).length;
       
       const outstandingInvoices = invoices.filter((invoice: any) => 
         parseFloat(invoice.balancedue || invoice.amountremaining || '0') > 0
@@ -1267,7 +1284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         recentOrders: orders.slice(0, 5).map((order: any) => ({
           id: order.id,
           orderNumber: order.ordernumber || order.tranid,
-          status: order.status,
+          status: mapOrderStatus(order.status),
           totalAmount: order.total || '0.00',
           currency: 'USD',
           orderDate: order.orderdate || order.trandate,
