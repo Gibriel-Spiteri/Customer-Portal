@@ -383,14 +383,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                         const itemNameLower = itemName.toLowerCase();
                         const amount = parseFloat(item.amount || '0');
 
-                        const isTaxItem = itemName.includes('NY_') ||
-                          itemNameLower.includes('ny_suffolk') ||
-                          itemNameLower.includes('ny_bhdl') ||
-                          itemNameLower.includes('ny_ny') ||
-                          (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                         const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
 
-                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem && !isNonLineItemDiscount(itemName);
+                        return Math.abs(amount) > 0.01 && !isShippingItem && !isNonLineItemDiscount(itemName);
                       });
 
                       let productsTotal = 0;
@@ -400,11 +395,6 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                         const n = name.toLowerCase();
                         return n.includes('delivered') || n.includes('ups') || n.includes('shipping');
                       };
-                      const isTaxItem = (name: string) => {
-                        const n = name.toLowerCase();
-                        return n.includes('ny_') || (n.includes('tax') && !n.includes('we pay the tax'));
-                      };
-
                       allItems.forEach(item => {
                         const qty = Math.abs(parseFloat(String(item.quantity || 0)));
                         const rate = Math.abs(parseFloat(item.rate || '0'));
@@ -415,8 +405,8 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
 
                         if (isShippingItem(itemName)) {
                           shippingTotal += itemTotal;
-                        } else if (isTaxItem(itemName) || isNonLineItemDiscount(itemName)) {
-                          // Skip tax items and non-line-item discounts (handled in DISCOUNTS section)
+                        } else if (isNonLineItemDiscount(itemName)) {
+                          // Skip non-line-item discounts (handled in DISCOUNTS section)
                         } else if (isDiscountItem(itemName)) {
                           // Line item discounts reduce the subtotal
                           productsTotal -= itemTotal;

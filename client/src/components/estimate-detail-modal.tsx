@@ -166,14 +166,9 @@ export function EstimateDetailModal({ estimate, loading, onClose }: EstimateDeta
                         const itemNameLower = itemName.toLowerCase();
                         const amount = parseFloat(String(item.amount || 0));
                         
-                        const isTaxItem = itemName.includes('NY_') || 
-                                         itemNameLower.includes('ny_suffolk') ||
-                                         itemNameLower.includes('ny_bhdl') ||
-                                         itemNameLower.includes('ny_ny') ||
-                                         (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'));
                         const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
                         
-                        return Math.abs(amount) > 0.01 && !isTaxItem && !isShippingItem;
+                        return Math.abs(amount) > 0.01 && !isShippingItem;
                       });
                       
                       let productsTotal = 0;
@@ -196,9 +191,7 @@ export function EstimateDetailModal({ estimate, loading, onClose }: EstimateDeta
                           itemNameLower === 'discount' ||
                           itemNameLower.includes('we pay the tax') ||
                           itemNameLower.includes('we pay') ||
-                          itemNameLower.includes('credit') ||
-                          itemNameLower.includes('ny_') ||
-                          (itemNameLower.includes('tax') && !itemNameLower.includes('we pay the tax'))
+                          itemNameLower.includes('credit')
                         ) {
                         } else {
                           productsTotal += itemTotal;
