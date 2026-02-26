@@ -26,7 +26,6 @@ import {
   Smartphone
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
-import { ChangePassword } from "@/components/change-password";
 
 interface Account {
   id: string;
@@ -439,8 +438,6 @@ export default function AccountSettings() {
                   </CardContent>
                 </Card>
 
-                {/* Password Change */}
-                <ChangePassword />
               </div>
       </div>
     </MobileLayout>

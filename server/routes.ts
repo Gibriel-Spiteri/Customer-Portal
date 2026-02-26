@@ -7,7 +7,6 @@ import { queueService } from "./services/queue";
 import { 
   loginSchema, 
   registrationSchema, 
-  changePasswordSchema, 
   requestPasswordResetSchema, 
   resetPasswordSchema
 } from "@shared/schema";
@@ -840,39 +839,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Change password endpoint
-  app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
-    try {
-      const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
-      const userId = req.user.id;
-      
-      // Get user
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      
-      // Verify current password
-      const isValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isValid) {
-        return res.status(401).json({ message: 'Current password is incorrect' });
-      }
-      
-      // Update password
-      const updated = await storage.updatePassword(userId, newPassword);
-      if (!updated) {
-        return res.status(500).json({ message: 'Failed to update password' });
-      }
-      
-      res.json({ message: 'Password changed successfully' });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Validation error', errors: error.errors });
-      }
-      console.error('Change password error:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
 
   // Request password reset endpoint
   app.post('/api/auth/request-password-reset', async (req, res) => {

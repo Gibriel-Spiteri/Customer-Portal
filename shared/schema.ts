@@ -75,11 +75,6 @@ export const registrationSchema = z.object({
   netsuiteCustomerId: z.string().min(1, 'Customer Number is required'),
 });
 
-// Change password schema
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-});
 
 // Request password reset schema
 export const requestPasswordResetSchema = z.object({
