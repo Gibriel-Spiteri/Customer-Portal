@@ -605,6 +605,11 @@ export class NetSuiteM2M {
       this.executeSuiteQL(praQuery, 50, 0).catch((err) => { console.log('PRA query error:', err.message); return { items: [] }; })
     ]);
 
+    console.log(`[DEBUG] Order ${orderId} line items count: ${linesResult.items.length}`);
+    linesResult.items.forEach((item: any, i: number) => {
+      console.log(`[DEBUG] Line ${i}: itemName=${item.itemname}, itemType=${item.itemtype}, amount=${item.amount}, quantity=${item.quantity}, rate=${item.rate}, taxline=${item.taxline}`);
+    });
+
     if (mainResult.items.length === 0) {
       throw new Error(`Order ${orderId} not found`);
     }
