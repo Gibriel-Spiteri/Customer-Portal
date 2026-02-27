@@ -384,10 +384,12 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                         const itemName = item.itemName || '';
                         const itemNameLower = itemName.toLowerCase();
                         const amount = parseFloat(item.amount || '0');
+                        const rate = parseFloat(item.rate || '0');
 
                         const isShippingItem = itemNameLower.includes('delivered') || itemNameLower.includes('ups') || itemNameLower.includes('shipping');
+                        const hasValue = Math.abs(amount) > 0.01 || Math.abs(rate) > 0.01;
 
-                        return Math.abs(amount) > 0.01 && !isShippingItem && !isNonLineItemDiscount(itemName);
+                        return hasValue && !isShippingItem && !isNonLineItemDiscount(itemName);
                       });
 
                       let productsTotal = 0;
