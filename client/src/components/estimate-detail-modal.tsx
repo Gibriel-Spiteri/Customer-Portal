@@ -243,9 +243,9 @@ export function EstimateDetailModal({ estimate, loading, onClose }: EstimateDeta
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
                                     <h4 className={`font-medium ${textColor}`}>
-                                      {item.itemName || item.name}
+                                      {isNegative && item.description ? item.description : (item.itemName || item.name)}
                                     </h4>
-                                    {item.description && 
+                                    {!isNegative && item.description && 
                                       !item.description.toLowerCase().includes('click print for description') && (
                                       <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                     )}

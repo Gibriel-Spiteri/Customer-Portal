@@ -450,7 +450,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
                                     <h4 className={`font-medium ${textColor}`}>
-                                      {item.itemName}
+                                      {isDiscountItem(item.itemName || '') && item.description ? item.description : item.itemName}
                                     </h4>
                                     {!isDiscountItem(item.itemName || '') && item.description &&
                                       !item.description.toLowerCase().includes('click print for description') && (
