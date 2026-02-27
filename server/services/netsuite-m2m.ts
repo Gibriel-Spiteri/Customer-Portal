@@ -409,7 +409,7 @@ export class NetSuiteM2M {
       WHERE 
         transactionline.transaction = ${estimateId}
         AND transactionline.item IS NOT NULL
-        AND transactionline.taxline = 'F'
+        AND (transactionline.taxline IS NULL OR transactionline.taxline = 'F')
       ORDER BY 
         transactionline.linesequencenumber
     `.trim();
@@ -573,7 +573,7 @@ export class NetSuiteM2M {
       WHERE 
         transactionline.transaction = ${orderId}
         AND transactionline.item IS NOT NULL
-        AND transactionline.taxline = 'F'
+        AND (transactionline.taxline IS NULL OR transactionline.taxline = 'F')
       ORDER BY 
         transactionline.linesequencenumber
     `.trim();
