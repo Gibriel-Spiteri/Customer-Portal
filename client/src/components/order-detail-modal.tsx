@@ -347,9 +347,11 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     {(() => {
                       const allItems = order.items || [];
 
-                      const isDiscountItem = (name: string) => {
+                      const isDiscountItem = (name: string, itemType?: string) => {
                         const n = name.toLowerCase();
-                        return n === 'customer discount' ||
+                        const t = (itemType || '').toLowerCase();
+                        return t === 'discount' ||
+                          n === 'customer discount' ||
                           n === 'discount' ||
                           n.includes('% off') ||
                           n.includes('% discount') ||
@@ -407,7 +409,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                           shippingTotal += itemTotal;
                         } else if (isNonLineItemDiscount(itemName)) {
                           // Skip non-line-item discounts (handled in DISCOUNTS section)
-                        } else if (isDiscountItem(itemName)) {
+                        } else if (isDiscountItem(itemName, item.itemType)) {
                           // Line item discounts reduce the subtotal
                           productsTotal -= itemTotal;
                         } else {
@@ -438,7 +440,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                             let descColor = "text-gray-600";
                             let isNegative = false;
 
-                            if (isDiscountItem(item.itemName || '')) {
+                            const isDiscount = isDiscountItem(item.itemName || '', item.itemType);
+
+                            if (isDiscount) {
                               bgColor = "bg-green-50";
                               textColor = "text-green-900";
                               descColor = "text-green-700";
@@ -450,9 +454,9 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
                                     <h4 className={`font-medium ${textColor}`}>
-                                      {isDiscountItem(item.itemName || '') && item.description ? item.description : item.itemName}
+                                      {isDiscount && item.description ? item.description : item.itemName}
                                     </h4>
-                                    {!isDiscountItem(item.itemName || '') && item.description &&
+                                    {!isDiscount && item.description &&
                                       !item.description.toLowerCase().includes('click print for description') && (
                                         <p className={`text-sm ${descColor} mt-1`}>{item.description}</p>
                                       )}
