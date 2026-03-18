@@ -2692,6 +2692,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result = await m2m.getExpressBathItems('custitem_expressbath', limit, offset);
 
+      for (const item of result.items) {
+        const i = item as any;
+        const levels = [
+          i.sitecategorygreatgrandparent,
+          i.sitecategorygrandparent,
+          i.sitecategoryparent,
+          i.sitecategory
+        ].filter(Boolean);
+        
+        if (levels.length >= 2) {
+          i.sitecategory = levels[1];
+        } else if (levels.length === 1) {
+          i.sitecategory = levels[0];
+        }
+        delete i.sitecategoryparent;
+        delete i.sitecategorygrandparent;
+        delete i.sitecategorygreatgrandparent;
+      }
+
       const seen = new Map<string, any>();
       for (const item of result.items) {
         const id = (item as any).internalid || (item as any).internalId;
@@ -2700,6 +2719,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       const dedupedItems = Array.from(seen.values());
+
+      if (dedupedItems.length > 0) {
+        const sample = dedupedItems.slice(0, 5).map((i: any) => ({ id: i.internalid, sitecategory: i.sitecategory }));
+        console.log('Express Bath sample sitecategory values:', JSON.stringify(sample, null, 2));
+      }
 
       res.json({
         success: true,

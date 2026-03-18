@@ -37,12 +37,7 @@ function itemName(item: ExpressBathItem): string {
 }
 
 function getItemCategory(item: ExpressBathItem): string {
-  if (!item.sitecategory) return 'Other';
-  const segments = item.sitecategory.split(':').map(s => s.trim());
-  if (segments.length >= 2) {
-    return segments[1];
-  }
-  return segments[0] || 'Other';
+  return item.sitecategory || 'Other';
 }
 
 function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => void }) {

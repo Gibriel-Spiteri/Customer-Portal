@@ -925,11 +925,18 @@ export class NetSuiteM2M {
         item.custitem_itemthumbnailurl AS thumbnailUrl,
         BUILTIN.DF(item.unitstype) AS unitType,
         item.lastmodifieddate,
-        BUILTIN.DF(isc.category) AS siteCategory
+        BUILTIN.DF(isc.category) AS siteCategory,
+        BUILTIN.DF(sc_parent.id) AS siteCategoryParent,
+        BUILTIN.DF(sc_grandparent.id) AS siteCategoryGrandparent,
+        BUILTIN.DF(sc_greatgrandparent.id) AS siteCategoryGreatGrandparent
       FROM 
         item
         LEFT JOIN pricing p ON p.item = item.id AND p.pricelevel = 3 AND p.quantity = 1
         LEFT JOIN ItemSiteCategory isc ON isc.item = item.id
+        LEFT JOIN SiteCategory sc ON sc.id = isc.category
+        LEFT JOIN SiteCategory sc_parent ON sc_parent.id = sc.parentcategory
+        LEFT JOIN SiteCategory sc_grandparent ON sc_grandparent.id = sc_parent.parentcategory
+        LEFT JOIN SiteCategory sc_greatgrandparent ON sc_greatgrandparent.id = sc_grandparent.parentcategory
       WHERE 
         item.${fieldName} = 'T'
         AND item.isinactive = 'F'
