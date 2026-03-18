@@ -1,10 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/auth-context';
 import { MobileLayout } from '@/components/layout/mobile-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Table,
   TableBody,
@@ -15,11 +11,10 @@ import {
 } from '@/components/ui/table';
 import {
   Package,
-  AlertCircle,
-  RefreshCw,
   PackageCheck,
   PackageX,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,13 +36,188 @@ interface ExpressBathItem {
   lastmodifieddate: string | null;
 }
 
-interface ExpressBathResponse {
-  success: boolean;
-  items: ExpressBathItem[];
-  count: number;
-  hasMore: boolean;
-  totalResults?: number;
-}
+const DUMMY_ITEMS: ExpressBathItem[] = [
+  {
+    internalid: '10001',
+    itemnumber: 'EB-VAN-36WHT',
+    displayname: '36" Single Sink Vanity - White',
+    description: 'Modern single sink bathroom vanity with soft-close drawers',
+    itemtype: 'InvtPart',
+    quantityonhand: '45',
+    quantityavailable: '32',
+    quantitycommitted: '13',
+    quantityonorder: '20',
+    quantitybackordered: '0',
+    baseprice: '849.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/15/2026',
+  },
+  {
+    internalid: '10002',
+    itemnumber: 'EB-VAN-48GRY',
+    displayname: '48" Double Sink Vanity - Gray',
+    description: 'Contemporary double sink vanity with quartz countertop',
+    itemtype: 'InvtPart',
+    quantityonhand: '18',
+    quantityavailable: '12',
+    quantitycommitted: '6',
+    quantityonorder: '15',
+    quantitybackordered: '3',
+    baseprice: '1299.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/14/2026',
+  },
+  {
+    internalid: '10003',
+    itemnumber: 'EB-MIR-24RND',
+    displayname: '24" Round LED Mirror',
+    description: 'Frameless LED backlit mirror with anti-fog',
+    itemtype: 'InvtPart',
+    quantityonhand: '72',
+    quantityavailable: '65',
+    quantitycommitted: '7',
+    quantityonorder: '0',
+    quantitybackordered: '0',
+    baseprice: '199.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/12/2026',
+  },
+  {
+    internalid: '10004',
+    itemnumber: 'EB-FAU-CHRM',
+    displayname: 'Single Handle Faucet - Chrome',
+    description: 'Widespread bathroom faucet with pop-up drain',
+    itemtype: 'InvtPart',
+    quantityonhand: '156',
+    quantityavailable: '140',
+    quantitycommitted: '16',
+    quantityonorder: '50',
+    quantitybackordered: '0',
+    baseprice: '129.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/16/2026',
+  },
+  {
+    internalid: '10005',
+    itemnumber: 'EB-TIL-MRBWHT',
+    displayname: 'Marble Hex Tile - White (per sq ft)',
+    description: 'Natural marble hexagon mosaic tile',
+    itemtype: 'InvtPart',
+    quantityonhand: '2400',
+    quantityavailable: '1800',
+    quantitycommitted: '600',
+    quantityonorder: '1000',
+    quantitybackordered: '200',
+    baseprice: '12.99',
+    unittype: 'SqFt',
+    lastmodifieddate: '03/10/2026',
+  },
+  {
+    internalid: '10006',
+    itemnumber: 'EB-SHW-RNSYS',
+    displayname: 'Rain Shower System - Brushed Nickel',
+    description: 'Complete rain shower system with handheld spray',
+    itemtype: 'InvtPart',
+    quantityonhand: '8',
+    quantityavailable: '3',
+    quantitycommitted: '5',
+    quantityonorder: '25',
+    quantitybackordered: '10',
+    baseprice: '449.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/11/2026',
+  },
+  {
+    internalid: '10007',
+    itemnumber: 'EB-TUB-FREE60',
+    displayname: '60" Freestanding Soaking Tub',
+    description: 'Acrylic freestanding oval bathtub',
+    itemtype: 'InvtPart',
+    quantityonhand: '5',
+    quantityavailable: '0',
+    quantitycommitted: '5',
+    quantityonorder: '10',
+    quantitybackordered: '8',
+    baseprice: '1599.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/13/2026',
+  },
+  {
+    internalid: '10008',
+    itemnumber: 'EB-TOI-ELNG',
+    displayname: 'Elongated Comfort Height Toilet',
+    description: 'Two-piece elongated toilet with slow-close seat',
+    itemtype: 'InvtPart',
+    quantityonhand: '34',
+    quantityavailable: '28',
+    quantitycommitted: '6',
+    quantityonorder: '0',
+    quantitybackordered: '0',
+    baseprice: '349.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/09/2026',
+  },
+  {
+    internalid: '10009',
+    itemnumber: 'EB-CAB-MED30',
+    displayname: '30" Recessed Medicine Cabinet',
+    description: 'Mirror medicine cabinet with adjustable shelves',
+    itemtype: 'InvtPart',
+    quantityonhand: '22',
+    quantityavailable: '19',
+    quantitycommitted: '3',
+    quantityonorder: '10',
+    quantitybackordered: '0',
+    baseprice: '249.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/08/2026',
+  },
+  {
+    internalid: '10010',
+    itemnumber: 'EB-ACC-TBRNG',
+    displayname: 'Towel Bar Ring Set - Matte Black',
+    description: '4-piece bathroom accessory set',
+    itemtype: 'InvtPart',
+    quantityonhand: '0',
+    quantityavailable: '0',
+    quantitycommitted: '0',
+    quantityonorder: '40',
+    quantitybackordered: '15',
+    baseprice: '79.99',
+    unittype: 'Set',
+    lastmodifieddate: '03/07/2026',
+  },
+  {
+    internalid: '10011',
+    itemnumber: 'EB-LGT-VAN3',
+    displayname: '3-Light Vanity Light - Brass',
+    description: 'Modern 3-light vanity sconce with clear glass',
+    itemtype: 'InvtPart',
+    quantityonhand: '41',
+    quantityavailable: '38',
+    quantitycommitted: '3',
+    quantityonorder: '0',
+    quantitybackordered: '0',
+    baseprice: '159.99',
+    unittype: 'Each',
+    lastmodifieddate: '03/06/2026',
+  },
+  {
+    internalid: '10012',
+    itemnumber: 'EB-FLR-VYPLNK',
+    displayname: 'Luxury Vinyl Plank - Waterproof (per sq ft)',
+    description: 'Waterproof luxury vinyl plank flooring for bathrooms',
+    itemtype: 'InvtPart',
+    quantityonhand: '5200',
+    quantityavailable: '4100',
+    quantitycommitted: '1100',
+    quantityonorder: '2000',
+    quantitybackordered: '0',
+    baseprice: '4.49',
+    unittype: 'SqFt',
+    lastmodifieddate: '03/17/2026',
+  },
+];
 
 function getStockBadge(quantityAvailable: number) {
   if (quantityAvailable > 10) {
@@ -59,66 +229,27 @@ function getStockBadge(quantityAvailable: number) {
 }
 
 function ExpressBathContent() {
-  const { token } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<ExpressBathResponse>({
-    queryKey: ['/api/express-bath/items'],
-    enabled: !!token,
-  });
+  const items = DUMMY_ITEMS;
 
   const filteredItems = useMemo(() => {
-    if (!data?.items) return [];
-    if (!searchTerm.trim()) return data.items;
+    if (!searchTerm.trim()) return items;
     const term = searchTerm.toLowerCase();
-    return data.items.filter(item =>
+    return items.filter(item =>
       (item.itemnumber || '').toLowerCase().includes(term) ||
       (item.displayname || '').toLowerCase().includes(term) ||
       (item.description || '').toLowerCase().includes(term)
     );
-  }, [data?.items, searchTerm]);
-
-  const totalOnHand = useMemo(() => {
-    if (!data?.items) return 0;
-    return data.items.reduce((sum, item) => sum + parseFloat(item.quantityonhand || '0'), 0);
-  }, [data?.items]);
+  }, [items, searchTerm]);
 
   const totalAvailable = useMemo(() => {
-    if (!data?.items) return 0;
-    return data.items.reduce((sum, item) => sum + parseFloat(item.quantityavailable || '0'), 0);
-  }, [data?.items]);
+    return items.reduce((sum, item) => sum + parseFloat(item.quantityavailable || '0'), 0);
+  }, [items]);
 
   const outOfStockCount = useMemo(() => {
-    if (!data?.items) return 0;
-    return data.items.filter(item => parseFloat(item.quantityavailable || '0') <= 0).length;
-  }, [data?.items]);
-
-  if (isLoading) {
-    return (
-      <div className="p-4 md:p-6 space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-        </div>
-        <Skeleton className="h-96" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="p-4 md:p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load Express Bath items: {error instanceof Error ? error.message : 'Unknown error'}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+    return items.filter(item => parseFloat(item.quantityavailable || '0') <= 0).length;
+  }, [items]);
 
   return (
     <div className="p-4 md:p-6 space-y-4 pb-24 md:pb-6">
@@ -126,16 +257,15 @@ function ExpressBathContent() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Express Bath</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {data?.items?.length || 0} items
+            {items.length} items
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
+          onClick={() => {}}
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
@@ -149,7 +279,7 @@ function ExpressBathContent() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Total Items</p>
-                <p className="text-xl font-bold">{data?.items?.length || 0}</p>
+                <p className="text-xl font-bold">{items.length}</p>
               </div>
             </div>
           </CardContent>
@@ -201,12 +331,8 @@ function ExpressBathContent() {
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
               <Package className="h-12 w-12 mb-3 text-gray-300" />
-              <p className="text-lg font-medium">
-                {searchTerm ? 'No matching items found' : 'No Express Bath items found'}
-              </p>
-              <p className="text-sm mt-1">
-                {searchTerm ? 'Try adjusting your search term' : 'Items with Express Bath checked will appear here'}
-              </p>
+              <p className="text-lg font-medium">No matching items found</p>
+              <p className="text-sm mt-1">Try adjusting your search term</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -214,6 +340,7 @@ function ExpressBathContent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Item</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">On Hand</TableHead>
                     <TableHead className="text-right">Available</TableHead>
                     <TableHead className="text-right">Committed</TableHead>
@@ -230,10 +357,14 @@ function ExpressBathContent() {
                         <TableCell>
                           <div>
                             <p className="font-medium text-sm">{item.displayname || item.itemnumber}</p>
-                            {item.displayname && item.itemnumber && (
-                              <p className="text-xs text-gray-500">{item.itemnumber}</p>
+                            <p className="text-xs text-gray-500">{item.itemnumber}</p>
+                            {item.description && (
+                              <p className="text-xs text-gray-400 mt-0.5 hidden md:block">{item.description}</p>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm">
+                          {item.baseprice ? `$${parseFloat(item.baseprice).toFixed(2)}` : '-'}
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm">
                           {parseFloat(item.quantityonhand || '0').toLocaleString()}
