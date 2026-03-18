@@ -9,7 +9,6 @@ import {
   Settings, 
   HelpCircle,
   Calculator,
-  Bug,
   Bath
 } from "lucide-react";
 
@@ -55,11 +54,6 @@ const navigation: NavigationItem[] = [
     name: 'Account Settings',
     href: '/account',
     icon: Settings,
-  },
-  {
-    name: 'Debug Info',
-    href: '/debug',
-    icon: Bug,
   },
 ];
 

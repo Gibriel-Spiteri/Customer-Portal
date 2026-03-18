@@ -7,7 +7,6 @@ import {
   Star,
   Settings, 
   HelpCircle,
-  Bug,
   Bath
 } from "lucide-react";
 
@@ -46,11 +45,6 @@ const navigation = [
     name: 'Account Settings',
     href: '/account',
     icon: Settings,
-  },
-  {
-    name: 'Debug Info',
-    href: '/debug',
-    icon: Bug,
   },
 ];
 
