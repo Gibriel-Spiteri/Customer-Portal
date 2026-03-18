@@ -48,7 +48,7 @@ function Router() {
       <Route path="/invoices" component={Invoices} />
       <Route path="/payments" component={Payments} />
       <Route path="/loyalty" component={Loyalty} />
-      <Route path="/express-bath" component={ExpressBath} />
+      <Route path="/express-bath">{() => <ExpressBath />}</Route>
       <Route path="/consumers-cash" component={ConsumersCash} />
       <Route path="/account" component={AccountSettings} />
       <Route path="/support" component={Support} />
