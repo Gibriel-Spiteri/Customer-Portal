@@ -66,7 +66,7 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
           <X className="h-5 w-5 text-gray-500" />
         </button>
 
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center h-48 rounded-t-2xl relative">
+        <div className="bg-white p-4 flex items-center justify-center h-48 rounded-t-2xl relative">
           {item.thumbnailurl ? (
             <img src={item.thumbnailurl} alt={itemName(item)} className="max-h-full max-w-full object-contain" />
           ) : (
@@ -74,7 +74,7 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
           )}
         </div>
 
-        <div className="p-6">
+        <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-b-2xl">
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <p className="text-xs text-gray-400 font-mono">{item.itemnumber}</p>
