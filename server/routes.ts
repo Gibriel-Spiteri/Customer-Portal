@@ -2659,6 +2659,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/express-bath/discover-field', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.status(503).json({ success: false, message: 'NetSuite M2M is not configured' });
+      }
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const result = await m2m.discoverExpressBathField();
+      console.log('Express Bath field discovery result:', JSON.stringify(result.items, null, 2));
+      res.json({ success: true, fields: result.items });
+    } catch (error) {
+      console.error('Express Bath field discovery error:', error);
+      res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   app.get('/api/express-bath/items', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 1000;
@@ -2673,7 +2689,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
-      const result = await m2m.getExpressBathItems(limit, offset);
+
+      const discoveryResult = await m2m.discoverExpressBathField();
+      console.log('Express Bath field discovery:', JSON.stringify(discoveryResult.items, null, 2));
+
+      if (!discoveryResult.items || discoveryResult.items.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No Express Bath custom field found in NetSuite. Expected a checkbox field with "express" or "bath" in the name.'
+        });
+      }
+
+      const fieldScriptId = discoveryResult.items[0].scriptid;
+      console.log('Using Express Bath field:', fieldScriptId);
+
+      const result = await m2m.getExpressBathItems(fieldScriptId, limit, offset);
 
       res.json({
         success: true,

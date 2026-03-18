@@ -885,7 +885,28 @@ export class NetSuiteM2M {
     return result.items;
   }
 
-  async getExpressBathItems(limit: number = 1000, offset: number = 0): Promise<SuiteQLResponse> {
+  async discoverExpressBathField(): Promise<SuiteQLResponse> {
+    const query = `
+      SELECT 
+        customfield.scriptid,
+        customfield.name,
+        customfield.fieldtype
+      FROM 
+        customfield
+      WHERE 
+        LOWER(customfield.scriptid) LIKE 'custitem%'
+        AND (
+          LOWER(customfield.scriptid) LIKE '%express%'
+          OR LOWER(customfield.scriptid) LIKE '%bath%'
+          OR LOWER(customfield.name) LIKE '%express%'
+          OR LOWER(customfield.name) LIKE '%bath%'
+        )
+    `.trim();
+
+    return await this.executeSuiteQL(query, 100, 0);
+  }
+
+  async getExpressBathItems(fieldName: string = 'custitem_express_bath', limit: number = 1000, offset: number = 0): Promise<SuiteQLResponse> {
     const query = `
       SELECT 
         item.id AS internalId,
@@ -905,7 +926,7 @@ export class NetSuiteM2M {
       FROM 
         item
       WHERE 
-        item.custitem_express_bath = 'T'
+        item.${fieldName} = 'T'
         AND item.isinactive = 'F'
       ORDER BY 
         item.itemid
