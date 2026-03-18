@@ -2690,20 +2690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
 
-      const discoveryResult = await m2m.discoverExpressBathField();
-      console.log('Express Bath field discovery:', JSON.stringify(discoveryResult.items, null, 2));
-
-      if (!discoveryResult.items || discoveryResult.items.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'No Express Bath custom field found in NetSuite. Expected a checkbox field with "express" or "bath" in the name.'
-        });
-      }
-
-      const fieldScriptId = discoveryResult.items[0].scriptid;
-      console.log('Using Express Bath field:', fieldScriptId);
-
-      const result = await m2m.getExpressBathItems(fieldScriptId, limit, offset);
+      const result = await m2m.getExpressBathItems('custitem_expressbath', limit, offset);
 
       res.json({
         success: true,
