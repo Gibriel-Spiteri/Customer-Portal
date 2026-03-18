@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Package, Search, RefreshCw, ShoppingCart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Component } from 'react';
+import type { ReactNode } from 'react';
 import {
   DUMMY_ITEMS,
   CATEGORIES,
@@ -11,6 +12,31 @@ import {
   getStockInfo,
 } from '@/data/express-bath-items';
 import type { ExpressBathItem } from '@/data/express-bath-items';
+
+class ExpressBathErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, color: 'red', background: '#fff0f0' }}>
+          <h2>Express Bath Error</h2>
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.message}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function ItemDetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => void }) {
   const available = parseFloat(item.quantityavailable || '0');
@@ -239,8 +265,10 @@ function ExpressBathContent() {
 
 export default function ExpressBath() {
   return (
-    <MobileLayout>
-      <ExpressBathContent />
-    </MobileLayout>
+    <ExpressBathErrorBoundary>
+      <MobileLayout>
+        <ExpressBathContent />
+      </MobileLayout>
+    </ExpressBathErrorBoundary>
   );
 }
