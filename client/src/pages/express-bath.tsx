@@ -137,7 +137,7 @@ function ExpressBathContent() {
   }, [items, searchTerm, activeCat]);
 
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-6">
+    <div className="pb-24 md:pb-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Express Bath</h1>
