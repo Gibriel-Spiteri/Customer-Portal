@@ -1,8 +1,9 @@
 import { MobileLayout } from '@/components/layout/mobile-layout';
 import { Badge } from '@/components/ui/badge';
-import { Package, Search, RefreshCw, ShoppingCart, X, Loader2, AlertCircle, LayoutGrid, List } from 'lucide-react';
+import { Package, Search, RefreshCw, ShoppingCart, X, Loader2, AlertCircle, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -109,6 +110,7 @@ function ExpressBathContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCat, setActiveCat] = useState('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState('name-asc');
   const [selected, setSelected] = useState<ExpressBathItem | null>(null);
 
   const { data, isLoading, isError, error } = useQuery<{ success: boolean; items: ExpressBathItem[]; count: number; hasMore: boolean; totalResults: number }>({
@@ -133,8 +135,26 @@ function ExpressBathContent() {
         (i.description || '').toLowerCase().includes(t)
       );
     }
-    return r;
-  }, [items, searchTerm, activeCat]);
+    const sorted = [...r];
+    switch (sortBy) {
+      case 'name-asc':
+        sorted.sort((a, b) => itemName(a).localeCompare(itemName(b)));
+        break;
+      case 'name-desc':
+        sorted.sort((a, b) => itemName(b).localeCompare(itemName(a)));
+        break;
+      case 'price-asc':
+        sorted.sort((a, b) => (parseFloat(a.baseprice || '0') - parseFloat(b.baseprice || '0')));
+        break;
+      case 'price-desc':
+        sorted.sort((a, b) => (parseFloat(b.baseprice || '0') - parseFloat(a.baseprice || '0')));
+        break;
+      case 'stock-desc':
+        sorted.sort((a, b) => (parseFloat(b.quantityavailable || '0') - parseFloat(a.quantityavailable || '0')));
+        break;
+    }
+    return sorted;
+  }, [items, searchTerm, activeCat, sortBy]);
 
   return (
     <div className="pb-24 md:pb-6">
@@ -172,9 +192,24 @@ function ExpressBathContent() {
         </div>
       </div>
 
-      <div className="relative flex-1 mb-5">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 h-10" />
+      <div className="flex gap-3 mb-5">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 h-10" />
+        </div>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-[180px] h-10">
+            <ArrowUpDown className="h-4 w-4 mr-2 text-gray-400" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name-asc">Name A–Z</SelectItem>
+            <SelectItem value="name-desc">Name Z–A</SelectItem>
+            <SelectItem value="price-asc">Price: Low to High</SelectItem>
+            <SelectItem value="price-desc">Price: High to Low</SelectItem>
+            <SelectItem value="stock-desc">Stock: Most Available</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
