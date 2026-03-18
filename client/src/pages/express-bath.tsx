@@ -268,7 +268,7 @@ function ExpressBathContent() {
 
 export default function ExpressBath() {
   return (
-    <MobileLayout title="Express Bath">
+    <MobileLayout>
       <ExpressBathContent />
     </MobileLayout>
   );
