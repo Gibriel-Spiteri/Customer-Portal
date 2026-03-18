@@ -34,6 +34,19 @@ function itemName(item: ExpressBathItem): string {
   return item.displayname || item.description || item.itemnumber;
 }
 
+function getItemCategory(item: ExpressBathItem): string {
+  const num = item.itemnumber || '';
+  const parts = num.split('-');
+  const prefix = parts[0];
+  const second = parts[1] || '';
+
+  if (prefix.startsWith('QZ')) return 'Quartz Tops';
+  if (second.startsWith('V') || prefix.startsWith('ANC')) return 'Vanity Cabinets';
+  if (prefix === 'C') return 'Toilets';
+  if (prefix === 'L') return 'Lavatories';
+  return 'Other';
+}
+
 function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => void }) {
   const avail = parseFloat(item.quantityavailable || '0');
   const si = stockInfo(avail);
@@ -117,6 +130,7 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
 
 function ExpressBathContent() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeCat, setActiveCat] = useState('All');
   const [selected, setSelected] = useState<ExpressBathItem | null>(null);
 
   const { data, isLoading, isError, error } = useQuery<{ success: boolean; items: ExpressBathItem[]; count: number; hasMore: boolean; totalResults: number }>({
@@ -125,15 +139,24 @@ function ExpressBathContent() {
 
   const items = data?.items || [];
 
+  const categories = useMemo(() => {
+    const cats = new Set(items.map(i => getItemCategory(i)));
+    return ['All', ...Array.from(cats).sort()];
+  }, [items]);
+
   const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return items;
-    const t = searchTerm.toLowerCase();
-    return items.filter(i =>
-      (i.itemnumber || '').toLowerCase().includes(t) ||
-      (i.displayname || '').toLowerCase().includes(t) ||
-      (i.description || '').toLowerCase().includes(t)
-    );
-  }, [items, searchTerm]);
+    let r = items;
+    if (activeCat !== 'All') r = r.filter(i => getItemCategory(i) === activeCat);
+    if (searchTerm.trim()) {
+      const t = searchTerm.toLowerCase();
+      r = r.filter(i =>
+        (i.itemnumber || '').toLowerCase().includes(t) ||
+        (i.displayname || '').toLowerCase().includes(t) ||
+        (i.description || '').toLowerCase().includes(t)
+      );
+    }
+    return r;
+  }, [items, searchTerm, activeCat]);
 
   return (
     <div className="p-4 md:p-6 pb-24 md:pb-6">
@@ -158,6 +181,12 @@ function ExpressBathContent() {
       <div className="relative flex-1 mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 h-10" />
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
+        {categories.map((c) => (
+          <button key={c} onClick={() => setActiveCat(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCat === c ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c}</button>
+        ))}
       </div>
 
       {isLoading ? (
