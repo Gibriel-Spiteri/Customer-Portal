@@ -361,28 +361,6 @@ function ExpressBathContent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-x-3 gap-y-1.5 pt-3 border-t border-gray-100">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-gray-400">On Hand</p>
-                      <p className="text-sm font-semibold text-gray-700">{parseFloat(item.quantityonhand || '0').toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-gray-400">Available</p>
-                      <p className="text-sm font-semibold text-gray-700">{available.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-gray-400">Committed</p>
-                      <p className="text-sm font-semibold text-gray-700">{parseFloat(item.quantitycommitted || '0').toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-gray-400">On Order</p>
-                      <p className="text-sm font-semibold text-gray-700">{parseFloat(item.quantityonorder || '0').toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-gray-400">Backordered</p>
-                      <p className="text-sm font-semibold text-gray-700">{parseFloat(item.quantitybackordered || '0').toLocaleString()}</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             );
