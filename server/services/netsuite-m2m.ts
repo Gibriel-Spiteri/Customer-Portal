@@ -913,6 +913,7 @@ export class NetSuiteM2M {
         item.itemid AS itemNumber,
         item.displayname AS displayName,
         item.description,
+        item.storedescription AS storeDescription,
         item.itemtype AS itemType,
         item.isinactive AS isInactive,
         COALESCE(item.totalquantityonhand, 0) AS quantityOnHand,

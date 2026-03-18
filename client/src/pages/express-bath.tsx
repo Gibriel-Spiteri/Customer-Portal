@@ -19,6 +19,7 @@ interface ExpressBathItem {
   quantityonorder: string;
   quantitybackordered: string;
   baseprice: string | null;
+  storedescription: string | null;
   thumbnailurl: string | null;
   unittype: string | null;
   lastmodifieddate: string | null;
@@ -93,34 +94,11 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
             </div>
           )}
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wider">On Hand</p>
-              <p className="text-lg font-semibold text-gray-800 mt-0.5">{parseFloat(item.quantityonhand || '0').toLocaleString()}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wider">Available</p>
-              <p className="text-lg font-semibold text-gray-800 mt-0.5">{avail.toLocaleString()}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wider">Committed</p>
-              <p className="text-lg font-semibold text-gray-800 mt-0.5">{parseFloat(item.quantitycommitted || '0').toLocaleString()}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wider">On Order</p>
-              <p className="text-lg font-semibold text-gray-800 mt-0.5">{parseFloat(item.quantityonorder || '0').toLocaleString()}</p>
-            </div>
-          </div>
-
-          {parseFloat(item.quantitybackordered || '0') > 0 && (
-            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-600 uppercase tracking-wider">Backordered</p>
-              <p className="text-lg font-semibold text-amber-700 mt-0.5">{parseFloat(item.quantitybackordered || '0').toLocaleString()}</p>
-            </div>
-          )}
-
-          {item.lastmodifieddate && (
-            <p className="text-xs text-gray-400 mt-4 text-right">Last updated: {item.lastmodifieddate}</p>
+          {item.storedescription && (
+            <div
+              className="mt-4 text-sm text-gray-600 prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1"
+              dangerouslySetInnerHTML={{ __html: item.storedescription }}
+            />
           )}
         </div>
       </div>
