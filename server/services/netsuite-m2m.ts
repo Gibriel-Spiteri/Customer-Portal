@@ -925,7 +925,7 @@ export class NetSuiteM2M {
         item.lastmodifieddate
       FROM 
         item
-        LEFT JOIN pricing p ON p.item = item.id AND p.pricelevel = 1 AND p.quantity = 0
+        LEFT JOIN pricing p ON p.item = item.id AND p.pricelevel = 3 AND p.quantity = 1
       WHERE 
         item.${fieldName} = 'T'
         AND item.isinactive = 'F'
