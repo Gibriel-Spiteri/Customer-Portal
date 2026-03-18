@@ -26,6 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **Drizzle ORM** for database operations with PostgreSQL
 - **Modular service architecture** with separate services for NetSuite integration, sync operations, and queue management
 - **CRD Rebate API** endpoint for fetching Consumers Cash data from NetSuite custom records
+- **Express Bath API** endpoint for fetching items with the Express Bath checkbox checked, including inventory levels
 
 ### Data Storage Solutions
 - **PostgreSQL database** via Neon serverless with connection pooling

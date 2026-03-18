@@ -9,7 +9,8 @@ import {
   Settings, 
   HelpCircle,
   Calculator,
-  Bug
+  Bug,
+  Bath
 } from "lucide-react";
 
 interface NavigationItem {
@@ -34,6 +35,11 @@ const navigation: NavigationItem[] = [
     name: 'Sales Orders',
     href: '/orders',
     icon: Calculator,
+  },
+  {
+    name: 'Express Bath',
+    href: '/express-bath',
+    icon: Bath,
   },
   {
     name: 'Consumers Cash',

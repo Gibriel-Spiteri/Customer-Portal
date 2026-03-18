@@ -2659,6 +2659,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/express-bath/items', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 1000;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      if (!process.env.NETSUITE_CONSUMER_KEY || !process.env.NETSUITE_CONSUMER_SECRET) {
+        return res.status(503).json({
+          success: false,
+          message: 'NetSuite M2M is not configured'
+        });
+      }
+
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const result = await m2m.getExpressBathItems(limit, offset);
+
+      res.json({
+        success: true,
+        items: result.items,
+        count: result.count,
+        hasMore: result.hasMore,
+        totalResults: result.totalResults
+      });
+    } catch (error) {
+      console.error('Express Bath items fetch error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch Express Bath items',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.post('/api/pay-balance', authenticateToken, async (req: any, res: any) => {
     try {
       const { salesOrderId } = req.body;

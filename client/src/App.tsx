@@ -28,6 +28,7 @@ import { NetSuiteTest } from "@/pages/netsuite-test";
 import NetSuiteDebug from "@/pages/netsuite-debug";
 import OAuthDebugPage from "@/pages/oauth-debug";
 import ConsumersCash from "@/pages/consumers-cash";
+import ExpressBath from "@/pages/express-bath";
 
 function Router() {
   return (
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/invoices" component={Invoices} />
       <Route path="/payments" component={Payments} />
       <Route path="/loyalty" component={Loyalty} />
+      <Route path="/express-bath" component={ExpressBath} />
       <Route path="/consumers-cash" component={ConsumersCash} />
       <Route path="/account" component={AccountSettings} />
       <Route path="/support" component={Support} />
