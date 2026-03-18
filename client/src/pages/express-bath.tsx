@@ -1,6 +1,6 @@
 import { MobileLayout } from '@/components/layout/mobile-layout';
 import { Badge } from '@/components/ui/badge';
-import { Package, Search, RefreshCw, ShoppingCart, X, Loader2, AlertCircle } from 'lucide-react';
+import { Package, Search, RefreshCw, ShoppingCart, X, Loader2, AlertCircle, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
@@ -108,6 +108,7 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
 function ExpressBathContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCat, setActiveCat] = useState('All');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selected, setSelected] = useState<ExpressBathItem | null>(null);
 
   const { data, isLoading, isError, error } = useQuery<{ success: boolean; items: ExpressBathItem[]; count: number; hasMore: boolean; totalResults: number }>({
@@ -144,15 +145,31 @@ function ExpressBathContent() {
             {isLoading ? 'Loading...' : `${filtered.length} of ${items.length} products`}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/express-bath/items'] })}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/express-bath/items'] })}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="relative flex-1 mb-5">
@@ -191,7 +208,7 @@ function ExpressBathContent() {
           <p className="text-lg font-medium text-gray-500">No products found</p>
           <p className="text-sm mt-1">Try a different search term</p>
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((item) => {
             const avail = parseFloat(item.quantityavailable || '0');
@@ -219,6 +236,36 @@ function ExpressBathContent() {
                     )}
                     {item.unittype && item.unittype !== 'EACH' && <span className="text-xs text-gray-400">/{item.unittype}</span>}
                   </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((item) => {
+            const avail = parseFloat(item.quantityavailable || '0');
+            const si = stockInfo(avail);
+            return (
+              <div key={item.internalid} onClick={() => setSelected(item)} className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200 cursor-pointer flex items-center gap-4 p-3">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center h-16 w-16 shrink-0">
+                  {item.thumbnailurl ? (
+                    <img src={item.thumbnailurl} alt={itemName(item)} className="max-h-full max-w-full object-contain rounded-lg" />
+                  ) : (
+                    <ShoppingCart className="h-6 w-6 text-gray-300" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">{itemName(item)}</h3>
+                  <p className="text-xs text-gray-400 font-mono mt-0.5">{item.itemnumber}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Badge variant="outline" className={`text-xs ${si.cls}`}>{si.label}</Badge>
+                  {item.baseprice ? (
+                    <span className="text-base font-bold text-gray-900 w-24 text-right">${parseFloat(item.baseprice).toFixed(2)}</span>
+                  ) : (
+                    <span className="text-sm text-gray-400 w-24 text-right">N/A</span>
+                  )}
                 </div>
               </div>
             );
