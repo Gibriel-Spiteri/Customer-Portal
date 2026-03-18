@@ -1,255 +1,120 @@
 import { MobileLayout } from '@/components/layout/mobile-layout';
 import { Badge } from '@/components/ui/badge';
-import {
-  Package,
-  Search,
-  RefreshCw,
-  ShoppingCart,
-} from 'lucide-react';
+import { Package, Search, RefreshCw, ShoppingCart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
+import {
+  DUMMY_ITEMS,
+  CATEGORIES,
+  CATEGORY_COLORS,
+  getStockInfo,
+} from '@/data/express-bath-items';
+import type { ExpressBathItem } from '@/data/express-bath-items';
 
-interface ExpressBathItem {
-  internalid: string;
-  itemnumber: string;
-  displayname: string;
-  description: string | null;
-  itemtype: string;
-  quantityonhand: string;
-  quantityavailable: string;
-  quantitycommitted: string;
-  quantityonorder: string;
-  quantitybackordered: string;
-  baseprice: string | null;
-  unittype: string | null;
-  lastmodifieddate: string | null;
-  category: string;
+function ItemDetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => void }) {
+  const available = parseFloat(item.quantityavailable || '0');
+  const stock = getStockInfo(available);
+  const catColor = CATEGORY_COLORS[item.category] || 'bg-gray-100 text-gray-700';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/80 hover:bg-gray-100 transition-colors"
+        >
+          <X className="h-5 w-5 text-gray-500" />
+        </button>
+
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 flex items-center justify-center h-48 rounded-t-2xl relative">
+          <ShoppingCart className="h-16 w-16 text-gray-300" />
+          <div className="absolute top-4 left-4">
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${catColor}`}>
+              {item.category}
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1">
+              <p className="text-xs text-gray-400 font-mono">{item.itemnumber}</p>
+              <h2 className="text-xl font-bold text-gray-900 mt-1">{item.displayname}</h2>
+            </div>
+            <Badge variant="outline" className={`text-xs ml-3 shrink-0 ${stock.className}`}>
+              {stock.label}
+            </Badge>
+          </div>
+
+          {item.description && (
+            <p className="text-sm text-gray-500 mt-2">{item.description}</p>
+          )}
+
+          <div className="mt-4 flex items-baseline gap-1">
+            <span className="text-3xl font-bold text-gray-900">
+              ${item.baseprice || '0.00'}
+            </span>
+            {item.unittype && item.unittype !== 'Each' && (
+              <span className="text-sm text-gray-400">/ {item.unittype}</span>
+            )}
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">On Hand</p>
+              <p className="text-lg font-semibold text-gray-800 mt-0.5">
+                {parseFloat(item.quantityonhand || '0').toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">Available</p>
+              <p className="text-lg font-semibold text-gray-800 mt-0.5">
+                {available.toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">Committed</p>
+              <p className="text-lg font-semibold text-gray-800 mt-0.5">
+                {parseFloat(item.quantitycommitted || '0').toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">On Order</p>
+              <p className="text-lg font-semibold text-gray-800 mt-0.5">
+                {parseFloat(item.quantityonorder || '0').toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {parseFloat(item.quantitybackordered || '0') > 0 && (
+            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-600 uppercase tracking-wider">Backordered</p>
+              <p className="text-lg font-semibold text-amber-700 mt-0.5">
+                {parseFloat(item.quantitybackordered || '0').toLocaleString()}
+              </p>
+            </div>
+          )}
+
+          {item.lastmodifieddate && (
+            <p className="text-xs text-gray-400 mt-4 text-right">
+              Last updated: {item.lastmodifieddate}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
-
-const DUMMY_ITEMS: ExpressBathItem[] = [
-  {
-    internalid: '10001',
-    itemnumber: 'EB-VAN-36WHT',
-    displayname: '36" Single Sink Vanity - White',
-    description: 'Modern single sink bathroom vanity with soft-close drawers',
-    itemtype: 'InvtPart',
-    quantityonhand: '45',
-    quantityavailable: '32',
-    quantitycommitted: '13',
-    quantityonorder: '20',
-    quantitybackordered: '0',
-    baseprice: '849.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/15/2026',
-    category: 'Vanities',
-  },
-  {
-    internalid: '10002',
-    itemnumber: 'EB-VAN-48GRY',
-    displayname: '48" Double Sink Vanity - Gray',
-    description: 'Contemporary double sink vanity with quartz countertop',
-    itemtype: 'InvtPart',
-    quantityonhand: '18',
-    quantityavailable: '12',
-    quantitycommitted: '6',
-    quantityonorder: '15',
-    quantitybackordered: '3',
-    baseprice: '1,299.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/14/2026',
-    category: 'Vanities',
-  },
-  {
-    internalid: '10003',
-    itemnumber: 'EB-MIR-24RND',
-    displayname: '24" Round LED Mirror',
-    description: 'Frameless LED backlit mirror with anti-fog technology',
-    itemtype: 'InvtPart',
-    quantityonhand: '72',
-    quantityavailable: '65',
-    quantitycommitted: '7',
-    quantityonorder: '0',
-    quantitybackordered: '0',
-    baseprice: '199.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/12/2026',
-    category: 'Mirrors',
-  },
-  {
-    internalid: '10004',
-    itemnumber: 'EB-FAU-CHRM',
-    displayname: 'Single Handle Faucet - Chrome',
-    description: 'Widespread bathroom faucet with pop-up drain',
-    itemtype: 'InvtPart',
-    quantityonhand: '156',
-    quantityavailable: '140',
-    quantitycommitted: '16',
-    quantityonorder: '50',
-    quantitybackordered: '0',
-    baseprice: '129.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/16/2026',
-    category: 'Faucets',
-  },
-  {
-    internalid: '10005',
-    itemnumber: 'EB-TIL-MRBWHT',
-    displayname: 'Marble Hex Tile - White',
-    description: 'Natural marble hexagon mosaic tile per sq ft',
-    itemtype: 'InvtPart',
-    quantityonhand: '2400',
-    quantityavailable: '1800',
-    quantitycommitted: '600',
-    quantityonorder: '1000',
-    quantitybackordered: '200',
-    baseprice: '12.99',
-    unittype: 'SqFt',
-    lastmodifieddate: '03/10/2026',
-    category: 'Tile',
-  },
-  {
-    internalid: '10006',
-    itemnumber: 'EB-SHW-RNSYS',
-    displayname: 'Rain Shower System - Brushed Nickel',
-    description: 'Complete rain shower system with handheld spray',
-    itemtype: 'InvtPart',
-    quantityonhand: '8',
-    quantityavailable: '3',
-    quantitycommitted: '5',
-    quantityonorder: '25',
-    quantitybackordered: '10',
-    baseprice: '449.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/11/2026',
-    category: 'Showers',
-  },
-  {
-    internalid: '10007',
-    itemnumber: 'EB-TUB-FREE60',
-    displayname: '60" Freestanding Soaking Tub',
-    description: 'Acrylic freestanding oval bathtub',
-    itemtype: 'InvtPart',
-    quantityonhand: '5',
-    quantityavailable: '0',
-    quantitycommitted: '5',
-    quantityonorder: '10',
-    quantitybackordered: '8',
-    baseprice: '1,599.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/13/2026',
-    category: 'Tubs',
-  },
-  {
-    internalid: '10008',
-    itemnumber: 'EB-TOI-ELNG',
-    displayname: 'Elongated Comfort Height Toilet',
-    description: 'Two-piece elongated toilet with slow-close seat',
-    itemtype: 'InvtPart',
-    quantityonhand: '34',
-    quantityavailable: '28',
-    quantitycommitted: '6',
-    quantityonorder: '0',
-    quantitybackordered: '0',
-    baseprice: '349.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/09/2026',
-    category: 'Toilets',
-  },
-  {
-    internalid: '10009',
-    itemnumber: 'EB-CAB-MED30',
-    displayname: '30" Recessed Medicine Cabinet',
-    description: 'Mirror medicine cabinet with adjustable shelves',
-    itemtype: 'InvtPart',
-    quantityonhand: '22',
-    quantityavailable: '19',
-    quantitycommitted: '3',
-    quantityonorder: '10',
-    quantitybackordered: '0',
-    baseprice: '249.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/08/2026',
-    category: 'Storage',
-  },
-  {
-    internalid: '10010',
-    itemnumber: 'EB-ACC-TBRNG',
-    displayname: 'Towel Bar Ring Set - Matte Black',
-    description: '4-piece bathroom accessory set',
-    itemtype: 'InvtPart',
-    quantityonhand: '0',
-    quantityavailable: '0',
-    quantitycommitted: '0',
-    quantityonorder: '40',
-    quantitybackordered: '15',
-    baseprice: '79.99',
-    unittype: 'Set',
-    lastmodifieddate: '03/07/2026',
-    category: 'Accessories',
-  },
-  {
-    internalid: '10011',
-    itemnumber: 'EB-LGT-VAN3',
-    displayname: '3-Light Vanity Light - Brass',
-    description: 'Modern 3-light vanity sconce with clear glass',
-    itemtype: 'InvtPart',
-    quantityonhand: '41',
-    quantityavailable: '38',
-    quantitycommitted: '3',
-    quantityonorder: '0',
-    quantitybackordered: '0',
-    baseprice: '159.99',
-    unittype: 'Each',
-    lastmodifieddate: '03/06/2026',
-    category: 'Lighting',
-  },
-  {
-    internalid: '10012',
-    itemnumber: 'EB-FLR-VYPLNK',
-    displayname: 'Luxury Vinyl Plank - Waterproof',
-    description: 'Waterproof luxury vinyl plank flooring for bathrooms per sq ft',
-    itemtype: 'InvtPart',
-    quantityonhand: '5200',
-    quantityavailable: '4100',
-    quantitycommitted: '1100',
-    quantityonorder: '2000',
-    quantitybackordered: '0',
-    baseprice: '4.49',
-    unittype: 'SqFt',
-    lastmodifieddate: '03/17/2026',
-    category: 'Flooring',
-  },
-];
-
-const CATEGORIES = ['All', ...Array.from(new Set(DUMMY_ITEMS.map(i => i.category)))];
-
-function getStockInfo(quantityAvailable: number) {
-  if (quantityAvailable > 10) {
-    return { label: 'In Stock', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-  } else if (quantityAvailable > 0) {
-    return { label: 'Low Stock', className: 'bg-amber-50 text-amber-700 border-amber-200' };
-  }
-  return { label: 'Out of Stock', className: 'bg-red-50 text-red-700 border-red-200' };
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  'Vanities': 'bg-indigo-100 text-indigo-700',
-  'Mirrors': 'bg-sky-100 text-sky-700',
-  'Faucets': 'bg-cyan-100 text-cyan-700',
-  'Tile': 'bg-violet-100 text-violet-700',
-  'Showers': 'bg-blue-100 text-blue-700',
-  'Tubs': 'bg-teal-100 text-teal-700',
-  'Toilets': 'bg-slate-100 text-slate-700',
-  'Storage': 'bg-orange-100 text-orange-700',
-  'Accessories': 'bg-pink-100 text-pink-700',
-  'Lighting': 'bg-yellow-100 text-yellow-700',
-  'Flooring': 'bg-lime-100 text-lime-700',
-};
 
 function ExpressBathContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [selectedItem, setSelectedItem] = useState<ExpressBathItem | null>(null);
   const items = DUMMY_ITEMS;
 
   const filteredItems = useMemo(() => {
@@ -325,7 +190,8 @@ function ExpressBathContent() {
             return (
               <div
                 key={item.internalid}
-                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200"
+                onClick={() => setSelectedItem(item)}
+                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200 cursor-pointer"
               >
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex items-center justify-center h-40 relative">
                   <ShoppingCart className="h-12 w-12 text-gray-300 group-hover:text-gray-400 transition-colors" />
@@ -349,23 +215,23 @@ function ExpressBathContent() {
                   {item.description && (
                     <p className="text-xs text-gray-500 line-clamp-2 mb-3">{item.description}</p>
                   )}
-
-                  <div className="flex items-end justify-between mb-3">
-                    <div>
-                      <span className="text-xl font-bold text-gray-900">
-                        ${item.baseprice || '0.00'}
-                      </span>
-                      {item.unittype && item.unittype !== 'Each' && (
-                        <span className="text-xs text-gray-400 ml-1">/{item.unittype}</span>
-                      )}
-                    </div>
+                  <div className="flex items-end justify-between">
+                    <span className="text-xl font-bold text-gray-900">
+                      ${item.baseprice || '0.00'}
+                    </span>
+                    {item.unittype && item.unittype !== 'Each' && (
+                      <span className="text-xs text-gray-400">/{item.unittype}</span>
+                    )}
                   </div>
-
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {selectedItem && (
+        <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />
       )}
     </div>
   );
