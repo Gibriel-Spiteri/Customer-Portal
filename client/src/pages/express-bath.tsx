@@ -250,7 +250,7 @@ function ExpressBathContent() {
             const si = stockInfo(avail);
             return (
               <div key={item.internalid} onClick={() => setSelected(item)} className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200 cursor-pointer">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center h-40 relative">
+                <div className="bg-white p-4 flex items-center justify-center h-40 relative">
                   {item.thumbnailurl ? (
                     <img src={item.thumbnailurl} alt={itemName(item)} className="max-h-full max-w-full object-contain" />
                   ) : (
@@ -260,7 +260,7 @@ function ExpressBathContent() {
                     <Badge variant="outline" className={`text-xs ${si.cls}`}>{si.label}</Badge>
                   </div>
                 </div>
-                <div className="p-4">
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100">
                   <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2">{itemName(item)}</h3>
                   {item.description && item.displayname && <p className="text-xs text-gray-500 line-clamp-2 mb-3">{item.description}</p>}
                   <div className="flex items-end justify-between">
