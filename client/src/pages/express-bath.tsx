@@ -4,6 +4,7 @@ import { Package, Search, RefreshCw, ShoppingCart, X, Loader2, AlertCircle, Layo
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -103,6 +104,7 @@ function ExpressBathContent() {
   const [activeCat, setActiveCat] = useState('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('name-asc');
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [selected, setSelected] = useState<ExpressBathItem | null>(null);
 
   const { data, isLoading, isError, error } = useQuery<{ success: boolean; items: ExpressBathItem[]; count: number; hasMore: boolean; totalResults: number }>({
@@ -118,6 +120,7 @@ function ExpressBathContent() {
 
   const filtered = useMemo(() => {
     let r = items;
+    if (inStockOnly) r = r.filter(i => parseFloat(i.quantityavailable || '0') > 0);
     if (activeCat !== 'All') r = r.filter(i => getItemCategory(i) === activeCat);
     if (searchTerm.trim()) {
       const t = searchTerm.toLowerCase();
@@ -146,7 +149,7 @@ function ExpressBathContent() {
         break;
     }
     return sorted;
-  }, [items, searchTerm, activeCat, sortBy]);
+  }, [items, searchTerm, activeCat, sortBy, inStockOnly]);
 
   return (
     <div className="pb-24 md:pb-6">
@@ -204,10 +207,16 @@ function ExpressBathContent() {
         </Select>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
-        {categories.map((c) => (
-          <button key={c} onClick={() => setActiveCat(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCat === c ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c}</button>
-        ))}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {categories.map((c) => (
+            <button key={c} onClick={() => setActiveCat(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCat === c ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-3">
+          <label htmlFor="in-stock-toggle" className="text-sm font-medium text-gray-600 whitespace-nowrap cursor-pointer">In Stock</label>
+          <Switch id="in-stock-toggle" checked={inStockOnly} onCheckedChange={setInStockOnly} />
+        </div>
       </div>
 
       {isLoading ? (
