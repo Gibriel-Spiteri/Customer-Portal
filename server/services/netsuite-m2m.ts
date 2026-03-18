@@ -906,21 +906,21 @@ export class NetSuiteM2M {
     return await this.executeSuiteQL(query, 100, 0);
   }
 
-  async getExpressBathItems(fieldName: string = 'custitem_express_bath', limit: number = 1000, offset: number = 0): Promise<SuiteQLResponse> {
+  async getExpressBathItems(fieldName: string = 'custitem_expressbath', limit: number = 1000, offset: number = 0): Promise<SuiteQLResponse> {
     const query = `
       SELECT 
         item.id AS internalId,
         item.itemid AS itemNumber,
         item.displayname AS displayName,
         item.description,
-        item.type AS itemType,
+        item.itemtype AS itemType,
         item.isinactive AS isInactive,
         COALESCE(item.totalquantityonhand, 0) AS quantityOnHand,
         COALESCE(item.quantityavailable, 0) AS quantityAvailable,
         COALESCE(item.quantitycommitted, 0) AS quantityCommitted,
         COALESCE(item.quantityonorder, 0) AS quantityOnOrder,
         COALESCE(item.quantitybackordered, 0) AS quantityBackOrdered,
-        item.baseprice AS basePrice,
+        item.cost AS basePrice,
         BUILTIN.DF(item.unitstype) AS unitType,
         item.lastmodifieddate
       FROM 
