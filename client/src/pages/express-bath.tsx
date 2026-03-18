@@ -232,7 +232,6 @@ function ExpressBathContent() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-xs text-gray-400 font-mono mb-1">{item.itemnumber}</p>
                   <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2">{itemName(item)}</h3>
                   {item.description && item.displayname && <p className="text-xs text-gray-500 line-clamp-2 mb-3">{item.description}</p>}
                   <div className="flex items-end justify-between">
