@@ -7,7 +7,8 @@ import {
   Star,
   Settings, 
   HelpCircle,
-  Bug
+  Bug,
+  Bath
 } from "lucide-react";
 
 const navigation = [
@@ -25,6 +26,11 @@ const navigation = [
     name: 'Sales Orders',
     href: '/orders',
     icon: ShoppingCart,
+  },
+  {
+    name: 'Express Bath',
+    href: '/express-bath',
+    icon: Bath,
   },
   {
     name: 'Consumers Cash',
