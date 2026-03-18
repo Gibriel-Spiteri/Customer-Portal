@@ -48,8 +48,8 @@ function Router() {
       <Route path="/invoices" component={Invoices} />
       <Route path="/payments" component={Payments} />
       <Route path="/loyalty" component={Loyalty} />
-      <Route path="/express-bath">{() => <ExpressBath />}</Route>
-      <Route path="/consumers-cash" component={ConsumersCash} />
+      <Route path="/express-bath">{() => <div style={{padding: '40px', fontSize: '24px', background: 'lime'}}>EXPRESS BATH ROUTE MATCHED - If you see this, routing works!</div>}</Route>
+      <Route path="/consumers-cash">{() => <div style={{padding: '40px', fontSize: '24px', background: 'cyan'}}>CONSUMERS CASH ROUTE MATCHED</div>}</Route>
       <Route path="/account" component={AccountSettings} />
       <Route path="/support" component={Support} />
       <Route path="/debug" component={Debug} />
