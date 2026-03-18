@@ -2692,10 +2692,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result = await m2m.getExpressBathItems('custitem_expressbath', limit, offset);
 
+      const seen = new Map<string, any>();
+      for (const item of result.items) {
+        const id = (item as any).internalid || (item as any).internalId;
+        if (!seen.has(id)) {
+          seen.set(id, item);
+        }
+      }
+      const dedupedItems = Array.from(seen.values());
+
       res.json({
         success: true,
-        items: result.items,
-        count: result.count,
+        items: dedupedItems,
+        count: dedupedItems.length,
         hasMore: result.hasMore,
         totalResults: result.totalResults
       });

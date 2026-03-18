@@ -924,10 +924,12 @@ export class NetSuiteM2M {
         p.unitprice AS basePrice,
         item.custitem_itemthumbnailurl AS thumbnailUrl,
         BUILTIN.DF(item.unitstype) AS unitType,
-        item.lastmodifieddate
+        item.lastmodifieddate,
+        BUILTIN.DF(isc.sitecategory) AS siteCategory
       FROM 
         item
         LEFT JOIN pricing p ON p.item = item.id AND p.pricelevel = 3 AND p.quantity = 1
+        LEFT JOIN ItemSiteCategory isc ON isc.item = item.id
       WHERE 
         item.${fieldName} = 'T'
         AND item.isinactive = 'F'

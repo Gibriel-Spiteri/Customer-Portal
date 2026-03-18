@@ -24,6 +24,7 @@ interface ExpressBathItem {
   thumbnailurl: string | null;
   unittype: string | null;
   lastmodifieddate: string | null;
+  sitecategory: string | null;
 }
 
 function stockInfo(qty: number) {
@@ -36,16 +37,12 @@ function itemName(item: ExpressBathItem): string {
 }
 
 function getItemCategory(item: ExpressBathItem): string {
-  const num = item.itemnumber || '';
-  const parts = num.split('-');
-  const prefix = parts[0];
-  const second = parts[1] || '';
-
-  if (prefix.startsWith('QZ')) return 'Quartz Tops';
-  if (second.startsWith('V') || prefix.startsWith('ANC')) return 'Vanity Cabinets';
-  if (prefix === 'C') return 'Toilets';
-  if (prefix === 'L') return 'Lavatories';
-  return 'Other';
+  if (!item.sitecategory) return 'Other';
+  const segments = item.sitecategory.split(':').map(s => s.trim());
+  if (segments.length >= 2) {
+    return segments[segments.length - 2];
+  }
+  return segments[0] || 'Other';
 }
 
 function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => void }) {
