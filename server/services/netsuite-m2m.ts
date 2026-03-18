@@ -920,11 +920,12 @@ export class NetSuiteM2M {
         COALESCE(item.quantitycommitted, 0) AS quantityCommitted,
         COALESCE(item.quantityonorder, 0) AS quantityOnOrder,
         COALESCE(item.quantitybackordered, 0) AS quantityBackOrdered,
-        item.cost AS basePrice,
+        p.unitprice AS basePrice,
         BUILTIN.DF(item.unitstype) AS unitType,
         item.lastmodifieddate
       FROM 
         item
+        LEFT JOIN pricing p ON p.item = item.id AND p.pricelevel = 1 AND p.quantity = 0
       WHERE 
         item.${fieldName} = 'T'
         AND item.isinactive = 'F'
