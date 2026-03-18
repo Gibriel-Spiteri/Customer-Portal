@@ -921,6 +921,7 @@ export class NetSuiteM2M {
         COALESCE(item.quantityonorder, 0) AS quantityOnOrder,
         COALESCE(item.quantitybackordered, 0) AS quantityBackOrdered,
         p.unitprice AS basePrice,
+        item.custitem_itemthumbnailurl AS thumbnailUrl,
         BUILTIN.DF(item.unitstype) AS unitType,
         item.lastmodifieddate
       FROM 

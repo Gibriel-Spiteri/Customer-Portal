@@ -19,6 +19,7 @@ interface ExpressBathItem {
   quantityonorder: string;
   quantitybackordered: string;
   baseprice: string | null;
+  thumbnailurl: string | null;
   unittype: string | null;
   lastmodifieddate: string | null;
 }
@@ -51,11 +52,12 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
           <X className="h-5 w-5 text-gray-500" />
         </button>
 
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 flex items-center justify-center h-48 rounded-t-2xl relative">
-          <ShoppingCart className="h-16 w-16 text-gray-300" />
-          <div className="absolute top-4 left-4">
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">{item.itemtype}</span>
-          </div>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center h-48 rounded-t-2xl relative">
+          {item.thumbnailurl ? (
+            <img src={item.thumbnailurl} alt={itemName(item)} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <ShoppingCart className="h-16 w-16 text-gray-300" />
+          )}
         </div>
 
         <div className="p-6">
@@ -190,8 +192,12 @@ function ExpressBathContent() {
             const si = stockInfo(avail);
             return (
               <div key={item.internalid} onClick={() => setSelected(item)} className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200 cursor-pointer">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex items-center justify-center h-40 relative">
-                  <ShoppingCart className="h-12 w-12 text-gray-300 group-hover:text-gray-400 transition-colors" />
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center h-40 relative">
+                  {item.thumbnailurl ? (
+                    <img src={item.thumbnailurl} alt={itemName(item)} className="max-h-full max-w-full object-contain" />
+                  ) : (
+                    <ShoppingCart className="h-12 w-12 text-gray-300 group-hover:text-gray-400 transition-colors" />
+                  )}
                   <div className="absolute top-3 right-3">
                     <Badge variant="outline" className={`text-xs ${si.cls}`}>{si.label}</Badge>
                   </div>
