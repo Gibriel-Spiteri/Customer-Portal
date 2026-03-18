@@ -31,7 +31,7 @@ export function MobileLayout({ children, className }: MobileLayoutProps) {
           "flex-1 overflow-y-auto pb-20 md:pb-4", // Add bottom padding for mobile nav
           className
         )}>
-          <div className="px-4 pt-0 pb-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="px-4 pt-6 pb-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
