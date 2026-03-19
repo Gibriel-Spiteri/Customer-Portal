@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 
@@ -102,10 +102,17 @@ function DetailModal({ item, onClose }: { item: ExpressBathItem; onClose: () => 
 function ExpressBathContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCat, setActiveCat] = useState('All');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => window.innerWidth < 640 ? 'list' : 'grid');
   const [sortBy, setSortBy] = useState('name-asc');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selected, setSelected] = useState<ExpressBathItem | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const handler = (e: MediaQueryListEvent) => setViewMode(e.matches ? 'list' : 'grid');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const { data, isLoading, isError, error } = useQuery<{ success: boolean; items: ExpressBathItem[]; count: number; hasMore: boolean; totalResults: number }>({
     queryKey: ['/api/express-bath/items'],
