@@ -2720,20 +2720,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const dedupedItems = Array.from(seen.values());
 
+      const allTypes = [...new Set(dedupedItems.map((i: any) => i.itemtype))];
+      console.log('Express Bath: All item types found:', JSON.stringify(allTypes));
+
+      for (const item of dedupedItems) {
+        const i = item as any;
+        console.log(`Express Bath item: ${i.itemnumber || i.itemid} | type: ${i.itemtype} | qtyAvailable: ${i.quantityavailable} | qtyOnHand: ${i.quantityonhand}`);
+      }
+
       const kitItems = dedupedItems.filter((i: any) => {
         const type = (i.itemtype || '').toLowerCase();
         return type === 'kit' || type === 'kititem' || type === 'kit/package';
       });
 
+      console.log(`Express Bath: Found ${kitItems.length} kit items out of ${dedupedItems.length} total`);
       if (kitItems.length > 0) {
+        for (const k of kitItems) {
+          console.log(`Express Bath KIT: ${(k as any).itemnumber} (id: ${(k as any).internalid}) - original qtyAvailable: ${(k as any).quantityavailable}`);
+        }
         const kitIds = kitItems.map((i: any) => parseInt(i.internalid));
         try {
           const kitAvailability = await m2m.getKitComponentAvailability(kitIds);
+          console.log(`Express Bath: Kit component availability results:`, JSON.stringify(Object.fromEntries(kitAvailability)));
           for (const item of dedupedItems) {
             const i = item as any;
             const id = parseInt(i.internalid);
             if (kitAvailability.has(id)) {
+              const oldQty = i.quantityavailable;
               i.quantityavailable = String(kitAvailability.get(id));
+              console.log(`Express Bath KIT ${i.itemnumber}: updated qtyAvailable from ${oldQty} to ${i.quantityavailable}`);
             }
           }
           console.log(`Express Bath: Resolved kit availability for ${kitIds.length} kit items`);
