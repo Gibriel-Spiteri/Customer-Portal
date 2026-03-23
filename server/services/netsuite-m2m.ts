@@ -910,54 +910,53 @@ export class NetSuiteM2M {
     if (kitInternalIds.length === 0) return new Map();
 
     const idList = kitInternalIds.join(',');
-    try {
-      const discoverQuery = `SELECT * FROM itemMember WHERE item IN (${idList}) AND ROWNUM <= 5`;
-      console.log('Express Bath: Discovering itemMember fields...');
-      const discoverResult = await this.executeSuiteQL(discoverQuery, 5, 0);
-      console.log(`Express Bath: itemMember discovery returned ${discoverResult.items.length} rows`);
-      if (discoverResult.items.length > 0) {
-        const sampleRow = discoverResult.items[0] as any;
-        const fields = Object.keys(sampleRow).filter(k => k !== 'links');
-        console.log(`Express Bath: itemMember fields: ${JSON.stringify(fields)}`);
-        console.log(`Express Bath: itemMember sample row: ${JSON.stringify(sampleRow)}`);
-      }
-    } catch (discoverErr) {
-      console.log(`Express Bath: itemMember discovery failed: ${discoverErr instanceof Error ? discoverErr.message.substring(0, 200) : discoverErr}`);
-    }
-
-    const tableAttempts = [
-      {
-        name: 'itemMember (item/memberitem)',
-        query: `SELECT im.item AS kitId, im.memberitem AS componentId, im.memberquantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.memberitem WHERE im.item IN (${idList})`
-      },
-      {
-        name: 'itemMember (parentitem/component)',
-        query: `SELECT im.parentitem AS kitId, im.component AS componentId, im.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.component WHERE im.parentitem IN (${idList})`
-      },
-      {
-        name: 'itemMember (item/component)',
-        query: `SELECT im.item AS kitId, im.component AS componentId, im.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.component WHERE im.item IN (${idList})`
-      }
+    const discoverTables = [
+      { name: 'itemMember (no filter)', query: `SELECT * FROM itemMember WHERE ROWNUM <= 3` },
+      { name: 'kitItem', query: `SELECT * FROM kitItem WHERE ROWNUM <= 3` },
+      { name: 'item parent lookup', query: `SELECT item.id, item.itemid, item.parent, item.quantityavailable FROM item WHERE item.parent IN (${idList}) AND ROWNUM <= 5` },
     ];
 
-    let result: SuiteQLResponse | null = null;
-    for (const attempt of tableAttempts) {
+    for (const dt of discoverTables) {
       try {
-        console.log(`Express Bath: Trying query: ${attempt.name}`);
-        result = await this.executeSuiteQL(attempt.query, 1000, 0);
-        console.log(`Express Bath: SUCCESS with ${attempt.name} - returned ${result.items.length} rows`);
-        if (result.items.length > 0) {
-          console.log(`Express Bath: Sample component row:`, JSON.stringify(result.items[0]));
+        console.log(`Express Bath: Discovering ${dt.name}...`);
+        const dr = await this.executeSuiteQL(dt.query, 10, 0);
+        console.log(`Express Bath: ${dt.name} returned ${dr.items.length} rows`);
+        if (dr.items.length > 0) {
+          const sampleRow = dr.items[0] as any;
+          const fields = Object.keys(sampleRow).filter(k => k !== 'links');
+          console.log(`Express Bath: ${dt.name} fields: ${JSON.stringify(fields)}`);
+          for (const row of dr.items) {
+            console.log(`Express Bath: ${dt.name} row: ${JSON.stringify(row)}`);
+          }
         }
-        break;
       } catch (err) {
-        console.log(`Express Bath: ${attempt.name} failed: ${err instanceof Error ? err.message.substring(0, 150) : err}`);
-        continue;
+        console.log(`Express Bath: ${dt.name} failed: ${err instanceof Error ? err.message.substring(0, 150) : err}`);
       }
     }
 
-    if (!result) {
-      console.error('Express Bath: All kit component query attempts failed');
+    const query = `
+      SELECT 
+        item.parent AS kitId,
+        item.id AS componentId,
+        COALESCE(item.quantityavailable, 0) AS componentAvailable
+      FROM item 
+      WHERE item.parent IN (${idList})
+    `.trim();
+
+    let result: SuiteQLResponse | null = null;
+    try {
+      console.log('Express Bath: Trying parent-based component lookup...');
+      result = await this.executeSuiteQL(query, 1000, 0);
+      console.log(`Express Bath: Parent lookup returned ${result.items.length} rows`);
+      if (result.items.length > 0) {
+        console.log(`Express Bath: Sample:`, JSON.stringify(result.items[0]));
+      }
+    } catch (err) {
+      console.log(`Express Bath: Parent lookup failed: ${err instanceof Error ? err.message.substring(0, 150) : err}`);
+    }
+
+    if (!result || result.items.length === 0) {
+      console.error('Express Bath: Could not find kit components');
       return new Map();
     }
 
