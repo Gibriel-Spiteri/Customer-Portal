@@ -910,53 +910,34 @@ export class NetSuiteM2M {
     if (kitInternalIds.length === 0) return new Map();
 
     const idList = kitInternalIds.join(',');
-    const discoverTables = [
-      { name: 'itemMember (no filter)', query: `SELECT * FROM itemMember WHERE ROWNUM <= 3` },
-      { name: 'kitItem', query: `SELECT * FROM kitItem WHERE ROWNUM <= 3` },
-      { name: 'item parent lookup', query: `SELECT item.id, item.itemid, item.parent, item.quantityavailable FROM item WHERE item.parent IN (${idList}) AND ROWNUM <= 5` },
-    ];
-
-    for (const dt of discoverTables) {
-      try {
-        console.log(`Express Bath: Discovering ${dt.name}...`);
-        const dr = await this.executeSuiteQL(dt.query, 10, 0);
-        console.log(`Express Bath: ${dt.name} returned ${dr.items.length} rows`);
-        if (dr.items.length > 0) {
-          const sampleRow = dr.items[0] as any;
-          const fields = Object.keys(sampleRow).filter(k => k !== 'links');
-          console.log(`Express Bath: ${dt.name} fields: ${JSON.stringify(fields)}`);
-          for (const row of dr.items) {
-            console.log(`Express Bath: ${dt.name} row: ${JSON.stringify(row)}`);
-          }
-        }
-      } catch (err) {
-        console.log(`Express Bath: ${dt.name} failed: ${err instanceof Error ? err.message.substring(0, 150) : err}`);
-      }
-    }
-
     const query = `
       SELECT 
-        item.parent AS kitId,
-        item.id AS componentId,
-        COALESCE(item.quantityavailable, 0) AS componentAvailable
-      FROM item 
-      WHERE item.parent IN (${idList})
+        im.parentitem AS kitId,
+        im.item AS componentId,
+        comp.itemid AS componentNumber,
+        COALESCE(comp.quantityavailable, 0) AS componentAvailable
+      FROM 
+        itemMember im
+        JOIN item comp ON comp.id = im.item
+      WHERE 
+        im.parentitem IN (${idList})
     `.trim();
 
-    let result: SuiteQLResponse | null = null;
+    let result: SuiteQLResponse;
     try {
-      console.log('Express Bath: Trying parent-based component lookup...');
       result = await this.executeSuiteQL(query, 1000, 0);
-      console.log(`Express Bath: Parent lookup returned ${result.items.length} rows`);
-      if (result.items.length > 0) {
-        console.log(`Express Bath: Sample:`, JSON.stringify(result.items[0]));
+      console.log(`Express Bath: Kit component lookup returned ${result.items.length} rows`);
+      for (const row of result.items) {
+        const r = row as any;
+        console.log(`Express Bath: Kit ${r.kitid} -> component ${r.componentnumber} (id: ${r.componentid}), available: ${r.componentavailable}`);
       }
     } catch (err) {
-      console.log(`Express Bath: Parent lookup failed: ${err instanceof Error ? err.message.substring(0, 150) : err}`);
+      console.error('Express Bath: Kit component lookup failed:', err instanceof Error ? err.message : err);
+      return new Map();
     }
 
-    if (!result || result.items.length === 0) {
-      console.error('Express Bath: Could not find kit components');
+    if (result.items.length === 0) {
+      console.log('Express Bath: No kit components found');
       return new Map();
     }
 
