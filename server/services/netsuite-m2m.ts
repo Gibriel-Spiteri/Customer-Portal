@@ -910,20 +910,45 @@ export class NetSuiteM2M {
     if (kitInternalIds.length === 0) return new Map();
 
     const idList = kitInternalIds.join(',');
-    const query = `
-      SELECT
-        ic.item AS kitId,
-        ic.component AS componentId,
-        ic.quantity AS componentQty,
-        COALESCE(comp.quantityavailable, 0) AS componentAvailable
-      FROM
-        ItemComponent ic
-        JOIN item comp ON comp.id = ic.component
-      WHERE
-        ic.item IN (${idList})
-    `.trim();
+    const tableAttempts = [
+      {
+        name: 'kitMember',
+        query: `SELECT km.item AS kitId, km.memberitem AS componentId, km.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM kitMember km JOIN item comp ON comp.id = km.memberitem WHERE km.item IN (${idList})`
+      },
+      {
+        name: 'itemMember',
+        query: `SELECT im.item AS kitId, im.memberitem AS componentId, im.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.memberitem WHERE im.item IN (${idList})`
+      },
+      {
+        name: 'item.memberitem (subquery)',
+        query: `SELECT sub.id AS kitId, sub.memberitem AS componentId, sub.memberquantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM (SELECT id, memberitem, memberquantity FROM item WHERE id IN (${idList})) sub JOIN item comp ON comp.id = sub.memberitem`
+      },
+      {
+        name: 'bomRevisionComponent',
+        query: `SELECT brc.item AS kitId, brc.component AS componentId, brc.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM bomRevisionComponent brc JOIN item comp ON comp.id = brc.component WHERE brc.item IN (${idList})`
+      }
+    ];
 
-    const result = await this.executeSuiteQL(query, 1000, 0);
+    let result: SuiteQLResponse | null = null;
+    for (const attempt of tableAttempts) {
+      try {
+        console.log(`Express Bath: Trying kit component table: ${attempt.name}`);
+        result = await this.executeSuiteQL(attempt.query, 1000, 0);
+        console.log(`Express Bath: SUCCESS with table ${attempt.name} - returned ${result.items.length} rows`);
+        if (result.items.length > 0) {
+          console.log(`Express Bath: Sample component row:`, JSON.stringify(result.items[0]));
+        }
+        break;
+      } catch (err) {
+        console.log(`Express Bath: Table ${attempt.name} failed: ${err instanceof Error ? err.message.substring(0, 100) : err}`);
+        continue;
+      }
+    }
+
+    if (!result) {
+      console.error('Express Bath: All kit component table attempts failed');
+      return new Map();
+    }
 
     const kitComponents = new Map<number, { qty: number; available: number }[]>();
     for (const row of result.items) {
