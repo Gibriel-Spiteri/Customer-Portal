@@ -912,15 +912,15 @@ export class NetSuiteM2M {
     const idList = kitInternalIds.join(',');
     const query = `
       SELECT
-        imi.parentitem AS kitId,
-        imi.memberitem AS componentId,
-        imi.quantity AS componentQty,
+        ic.item AS kitId,
+        ic.component AS componentId,
+        ic.quantity AS componentQty,
         COALESCE(comp.quantityavailable, 0) AS componentAvailable
       FROM
-        itemmemberitem imi
-        JOIN item comp ON comp.id = imi.memberitem
+        ItemComponent ic
+        JOIN item comp ON comp.id = ic.component
       WHERE
-        imi.parentitem IN (${idList})
+        ic.item IN (${idList})
     `.trim();
 
     const result = await this.executeSuiteQL(query, 1000, 0);
