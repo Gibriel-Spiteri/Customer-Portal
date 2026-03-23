@@ -910,43 +910,54 @@ export class NetSuiteM2M {
     if (kitInternalIds.length === 0) return new Map();
 
     const idList = kitInternalIds.join(',');
+    try {
+      const discoverQuery = `SELECT * FROM itemMember WHERE item IN (${idList}) AND ROWNUM <= 5`;
+      console.log('Express Bath: Discovering itemMember fields...');
+      const discoverResult = await this.executeSuiteQL(discoverQuery, 5, 0);
+      console.log(`Express Bath: itemMember discovery returned ${discoverResult.items.length} rows`);
+      if (discoverResult.items.length > 0) {
+        const sampleRow = discoverResult.items[0] as any;
+        const fields = Object.keys(sampleRow).filter(k => k !== 'links');
+        console.log(`Express Bath: itemMember fields: ${JSON.stringify(fields)}`);
+        console.log(`Express Bath: itemMember sample row: ${JSON.stringify(sampleRow)}`);
+      }
+    } catch (discoverErr) {
+      console.log(`Express Bath: itemMember discovery failed: ${discoverErr instanceof Error ? discoverErr.message.substring(0, 200) : discoverErr}`);
+    }
+
     const tableAttempts = [
       {
-        name: 'kitMember',
-        query: `SELECT km.item AS kitId, km.memberitem AS componentId, km.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM kitMember km JOIN item comp ON comp.id = km.memberitem WHERE km.item IN (${idList})`
+        name: 'itemMember (item/memberitem)',
+        query: `SELECT im.item AS kitId, im.memberitem AS componentId, im.memberquantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.memberitem WHERE im.item IN (${idList})`
       },
       {
-        name: 'itemMember',
-        query: `SELECT im.item AS kitId, im.memberitem AS componentId, im.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.memberitem WHERE im.item IN (${idList})`
+        name: 'itemMember (parentitem/component)',
+        query: `SELECT im.parentitem AS kitId, im.component AS componentId, im.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.component WHERE im.parentitem IN (${idList})`
       },
       {
-        name: 'item.memberitem (subquery)',
-        query: `SELECT sub.id AS kitId, sub.memberitem AS componentId, sub.memberquantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM (SELECT id, memberitem, memberquantity FROM item WHERE id IN (${idList})) sub JOIN item comp ON comp.id = sub.memberitem`
-      },
-      {
-        name: 'bomRevisionComponent',
-        query: `SELECT brc.item AS kitId, brc.component AS componentId, brc.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM bomRevisionComponent brc JOIN item comp ON comp.id = brc.component WHERE brc.item IN (${idList})`
+        name: 'itemMember (item/component)',
+        query: `SELECT im.item AS kitId, im.component AS componentId, im.quantity AS componentQty, COALESCE(comp.quantityavailable, 0) AS componentAvailable FROM itemMember im JOIN item comp ON comp.id = im.component WHERE im.item IN (${idList})`
       }
     ];
 
     let result: SuiteQLResponse | null = null;
     for (const attempt of tableAttempts) {
       try {
-        console.log(`Express Bath: Trying kit component table: ${attempt.name}`);
+        console.log(`Express Bath: Trying query: ${attempt.name}`);
         result = await this.executeSuiteQL(attempt.query, 1000, 0);
-        console.log(`Express Bath: SUCCESS with table ${attempt.name} - returned ${result.items.length} rows`);
+        console.log(`Express Bath: SUCCESS with ${attempt.name} - returned ${result.items.length} rows`);
         if (result.items.length > 0) {
           console.log(`Express Bath: Sample component row:`, JSON.stringify(result.items[0]));
         }
         break;
       } catch (err) {
-        console.log(`Express Bath: Table ${attempt.name} failed: ${err instanceof Error ? err.message.substring(0, 100) : err}`);
+        console.log(`Express Bath: ${attempt.name} failed: ${err instanceof Error ? err.message.substring(0, 150) : err}`);
         continue;
       }
     }
 
     if (!result) {
-      console.error('Express Bath: All kit component table attempts failed');
+      console.error('Express Bath: All kit component query attempts failed');
       return new Map();
     }
 
