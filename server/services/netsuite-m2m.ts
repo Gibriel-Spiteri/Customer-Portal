@@ -906,6 +906,48 @@ export class NetSuiteM2M {
     return await this.executeSuiteQL(query, 100, 0);
   }
 
+  async getKitComponentAvailability(kitInternalIds: number[]): Promise<Map<number, number>> {
+    if (kitInternalIds.length === 0) return new Map();
+
+    const idList = kitInternalIds.join(',');
+    const query = `
+      SELECT
+        imi.parentitem AS kitId,
+        imi.memberitem AS componentId,
+        imi.quantity AS componentQty,
+        COALESCE(comp.quantityavailable, 0) AS componentAvailable
+      FROM
+        itemmemberitem imi
+        JOIN item comp ON comp.id = imi.memberitem
+      WHERE
+        imi.parentitem IN (${idList})
+    `.trim();
+
+    const result = await this.executeSuiteQL(query, 1000, 0);
+
+    const kitComponents = new Map<number, { qty: number; available: number }[]>();
+    for (const row of result.items) {
+      const r = row as any;
+      const kitId = parseInt(r.kitid);
+      const componentQty = parseFloat(r.componentqty) || 1;
+      const componentAvailable = parseFloat(r.componentavailable) || 0;
+      if (!kitComponents.has(kitId)) {
+        kitComponents.set(kitId, []);
+      }
+      kitComponents.get(kitId)!.push({ qty: componentQty, available: componentAvailable });
+    }
+
+    const kitAvailability = new Map<number, number>();
+    for (const [kitId, components] of kitComponents) {
+      const availableKits = Math.min(
+        ...components.map(c => Math.floor(c.available / c.qty))
+      );
+      kitAvailability.set(kitId, availableKits);
+    }
+
+    return kitAvailability;
+  }
+
   async getExpressBathItems(fieldName: string = 'custitem_expressbath', limit: number = 1000, offset: number = 0): Promise<SuiteQLResponse> {
     const query = `
       SELECT 

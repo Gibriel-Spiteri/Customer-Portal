@@ -2720,6 +2720,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const dedupedItems = Array.from(seen.values());
 
+      const kitItems = dedupedItems.filter((i: any) => {
+        const type = (i.itemtype || '').toLowerCase();
+        return type === 'kit' || type === 'kititem' || type === 'kit/package';
+      });
+
+      if (kitItems.length > 0) {
+        const kitIds = kitItems.map((i: any) => parseInt(i.internalid));
+        try {
+          const kitAvailability = await m2m.getKitComponentAvailability(kitIds);
+          for (const item of dedupedItems) {
+            const i = item as any;
+            const id = parseInt(i.internalid);
+            if (kitAvailability.has(id)) {
+              i.quantityavailable = String(kitAvailability.get(id));
+            }
+          }
+          console.log(`Express Bath: Resolved kit availability for ${kitIds.length} kit items`);
+        } catch (kitError) {
+          console.error('Express Bath: Failed to resolve kit component availability:', kitError);
+        }
+      }
+
       if (dedupedItems.length > 0) {
         const sample = dedupedItems.slice(0, 5).map((i: any) => ({ id: i.internalid, sitecategory: i.sitecategory }));
         console.log('Express Bath sample sitecategory values:', JSON.stringify(sample, null, 2));
