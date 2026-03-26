@@ -578,7 +578,7 @@ export default function Support() {
 
               {/* Ticket Details Modal */}
               <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-                <DialogContent className="max-w-2xl max-h-[70vh] flex flex-col overflow-hidden">
+                <DialogContent className="max-w-2xl !top-[15%] !translate-y-0 max-h-[70vh] flex flex-col !overflow-hidden">
                   <DialogHeader className="shrink-0">
                     <DialogTitle className="flex items-center justify-between">
                       <span>Case #{selectedTicket?.caseNumber}</span>
@@ -596,8 +596,7 @@ export default function Support() {
                   </DialogHeader>
                   
                   {selectedTicket && (
-                    <div className="space-y-6 overflow-y-auto flex-1 pr-2">
-                      {/* End User / Job ID row */}
+                    <div className="min-h-0 flex-1 overflow-y-auto pr-2 space-y-6">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-sm text-gray-500">End User</span>
@@ -611,7 +610,6 @@ export default function Support() {
 
                       <hr className="border-gray-200" />
 
-                      {/* Created / Assigned To row */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-sm text-gray-500">Created:</span>
@@ -631,7 +629,6 @@ export default function Support() {
 
                       <hr className="border-gray-200" />
 
-                      {/* Subject & Detail */}
                       <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                         <div>
                           <span className="text-sm text-gray-500">Subject</span>
@@ -645,11 +642,10 @@ export default function Support() {
                         )}
                       </div>
 
-                      {/* Messages Section */}
                       {(caseMessages.length > 0 || loadingMessages) && (
                         <div>
                           <h4 className="text-sm font-bold text-gray-700 mb-3">Case Messages</h4>
-                          <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto space-y-3">
+                          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                             {loadingMessages ? (
                               <div className="flex items-center justify-center py-4">
                                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -691,7 +687,6 @@ export default function Support() {
                         </div>
                       )}
 
-                      {/* Actions */}
                       <div className="flex justify-between items-center pt-4 border-t">
                         <div className="text-sm text-gray-500">
                           For updates on this case, please contact our support team.
