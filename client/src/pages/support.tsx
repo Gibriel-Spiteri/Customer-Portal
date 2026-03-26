@@ -578,7 +578,7 @@ export default function Support() {
 
               {/* Ticket Details Modal */}
               <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                       <span>Case #{selectedTicket?.caseNumber}</span>
