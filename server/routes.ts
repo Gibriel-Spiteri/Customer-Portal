@@ -2460,18 +2460,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const salesQuery = `
         SELECT 
-          SUM(
-            CASE
-              WHEN transaction.type IN ('CustInvc', 'CashSale') THEN transaction.total
-              WHEN transaction.type IN ('CustCred', 'CashRfnd') THEN -1 * transaction.total
-              ELSE 0
-            END
-          ) AS qualifyingSales
+          SUM(transaction.total - NVL(transaction.taxtotal, 0)) AS totalSales
         FROM 
           transaction
         WHERE 
           transaction.entity = ${customerId}
-          AND transaction.type IN ('CustInvc', 'CashSale', 'CustCred', 'CashRfnd')
+          AND transaction.type IN ('CustInvc', 'CustCred')
           AND transaction.trandate >= '${startDate}'
           AND transaction.trandate <= '${endDate}'
       `;
@@ -2480,8 +2474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const salesResponse = await netsuiteM2M.executeSuiteQL(salesQuery, 1);
       console.log('Qualifying sales response:', salesResponse);
       const salesData = salesResponse.items?.[0];
-      // NetSuite returns field names in lowercase
-      const qualifyingSales = salesData?.qualifyingsales || salesData?.QUALIFYINGSALES || '0';
+      const qualifyingSales = salesData?.totalsales || salesData?.TOTALSALES || '0';
       console.log('Qualifying sales amount:', qualifyingSales);
       
       // SuiteQL query to fetch all CRD rebate records with transaction IDs
