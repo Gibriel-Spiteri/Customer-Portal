@@ -824,9 +824,13 @@ export class NetSuiteM2M {
         message.message,
         message.author,
         message.messagedate,
-        BUILTIN.DF(message.author) AS authorname
+        BUILTIN.DF(message.author) AS authorname,
+        entity.entityid,
+        entity.firstname,
+        entity.lastname
       FROM 
         message
+      LEFT JOIN entity ON entity.id = message.author
       WHERE 
         message.activity = ${caseId}
       ORDER BY 

@@ -1968,7 +1968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: msg.id,
         subject: msg.subject || 'No subject',
         content: msg.message || '',
-        author: msg.authorname || 'System',
+        author: (msg.firstname && msg.lastname ? `${msg.firstname} ${msg.lastname}` : msg.authorname) || 'System',
         date: msg.messagedate || new Date().toISOString(),
         type: msg.author === '-5' ? 'system' : 'user'
       }));
