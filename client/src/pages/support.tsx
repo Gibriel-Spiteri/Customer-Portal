@@ -582,8 +582,8 @@ export default function Support() {
 
               {/* Ticket Details Modal */}
               <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-                <DialogContent className="max-w-2xl !top-[15%] !translate-y-0 max-h-[70vh] flex flex-col !overflow-hidden">
-                  <DialogHeader className="shrink-0">
+                <DialogContent scrollable className="max-w-2xl">
+                  <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                       <span>Case #{selectedTicket?.caseNumber}</span>
                       <div className="flex items-center gap-2">
@@ -600,7 +600,7 @@ export default function Support() {
                   </DialogHeader>
                   
                   {selectedTicket && (
-                    <div className="min-h-0 flex-1 overflow-y-auto pr-2 space-y-6">
+                    <div className="space-y-6">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-sm text-gray-500">End User</span>
