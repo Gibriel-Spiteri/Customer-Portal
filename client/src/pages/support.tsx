@@ -256,7 +256,7 @@ export default function Support() {
               </div>
 
               {/* Contact Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 <Card className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4 md:p-5">
                     <div className="flex items-center gap-3">
