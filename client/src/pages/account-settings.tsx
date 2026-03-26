@@ -1,13 +1,13 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { DataBadge } from "@/components/data-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,14 +18,12 @@ import {
   Building2, 
   CreditCard,
   Shield,
-  Save,
   Loader2,
   Phone,
   MapPin,
   Users,
   Smartphone
 } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
 
 interface Account {
   id: string;
@@ -71,7 +69,6 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function AccountSettings() {
   const { user, token, isLoading: authLoading } = useAuth();
-  const { toast } = useToast();
 
   const { data: account, isLoading: accountLoading, error: accountError } = useQuery<Account>({
     queryKey: ['/api/account'],
@@ -112,44 +109,6 @@ export default function AccountSettings() {
       });
     }
   }, [profile, form]);
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: ProfileFormData) => {
-      const response = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update profile');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Profile Updated",
-        description: "Your profile information has been successfully updated.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Update Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: ProfileFormData) => {
-    updateProfileMutation.mutate(data);
-  };
 
   const formatCurrency = (amount: string | null, currency = 'USD') => {
     if (!amount) return 'N/A';
@@ -352,34 +311,26 @@ export default function AccountSettings() {
                       </div>
                     )}
                     
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="firstName">First Name</Label>
                           <Input
                             id="firstName"
-                            {...form.register("firstName")}
-                            disabled={profileLoading}
+                            value={form.getValues("firstName")}
+                            readOnly
+                            className="bg-gray-50 cursor-default"
                           />
-                          {form.formState.errors.firstName && (
-                            <p className="text-sm text-red-600">
-                              {form.formState.errors.firstName.message}
-                            </p>
-                          )}
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="lastName">Last Name</Label>
                           <Input
                             id="lastName"
-                            {...form.register("lastName")}
-                            disabled={profileLoading}
+                            value={form.getValues("lastName")}
+                            readOnly
+                            className="bg-gray-50 cursor-default"
                           />
-                          {form.formState.errors.lastName && (
-                            <p className="text-sm text-red-600">
-                              {form.formState.errors.lastName.message}
-                            </p>
-                          )}
                         </div>
                       </div>
 
@@ -390,51 +341,26 @@ export default function AccountSettings() {
                           <Input
                             id="email"
                             type="email"
-                            className="pl-10"
-                            {...form.register("email")}
-                            disabled={profileLoading}
+                            className="pl-10 bg-gray-50 cursor-default"
+                            value={form.getValues("email")}
+                            readOnly
                           />
                         </div>
-                        {form.formState.errors.email && (
-                          <p className="text-sm text-red-600">
-                            {form.formState.errors.email.message}
-                          </p>
-                        )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="companyName">Company Name (Optional)</Label>
+                        <Label htmlFor="companyName">Company Name</Label>
                         <div className="relative">
                           <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <Input
                             id="companyName"
-                            className="pl-10"
-                            {...form.register("companyName")}
-                            disabled={profileLoading}
+                            className="pl-10 bg-gray-50 cursor-default"
+                            value={form.getValues("companyName")}
+                            readOnly
                           />
                         </div>
                       </div>
-
-                      <div className="flex justify-end">
-                        <Button
-                          type="submit"
-                          disabled={updateProfileMutation.isPending || profileLoading}
-                          className="bg-netsuite-blue hover:bg-netsuite-light"
-                        >
-                          {updateProfileMutation.isPending ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Updating...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-2" />
-                              Save Changes
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
+                    </div>
                   </CardContent>
                 </Card>
 
