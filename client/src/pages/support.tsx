@@ -578,8 +578,8 @@ export default function Support() {
 
               {/* Ticket Details Modal */}
               <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                  <DialogHeader>
+                <DialogContent className="max-w-2xl max-h-[70vh] flex flex-col overflow-hidden">
+                  <DialogHeader className="shrink-0">
                     <DialogTitle className="flex items-center justify-between">
                       <span>Case #{selectedTicket?.caseNumber}</span>
                       <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export default function Support() {
                   </DialogHeader>
                   
                   {selectedTicket && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 overflow-y-auto flex-1 pr-2">
                       {/* End User / Job ID row */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
