@@ -36,6 +36,8 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Search
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
@@ -82,6 +84,7 @@ export default function Support() {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -453,6 +456,7 @@ export default function Support() {
                                 setSelectedTicket(ticket);
                                 setLoadingMessages(true);
                                 setCaseMessages([]);
+                                setExpandedMessages(new Set());
                                 try {
                                   const response = await fetch(`/api/support/tickets/${ticket.id}/messages`, {
                                     headers: { 'Authorization': `Bearer ${token}` },
@@ -652,7 +656,11 @@ export default function Support() {
                                 <span className="ml-2 text-sm text-gray-500">Loading messages...</span>
                               </div>
                             ) : caseMessages.length > 0 ? (
-                              caseMessages.map((message) => (
+                              caseMessages.map((message) => {
+                                const plainText = message.content.replace(/<[^>]*>/g, '');
+                                const isLong = plainText.length > 200;
+                                const isExpanded = expandedMessages.has(message.id);
+                                return (
                                 <div key={message.id} className="bg-white rounded-lg p-3 shadow-sm">
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center">
@@ -666,18 +674,39 @@ export default function Support() {
                                     </Badge>
                                   </div>
                                   <div 
-                                    className="text-sm text-gray-600 mb-2"
+                                    className="text-sm text-gray-600 mb-2 whitespace-pre-wrap"
                                     dangerouslySetInnerHTML={{ 
-                                      __html: message.content.replace(/<[^>]*>/g, '').substring(0, 200) + 
-                                              (message.content.length > 200 ? '...' : '')
+                                      __html: isExpanded || !isLong
+                                        ? plainText
+                                        : plainText.substring(0, 200) + '...'
                                     }}
                                   />
+                                  {isLong && (
+                                    <button
+                                      onClick={() => {
+                                        setExpandedMessages(prev => {
+                                          const next = new Set(prev);
+                                          if (next.has(message.id)) {
+                                            next.delete(message.id);
+                                          } else {
+                                            next.add(message.id);
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mb-2"
+                                    >
+                                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                      {isExpanded ? 'Show less' : 'Show more'}
+                                    </button>
+                                  )}
                                   <div className="flex items-center justify-between text-xs text-gray-500">
                                     <span>From: {message.author}</span>
                                     <span>{new Date(message.date).toLocaleDateString()}</span>
                                   </div>
                                 </div>
-                              ))
+                                );
+                              })
                             ) : (
                               <p className="text-sm text-gray-500 text-center py-2">
                                 No messages found for this case
