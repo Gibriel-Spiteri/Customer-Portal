@@ -2463,7 +2463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           SUM(
             CASE
               WHEN transaction.type IN ('CustInvc', 'CashSale') THEN transaction.total
-              WHEN transaction.type = 'CustCred' THEN -1 * transaction.total
+              WHEN transaction.type IN ('CustCred', 'CashRfnd') THEN -1 * transaction.total
               ELSE 0
             END
           ) AS qualifyingSales
@@ -2471,7 +2471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           transaction
         WHERE 
           transaction.entity = ${customerId}
-          AND transaction.type IN ('CustInvc', 'CashSale', 'CustCred')
+          AND transaction.type IN ('CustInvc', 'CashSale', 'CustCred', 'CashRfnd')
           AND transaction.trandate >= '${startDate}'
           AND transaction.trandate <= '${endDate}'
       `;
