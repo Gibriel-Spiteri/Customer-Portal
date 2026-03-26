@@ -159,7 +159,8 @@ export default function Orders() {
       case 'completed':
         viewFiltered = viewFiltered.filter(order => 
           order.status === 'closed' || 
-          order.status === 'fully billed'
+          order.status === 'fully billed' ||
+          order.status === 'cancelled'
         );
         break;
       
@@ -199,7 +200,8 @@ export default function Orders() {
       ).length,
       completed: orders.filter(order => 
         order.status === 'closed' || 
-        order.status === 'fully billed'
+        order.status === 'fully billed' ||
+        order.status === 'cancelled'
       ).length,
       all: orders.length
     };
