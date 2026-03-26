@@ -82,7 +82,7 @@ export default function Support() {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [caseMessages, setCaseMessages] = useState<CaseMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('2');
+  const [statusFilter, setStatusFilter] = useState<string>('open');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -187,11 +187,9 @@ export default function Support() {
   };
 
   const getViewCounts = () => {
-    if (!tickets) return { open: 0, notStarted: 0, inProgress: 0, closed: 0, all: 0 };
+    if (!tickets) return { open: 0, closed: 0, all: 0 };
     return {
       open: tickets.filter(t => ['1', '2', '3', '4'].includes(t.status)).length,
-      notStarted: tickets.filter(t => t.status === '1').length,
-      inProgress: tickets.filter(t => t.status === '2').length,
       closed: tickets.filter(t => t.status === '5').length,
       all: tickets.length,
     };
@@ -214,7 +212,8 @@ export default function Support() {
     
     const matchesStatus = statusFilter === 'all' ? true :
       statusFilter === 'open' ? ['1', '2', '3', '4'].includes(ticket.status) :
-      ticket.status === statusFilter || ticket.status === Number(statusFilter).toString();
+      statusFilter === 'closed' ? ticket.status === '5' :
+      true;
     
     return matchesStatus;
   }) || [];
@@ -369,9 +368,8 @@ export default function Support() {
                       <div className="flex flex-col md:flex-row gap-3">
                       <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 flex-1">
                         {[
-                          { value: '1', label: 'Not Started', count: viewCounts.notStarted, activeBg: 'bg-yellow-50', activeText: 'text-yellow-700', activeBadgeBg: 'bg-yellow-100', activeBadgeText: 'text-yellow-700', activeBorder: 'ring-yellow-200' },
-                          { value: '2', label: 'In Progress', count: viewCounts.inProgress, activeBg: 'bg-orange-50', activeText: 'text-orange-700', activeBadgeBg: 'bg-orange-100', activeBadgeText: 'text-orange-700', activeBorder: 'ring-orange-200' },
-                          { value: '5', label: 'Closed', count: viewCounts.closed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
+                          { value: 'open', label: 'Open', count: viewCounts.open, activeBg: 'bg-blue-50', activeText: 'text-blue-700', activeBadgeBg: 'bg-blue-100', activeBadgeText: 'text-blue-700', activeBorder: 'ring-blue-200' },
+                          { value: 'closed', label: 'Closed', count: viewCounts.closed, activeBg: 'bg-green-50', activeText: 'text-green-700', activeBadgeBg: 'bg-green-100', activeBadgeText: 'text-green-700', activeBorder: 'ring-green-200' },
                           { value: 'all', label: 'All', count: viewCounts.all, activeBg: 'bg-gray-50', activeText: 'text-gray-700', activeBadgeBg: 'bg-gray-200', activeBadgeText: 'text-gray-700', activeBorder: 'ring-gray-200' },
                         ].map((filter) => (
                           <button
