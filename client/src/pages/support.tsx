@@ -287,20 +287,6 @@ export default function Support() {
                   </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 md:p-5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg shrink-0">
-                        <MessageSquare className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Live Chat</h3>
-                        <p className="text-sm font-medium text-blue-600">Start Chat</p>
-                        <p className="text-xs text-gray-500">Available 24/7</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
 
               {/* New Ticket Form */}
