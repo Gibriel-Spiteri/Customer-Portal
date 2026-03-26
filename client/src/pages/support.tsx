@@ -657,7 +657,7 @@ export default function Support() {
                               </div>
                             ) : caseMessages.length > 0 ? (
                               caseMessages.map((message) => {
-                                const plainText = message.content.replace(/<[^>]*>/g, '');
+                                const plainText = message.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
                                 const isLong = plainText.length > 200;
                                 const isExpanded = expandedMessages.has(message.id);
                                 return (
@@ -674,7 +674,7 @@ export default function Support() {
                                     </Badge>
                                   </div>
                                   <div 
-                                    className="text-sm text-gray-600 mb-2 whitespace-pre-wrap"
+                                    className="text-sm text-gray-600 mb-2"
                                     dangerouslySetInnerHTML={{ 
                                       __html: isExpanded || !isLong
                                         ? plainText
