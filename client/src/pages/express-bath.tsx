@@ -121,8 +121,13 @@ function ExpressBathContent() {
   const items = data?.items || [];
 
   const categories = useMemo(() => {
-    const cats = new Set(items.map(i => getItemCategory(i)));
-    return ['All', ...Array.from(cats).sort()];
+    const catCounts = new Map<string, number>();
+    items.forEach(i => {
+      const cat = getItemCategory(i);
+      catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
+    });
+    const sorted = Array.from(catCounts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    return [{ name: 'All', count: items.length }, ...sorted.map(([name, count]) => ({ name, count }))];
   }, [items]);
 
   const filtered = useMemo(() => {
@@ -217,7 +222,10 @@ function ExpressBathContent() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {categories.map((c) => (
-            <button key={c} onClick={() => setActiveCat(c)} className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCat === c ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c}</button>
+            <button key={c.name} onClick={() => setActiveCat(c.name)} className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${activeCat === c.name ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              {c.name}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeCat === c.name ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'}`}>{c.count}</span>
+            </button>
           ))}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-3">
