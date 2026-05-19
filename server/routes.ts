@@ -664,9 +664,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
-      
+
+      const identifier = email.trim();
+      const isNumericId = /^\d+$/.test(identifier);
+      const safeIdentifier = identifier.replace(/'/g, "''");
+
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
+
+      const whereClause = isNumericId
+        ? `customer.entityid = '${safeIdentifier}' OR customer.id = '${safeIdentifier}'`
+        : `LOWER(customer.email) = LOWER('${safeIdentifier}')`;
 
       const customerQuery = `
         SELECT 
@@ -681,7 +689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM 
           customer
         WHERE 
-          LOWER(customer.email) = LOWER('${email.replace(/'/g, "''")}')
+          ${whereClause}
       `.trim();
 
       let customerResult;
@@ -731,10 +739,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      const customerEmail = (customer.email || '').toString().toLowerCase();
+
       let user = await storage.getUserByNetSuiteCustomerId(customerId);
 
-      if (!user) {
-        user = await storage.getUserByEmail(email);
+      if (!user && customerEmail) {
+        user = await storage.getUserByEmail(customerEmail);
       }
 
       if (user) {
@@ -754,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = (await storage.updateUser(user.id, updates)) || user;
       } else {
         user = await storage.createUser({
-          email: email.toLowerCase(),
+          email: customerEmail || identifier.toLowerCase(),
           password: password,
           netsuiteCustomerId: customerId,
           firstName: customer.firstname || null,

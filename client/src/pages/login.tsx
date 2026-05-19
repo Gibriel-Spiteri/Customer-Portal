@@ -102,13 +102,13 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email Address
+                  Email Address or Customer ID
                 </Label>
                 <Input
                   id="email"
                   name="email"
-                  type="email"
-                  autoComplete="email"
+                  type="text"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={(e) => {
@@ -116,9 +116,12 @@ export default function Login() {
                     setEmail(e.target.value);
                   }}
                   className="mt-1"
-                  placeholder="your.email@company.com"
+                  placeholder="your.email@company.com or 19485"
                   disabled={isSubmitting}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Sign in with your email address or your NetSuite customer ID number.
+                </p>
               </div>
               
               <div>
