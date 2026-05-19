@@ -116,7 +116,7 @@ export default function Login() {
                     setEmail(e.target.value);
                   }}
                   className="mt-1"
-                  placeholder="your.email@company.com or 19485"
+                  placeholder="your.email@company.com or customer ID"
                   disabled={isSubmitting}
                 />
                 <p className="text-xs text-gray-500 mt-1">
