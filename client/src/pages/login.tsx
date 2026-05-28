@@ -278,7 +278,7 @@ export default function Login() {
       </main>
       {/* Footer */}
       <footer className="w-full py-6 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} Consumers PRO. All rights reserved.
+        © {new Date().getFullYear()} Consumers PRO Portal™. All rights reserved.
       </footer>
     </div>
   );
