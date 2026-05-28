@@ -121,7 +121,7 @@ export default function Login() {
               <div className="mt-10 space-y-3">
                 <Button
                   onClick={() => setView("signin")}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-lg shadow-sm"
+                  className="w-full h-12 bg-[hsl(214,80%,40%)] hover:bg-[hsl(214,80%,34%)] dark:bg-[hsl(210,100%,45%)] dark:hover:bg-[hsl(210,100%,39%)] text-white text-base font-semibold rounded-lg shadow-sm"
                 >
                   <LogIn className="mr-2 h-5 w-5" />
                   Log In to Your Portal
@@ -232,7 +232,7 @@ export default function Login() {
 
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-lg"
+                    className="w-full h-12 bg-[hsl(214,80%,40%)] hover:bg-[hsl(214,80%,34%)] dark:bg-[hsl(210,100%,45%)] dark:hover:bg-[hsl(210,100%,39%)] text-white text-base font-semibold rounded-lg"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
