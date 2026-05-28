@@ -71,7 +71,6 @@ export default function CreateAccount() {
           </div>
         </div>
       </div>
-
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
@@ -129,12 +128,11 @@ export default function CreateAccount() {
           </p>
         </div>
       </div>
-
       {/* Footer */}
       <div className="bg-gray-50 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-sm text-gray-600">
-            <p>© 2024 Customer Portal. All rights reserved.</p>
+            <p>© 2026 PRO Portal. All rights reserved.</p>
             <p className="mt-2">
               Questions? Contact our support team for assistance.
             </p>
