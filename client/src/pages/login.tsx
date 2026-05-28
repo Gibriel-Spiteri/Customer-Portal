@@ -185,7 +185,6 @@ export default function Login() {
                       placeholder="email@company.com or PRO number"
                       disabled={isSubmitting}
                     />
-                    <p className="text-xs text-slate-500 mt-1">Sign in with your email address or PRO ID number #</p>
                   </div>
 
                   <div>
