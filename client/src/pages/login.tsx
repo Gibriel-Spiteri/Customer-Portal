@@ -91,7 +91,7 @@ export default function Login() {
       <header className="w-full bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="text-lg font-bold tracking-tight text-slate-900">
-            Consumers <span className="text-blue-600">PRO</span>
+            Consumers <span className="text-[hsl(214,80%,40%)] dark:text-[hsl(210,100%,45%)]">PRO</span>
           </div>
           <button
             onClick={() => setView("signin")}
@@ -110,7 +110,7 @@ export default function Login() {
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
                 Welcome to
                 <br />
-                <span className="text-blue-600">Consumers</span>
+                <span className="text-[hsl(214,80%,40%)] dark:text-[hsl(210,100%,45%)]">Consumers</span>
                 <span className="text-slate-900"> PRO</span>
               </h1>
               <p className="mt-6 text-base text-slate-500 leading-relaxed max-w-sm mx-auto">
