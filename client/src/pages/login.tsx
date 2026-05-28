@@ -151,9 +151,6 @@ export default function Login() {
 
               <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
                 <h2 className="text-2xl font-bold text-slate-900">Sign In</h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Access your orders, invoices, and account.
-                </p>
 
                 {error && (
                   <Alert variant="destructive" className="mt-4">
