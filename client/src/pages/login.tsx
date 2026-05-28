@@ -101,7 +101,6 @@ export default function Login() {
           </button>
         </div>
       </header>
-
       {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
@@ -186,10 +185,7 @@ export default function Login() {
                       placeholder="your.email@company.com or customer ID"
                       disabled={isSubmitting}
                     />
-                    <p className="text-xs text-slate-500 mt-1">
-                      Sign in with your email address or your NetSuite customer
-                      ID number.
-                    </p>
+                    <p className="text-xs text-slate-500 mt-1">Sign in with your email address or your PRO ID number.</p>
                   </div>
 
                   <div>
@@ -284,7 +280,6 @@ export default function Login() {
           </div>
         </div>
       </main>
-
       {/* Footer */}
       <footer className="w-full py-6 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} Consumers PRO. All rights reserved.
