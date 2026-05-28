@@ -168,7 +168,7 @@ export default function Login() {
                       htmlFor="email"
                       className="block text-sm font-medium text-slate-700"
                     >
-                      Email Address or Customer ID
+                      Email Address or PRO ID #
                     </Label>
                     <Input
                       id="email"
@@ -185,7 +185,7 @@ export default function Login() {
                       placeholder="your.email@company.com or customer ID"
                       disabled={isSubmitting}
                     />
-                    <p className="text-xs text-slate-500 mt-1">Sign in with your email address or your PRO ID number.</p>
+                    <p className="text-xs text-slate-500 mt-1">Sign in with your email address or PRO ID number #</p>
                   </div>
 
                   <div>
