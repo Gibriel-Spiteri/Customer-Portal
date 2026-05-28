@@ -182,7 +182,7 @@ export default function Login() {
                         setEmail(e.target.value);
                       }}
                       className="mt-1 h-11"
-                      placeholder="your.email@company.com or customer ID"
+                      placeholder="email@company.com or PRO number"
                       disabled={isSubmitting}
                     />
                     <p className="text-xs text-slate-500 mt-1">Sign in with your email address or PRO ID number #</p>
