@@ -47,13 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
     const currentPath = window.location.pathname;
     
-    // Check if current path is a public route
-    const isPublicRoute = publicRoutes.some(route => currentPath.includes(route));
+    // Check if current path is a public route ('/' is the sign-in landing page)
+    const isPublicRoute = currentPath === '/' || publicRoutes.some(route => currentPath === route || currentPath.startsWith(`${route}/`));
     
-    // Redirect to login if not authenticated and not on a public route
+    // Redirect to the sign-in landing page if not authenticated and not on a public route
     if (!isLoading && !user && !token && !isPublicRoute) {
-      console.log('AuthProvider: Redirecting to login - isLoading:', isLoading, 'user:', user, 'token:', token, 'pathname:', currentPath);
-      setLocation('/login');
+      console.log('AuthProvider: Redirecting to sign in - isLoading:', isLoading, 'user:', user, 'token:', token, 'pathname:', currentPath);
+      setLocation('/');
     }
   }, [user, isLoading, token, setLocation]);
 
@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_token');
     setToken(null);
     setUser(null);
-    setLocation('/login');
+    setLocation('/');
   };
 
   return (
