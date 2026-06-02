@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 export default function Login() {
-  const [view, setView] = useState<"welcome" | "signin">("welcome");
+  const [view, setView] = useState<"welcome" | "signin">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
