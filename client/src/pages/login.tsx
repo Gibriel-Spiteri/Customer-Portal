@@ -189,7 +189,7 @@ export default function Login() {
                 Forgot Password?
               </Link>
               <Link
-                href="/create-account"
+                href="/register"
                 className="text-sm text-blue-600 hover:underline"
               >
                 Create Account
