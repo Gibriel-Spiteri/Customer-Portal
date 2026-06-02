@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+    const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
     const currentPath = window.location.pathname;
     
     // Check if current path is a public route

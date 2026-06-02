@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { SyncProvider } from "@/contexts/sync-context";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
-import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import Dashboard from "@/pages/dashboard";
@@ -34,7 +33,6 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/auth/netsuite/callback" component={OAuthCallback} />

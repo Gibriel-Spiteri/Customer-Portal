@@ -181,18 +181,12 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="flex justify-between items-center mt-4">
+            <div className="flex justify-center items-center mt-4">
               <Link
                 href="/forgot-password"
                 className="text-sm text-blue-600 hover:underline"
               >
                 Forgot Password?
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Create Account
               </Link>
             </div>
           </div>
