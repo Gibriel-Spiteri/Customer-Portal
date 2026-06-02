@@ -5,16 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Loader2,
-  Wallet,
-  Wrench,
-  Target,
-  ArrowLeft,
-} from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -75,12 +66,6 @@ export default function Login() {
       </div>
     );
   }
-
-  const features = [
-    { icon: Wallet, label: "Profit" },
-    { icon: Wrench, label: "Resources" },
-    { icon: Target, label: "Opportunity" },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -210,25 +195,6 @@ export default function Login() {
                 Create Account
               </Link>
             </div>
-          </div>
-        </div>
-
-        {/* Feature cards */}
-        <div className="w-full max-w-md mt-16">
-          <div className="grid grid-cols-3 gap-3">
-            {features.map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                className="flex flex-col items-center justify-center bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
-              >
-                <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center mb-2">
-                  <Icon className="h-5 w-5 text-blue-600" />
-                </div>
-                <span className="text-xs font-medium text-slate-600">
-                  {label}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
       </main>
