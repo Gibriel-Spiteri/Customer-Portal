@@ -10,8 +10,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  LogIn,
-  Plus,
   Wallet,
   Wrench,
   Target,
@@ -19,7 +17,6 @@ import {
 } from "lucide-react";
 
 export default function Login() {
-  const [view, setView] = useState<"welcome" | "signin">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -91,170 +88,129 @@ export default function Login() {
       <header className="w-full bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="text-lg font-bold tracking-tight text-slate-900">
-            Consumers <span className="text-[hsl(214,80%,40%)] dark:text-[hsl(210,100%,45%)]">PRO</span>
+            Consumers{" "}
+            <span className="text-[hsl(214,80%,40%)] dark:text-[hsl(210,100%,45%)]">
+              PRO
+            </span>
           </div>
-          <button
-            onClick={() => setView("signin")}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
-          >
-            Portal Login
-          </button>
         </div>
       </header>
+
       {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          {view === "welcome" ? (
-            <div className="text-center">
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                Welcome to
-                <br />
-                <span className="text-[hsl(214,80%,40%)] dark:text-[hsl(210,100%,45%)]">Consumers</span>
-                <span className="text-slate-900"> PRO</span>
-              </h1>
-              <p className="mt-6 text-base text-slate-500 leading-relaxed max-w-sm mx-auto">
-                Your trusted partner for wholesale purchasing. Access exclusive
-                pricing, manage your account, and grow your business with us.
-              </p>
+          <a
+            href="https://ckbpro.com"
+            className="flex items-center text-sm text-slate-500 hover:text-slate-700 mb-6"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to ckbpro.com
+          </a>
 
-              <div className="mt-10 space-y-3">
-                <Button
-                  onClick={() => setView("signin")}
-                  className="w-full h-12 bg-[hsl(214,80%,40%)] hover:bg-[hsl(214,80%,34%)] dark:bg-[hsl(210,100%,45%)] dark:hover:bg-[hsl(210,100%,39%)] text-white text-base font-semibold rounded-lg shadow-sm"
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
+            <h2 className="text-2xl font-bold text-slate-900">Sign In</h2>
+
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+              <div>
+                <Label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-slate-700"
                 >
-                  <LogIn className="mr-2 h-5 w-5" />
-                  Log In to Your Portal
-                </Button>
-                <Link href="/create-account">
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 border-slate-200 bg-white hover:bg-slate-50 text-slate-900 text-base font-semibold rounded-lg shadow-sm"
-                  >
-                    <Plus className="mr-2 h-5 w-5" />
-                    Sign Up for Wholesale PROgram
-                  </Button>
-                </Link>
+                  Email Address or PRO ID #
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  value={email}
+                  onChange={(e) => {
+                    setError("");
+                    setEmail(e.target.value);
+                  }}
+                  className="mt-1 h-11"
+                  placeholder="email@company.com or PRO number"
+                  disabled={isSubmitting}
+                />
               </div>
-            </div>
-          ) : (
-            <div>
-              <button
-                onClick={() => {
-                  setView("welcome");
-                  setError("");
-                }}
-                className="flex items-center text-sm text-slate-500 hover:text-slate-700 mb-6"
-              >
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
-              </button>
 
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
-                <h2 className="text-2xl font-bold text-slate-900">Sign In</h2>
-
-                {error && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-                  <div>
-                    <Label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-slate-700"
-                    >
-                      Email Address or PRO ID #
-                    </Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="text"
-                      autoComplete="username"
-                      required
-                      value={email}
-                      onChange={(e) => {
-                        setError("");
-                        setEmail(e.target.value);
-                      }}
-                      className="mt-1 h-11"
-                      placeholder="email@company.com or PRO number"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div>
-                    <Label
-                      htmlFor="password"
-                      className="block text-sm font-medium text-slate-700"
-                    >
-                      Password
-                    </Label>
-                    <div className="relative mt-1">
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="current-password"
-                        required
-                        value={password}
-                        onChange={(e) => {
-                          setError("");
-                          setPassword(e.target.value);
-                        }}
-                        className="pr-10 h-11"
-                        placeholder="Enter your password"
-                        disabled={isSubmitting}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={() => setShowPassword(!showPassword)}
-                        tabIndex={-1}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-slate-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-slate-400" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full h-12 bg-[hsl(214,80%,40%)] hover:bg-[hsl(214,80%,34%)] dark:bg-[hsl(210,100%,45%)] dark:hover:bg-[hsl(210,100%,39%)] text-white text-base font-semibold rounded-lg"
+              <div>
+                <Label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Password
+                </Label>
+                <div className="relative mt-1">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => {
+                      setError("");
+                      setPassword(e.target.value);
+                    }}
+                    className="pr-10 h-11"
+                    placeholder="Enter your password"
                     disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-slate-400" />
                     ) : (
-                      "Sign In"
+                      <Eye className="h-4 w-4 text-slate-400" />
                     )}
-                  </Button>
-                </form>
-
-                <div className="flex justify-between items-center mt-4">
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    Forgot Password?
-                  </Link>
-                  <Link
-                    href="/create-account"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    Create Account
-                  </Link>
+                  </button>
                 </div>
               </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-[hsl(214,80%,40%)] hover:bg-[hsl(214,80%,34%)] dark:bg-[hsl(210,100%,45%)] dark:hover:bg-[hsl(210,100%,39%)] text-white text-base font-semibold rounded-lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
+
+            <div className="flex justify-between items-center mt-4">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Forgot Password?
+              </Link>
+              <Link
+                href="/create-account"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Create Account
+              </Link>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Feature cards */}
@@ -276,6 +232,7 @@ export default function Login() {
           </div>
         </div>
       </main>
+
       {/* Footer */}
       <footer className="w-full py-6 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} Consumers PRO Portal™. All rights reserved.
