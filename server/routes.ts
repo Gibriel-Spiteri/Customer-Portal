@@ -1258,12 +1258,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map NetSuite status codes to friendly names (same logic as /api/orders)
       const mapOrderStatus = (status: string): string => {
         const statusMap: Record<string, string> = {
-          'A': 'pending',
-          'B': 'pending approval',
+          'A': 'pending approval',
+          'B': 'pending fulfillment',
           'C': 'cancelled',
           'D': 'partially fulfilled',
-          'E': 'pending billing',
-          'F': 'pending fulfillment',
+          'E': 'partially fulfilled',
+          'F': 'pending billing',
           'G': 'fully billed',
           'H': 'closed',
         };
@@ -1412,12 +1412,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map NetSuite status codes to friendly names
       const mapStatus = (status: string): string => {
         const statusMap: Record<string, string> = {
-          'A': 'pending',
-          'B': 'pending approval',
+          'A': 'pending approval',
+          'B': 'pending fulfillment',
           'C': 'cancelled',
           'D': 'partially fulfilled',
-          'E': 'pending billing',
-          'F': 'pending fulfillment',
+          'E': 'partially fulfilled',
+          'F': 'pending billing',
           'G': 'fully billed',
           'H': 'closed',
         };
@@ -1471,12 +1471,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map NetSuite status codes to friendly names
       const mapStatus = (status: string): string => {
         const statusMap: Record<string, string> = {
-          'A': 'pending',
-          'B': 'pending approval',
+          'A': 'pending approval',
+          'B': 'pending fulfillment',
           'C': 'cancelled',
           'D': 'partially fulfilled',
-          'E': 'pending billing',
-          'F': 'pending fulfillment',
+          'E': 'partially fulfilled',
+          'F': 'pending billing',
           'G': 'fully billed',
           'H': 'closed',
         };
