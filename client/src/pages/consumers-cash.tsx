@@ -105,7 +105,10 @@ export default function ConsumersCash() {
   const { data, isLoading, error, refetch } = useQuery<CRDRebatesResponse>({
     queryKey: ['/api/crd-rebates'],
     enabled: !!token,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    // Removed `refetchInterval: 30000` — CRD rebate balances do not change every
+    // 30s, and this poll synchronized across open tabs/users into periodic
+    // NetSuite bursts (each /api/crd-rebates also runs validateCustomerAccess).
+    // Inherits the global refetchInterval:false; use the on-screen refresh instead.
   });
 
   // Pagination logic

@@ -55,6 +55,29 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   }
 };
 
+// Short-TTL cache of customer account/status, keyed by NetSuite customer ID.
+// validateCustomerAccess runs on EVERY protected request and previously fetched
+// the customer account (2 SuiteQL + an OAuth token POST) every single time. This
+// caches the account for CUSTOMER_STATUS_TTL_MS so repeat and parallel requests
+// reuse one fetch, and the account is stashed on req so the dashboard can reuse
+// it instead of fetching it again. Trade-off: hold-status changes
+// (GLOBAL_HOLD/DISCONTINUED/CONTACT_HOLD) and account balance can be up to the
+// TTL stale — acceptable for a self-service portal; lower the TTL to tighten.
+const CUSTOMER_STATUS_TTL_MS = 60 * 1000;
+const customerAccountCache = new Map<string, { account: any; fetchedAt: number }>();
+
+async function getCachedCustomerAccount(customerId: string): Promise<any> {
+  const cached = customerAccountCache.get(customerId);
+  if (cached && Date.now() - cached.fetchedAt < CUSTOMER_STATUS_TTL_MS) {
+    return cached.account;
+  }
+  const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+  const m2m = new NetSuiteM2M();
+  const account = await m2m.getCustomerAccount(customerId);
+  customerAccountCache.set(customerId, { account, fetchedAt: Date.now() });
+  return account;
+}
+
 // Middleware to validate customer center access and customer status
 const validateCustomerAccess = async (req: any, res: any, next: any) => {
   const user = req.user;
@@ -79,10 +102,16 @@ const validateCustomerAccess = async (req: any, res: any, next: any) => {
   // Check customer status for all NetSuite users
   if (user.netsuiteCustomerId) {
     try {
-      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
-      const m2m = new NetSuiteM2M();
-      const customerData = await m2m.getCustomerAccount(user.netsuiteCustomerId);
-      
+      // Replaced the per-request fetch with a 60s cached lookup (getCachedCustomerAccount).
+      // Legacy inline fetch preserved per house rule — it ran one getCustomerAccount
+      // (2 SuiteQL + a token POST) on EVERY protected request:
+      //   const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      //   const m2m = new NetSuiteM2M();
+      //   const customerData = await m2m.getCustomerAccount(user.netsuiteCustomerId);
+      const customerData = await getCachedCustomerAccount(user.netsuiteCustomerId);
+      // Stash so downstream handlers (e.g. /api/dashboard) reuse it without re-fetching.
+      req.nsCustomerAccount = customerData;
+
       const customerStatus = customerData.customerstatus;
       
       if (customerStatus === '2' || customerStatus === 2) {
@@ -1156,48 +1185,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Fetch all data in parallel for efficiency
-      const [account, orders, invoices, payments, estimates, cases, allOrders, allEstimates, allCases] = await Promise.all([
-        m2m.getCustomerAccount(req.user.netsuiteCustomerId).catch(err => {
-          console.error('Failed to fetch account:', err);
-          return null;
-        }),
-        m2m.getCustomerOrders(req.user.netsuiteCustomerId, 5).catch(err => {
+      // De-duplicated fetch. Previously this fired 9 parallel NetSuite calls,
+      // including DUPLICATE limit-5 AND limit-100 fetches of orders/estimates/cases
+      // (the limit-100 sets existed only to COUNT in JS — capped at 100, so inexact).
+      // Now: fetch each display list ONCE (limit 5) and get EXACT counts from SuiteQL
+      // aggregates via getDashboardCounts (2 calls). The account is reused from
+      // validateCustomerAccess's 60s cache (req.nsCustomerAccount) instead of refetched.
+      //
+      // Legacy 9-call fan-out preserved per house rule:
+      //   const [account, orders, invoices, payments, estimates, cases, allOrders, allEstimates, allCases] = await Promise.all([
+      //     m2m.getCustomerAccount(...),       m2m.getCustomerOrders(...,5),  m2m.getCustomerInvoices(...,5),
+      //     m2m.getCustomerPayments(...,5),     m2m.getCustomerEstimates(...,5), m2m.getCustomerCases(...,5),
+      //     m2m.getCustomerOrders(...,100),     m2m.getCustomerEstimates(...,100), m2m.getCustomerCases(...,100) ]);
+      //   // counts were allOrders/allEstimates/allCases .filter(...).length — capped at 100
+      const customerId = req.user.netsuiteCustomerId;
+      const [orders, invoices, payments, estimates, cases, counts] = await Promise.all([
+        m2m.getCustomerOrders(customerId, 5).catch(err => {
           console.error('Failed to fetch orders:', err);
           return [];
         }),
-        m2m.getCustomerInvoices(req.user.netsuiteCustomerId, 5).catch(err => {
+        m2m.getCustomerInvoices(customerId, 5).catch(err => {
           console.error('Failed to fetch invoices:', err);
           return [];
         }),
-        m2m.getCustomerPayments(req.user.netsuiteCustomerId, 5).catch(err => {
+        m2m.getCustomerPayments(customerId, 5).catch(err => {
           console.error('Failed to fetch payments:', err);
           return [];
         }),
-        m2m.getCustomerEstimates(req.user.netsuiteCustomerId, 5).catch(err => {
+        m2m.getCustomerEstimates(customerId, 5).catch(err => {
           console.error('Failed to fetch estimates:', err);
           return [];
         }),
-        m2m.getCustomerCases(req.user.netsuiteCustomerId, 5).catch(err => {
+        // limit is the 3rd arg of getCustomerCases (2nd is an unused email param);
+        // 30 matches the previous effective behavior, then we slice(0,5) for display.
+        m2m.getCustomerCases(customerId, undefined, 30).catch(err => {
           console.error('Failed to fetch cases:', err);
           return [];
         }),
-        // Fetch all orders to get accurate count
-        m2m.getCustomerOrders(req.user.netsuiteCustomerId, 100).catch(err => {
-          console.error('Failed to fetch all orders:', err);
-          return [];
+        m2m.getDashboardCounts(customerId).catch(err => {
+          console.error('Failed to fetch dashboard counts:', err);
+          return null;
         }),
-        // Fetch all estimates to get accurate count
-        m2m.getCustomerEstimates(req.user.netsuiteCustomerId, 100).catch(err => {
-          console.error('Failed to fetch all estimates:', err);
-          return [];
-        }),
-        // Fetch all cases to get accurate count
-        m2m.getCustomerCases(req.user.netsuiteCustomerId, 100).catch(err => {
-          console.error('Failed to fetch all cases:', err);
-          return [];
-        })
       ]);
+
+      // Reuse the account fetched (and cached) by validateCustomerAccess to avoid a
+      // duplicate getCustomerAccount (2 SuiteQL). Fall back to a fetch if absent.
+      let account = req.nsCustomerAccount ?? null;
+      if (!account) {
+        account = await m2m.getCustomerAccount(customerId).catch(err => {
+          console.error('Failed to fetch account:', err);
+          return null;
+        });
+      }
       
       // Map NetSuite status codes to friendly names (same logic as /api/orders)
       const mapOrderStatus = (status: string): string => {
@@ -1214,28 +1253,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return statusMap[status] || status.toLowerCase();
       };
       
-      // Calculate metrics using mapped statuses (consistent with SO page)
-      const activeOrders = allOrders.filter((order: any) => {
-        const mapped = mapOrderStatus(order.status);
-        return mapped !== 'closed' && mapped !== 'fully billed' && mapped !== 'cancelled';
-      });
-      const activeOrdersCount = activeOrders.length;
+      // Exact counts from SuiteQL aggregates (getDashboardCounts). Degrade to
+      // display-list approximations only if the count query is unavailable.
+      // Legacy approach (counted limit-100 lists in JS — capped at 100, inexact):
+      //   const activeOrdersCount   = allOrders.filter(o => active(o)).length;
+      //   const activeEstimatesCount= allEstimates.filter(...).length;
+      //   const openCasesCount      = allCases.filter(c => c.status != 5).length;
+      //   const pendingOrdersCount  = allOrders.filter(o => pending(o)).length;
+      let activeOrdersCount: number;
+      let pendingOrdersCount: number;
+      let activeEstimatesCount: number;
+      let openCasesCount: number;
+      if (counts) {
+        activeOrdersCount = counts.activeOrders;
+        pendingOrdersCount = counts.pendingOrders;
+        activeEstimatesCount = counts.activeEstimates;
+        openCasesCount = counts.openCases;
+      } else {
+        console.warn('Dashboard counts unavailable from SuiteQL; using display-list counts (may undercount beyond the 5 fetched).');
+        activeOrdersCount = orders.filter((order: any) => {
+          const mapped = mapOrderStatus(order.status);
+          return mapped !== 'closed' && mapped !== 'fully billed' && mapped !== 'cancelled';
+        }).length;
+        pendingOrdersCount = orders.filter((order: any) => {
+          const mapped = mapOrderStatus(order.status);
+          return mapped === 'pending' || mapped === 'pending approval' || mapped === 'pending fulfillment';
+        }).length;
+        activeEstimatesCount = estimates.filter((estimate: any) =>
+          estimate.status && !['Closed', 'Voided', 'Rejected'].includes(estimate.status)
+        ).length;
+        openCasesCount = cases.filter((supportCase: any) =>
+          supportCase.status !== '5' && supportCase.status !== 5
+        ).length;
+      }
       
-      const activeEstimatesCount = allEstimates.filter((estimate: any) => 
-        estimate.status && !['Closed', 'Voided', 'Rejected'].includes(estimate.status)
-      ).length;
-      
-      // In NetSuite, status 5 = Closed, so exclude those
-      const openCasesCount = allCases.filter((supportCase: any) => 
-        supportCase.status !== '5' && supportCase.status !== 5
-      ).length;
-      
-      const pendingOrdersCount = allOrders.filter((order: any) => {
-        const mapped = mapOrderStatus(order.status);
-        return mapped === 'pending' || mapped === 'pending approval' || mapped === 'pending fulfillment';
-      }).length;
-      
-      const outstandingInvoices = invoices.filter((invoice: any) => 
+      // activeEstimatesCount / openCasesCount / pendingOrdersCount are now computed
+      // exactly in the counts block above (from getDashboardCounts), so the legacy
+      // limit-100 JS-filter versions that lived here were removed (preserved as
+      // comments in that block).
+
+      const outstandingInvoices = invoices.filter((invoice: any) =>
         parseFloat(invoice.balancedue || invoice.amountremaining || '0') > 0
       );
       
