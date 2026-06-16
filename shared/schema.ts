@@ -13,6 +13,7 @@ export const users = pgTable('users', {
   lastName: varchar('last_name', { length: 100 }),
   companyName: varchar('company_name', { length: 255 }),
   isActive: boolean('is_active').default(true).notNull(),
+  isAdmin: boolean('is_admin').default(false).notNull(), // gates the /admin metrics dashboard
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -46,6 +47,26 @@ export const nsCache = pgTable('ns_cache', {
 }));
 
 export type NsCacheRow = typeof nsCache.$inferSelect;
+
+// Per-minute rollup of NetSuite request volume + cache effectiveness, for the
+// admin metrics dashboard. Written by a 60s flusher (server/services/ns-metrics-store.ts)
+// that drains the in-process counters and upsert-increments the current bucket — so
+// counts aggregate across Replit autoscale instances (each flushes its own delta).
+export const nsMetrics = pgTable('ns_metrics', {
+  bucket: timestamp('bucket', { withTimezone: true }).primaryKey(), // truncated to the minute
+  reqToken: integer('req_token').default(0).notNull(),
+  reqSuiteql: integer('req_suiteql').default(0).notNull(),
+  reqRecord: integer('req_record').default(0).notNull(),
+  reqRestlet: integer('req_restlet').default(0).notNull(),
+  reqOidc: integer('req_oidc').default(0).notNull(),
+  reqOther: integer('req_other').default(0).notNull(),
+  cacheHit: integer('cache_hit').default(0).notNull(),
+  cacheMiss: integer('cache_miss').default(0).notNull(),
+  cacheStale: integer('cache_stale').default(0).notNull(),
+  peakConcurrency: integer('peak_concurrency').default(0).notNull(),
+});
+
+export type NsMetricsRow = typeof nsMetrics.$inferSelect;
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
