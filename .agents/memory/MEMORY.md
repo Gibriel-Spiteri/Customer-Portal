@@ -1,0 +1,1 @@
+- [NetSuite M2M private key](netsuite-private-key.md) — key file is gitignored & wiped on env reconciliation; keep it in NETSUITE_PRIVATE_KEY secret and normalize the single-line PEM before signing.

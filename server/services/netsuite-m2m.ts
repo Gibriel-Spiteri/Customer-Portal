@@ -64,13 +64,13 @@ export class NetSuiteM2M {
     
     // Try to read private key from file if not in environment
     if (process.env.NETSUITE_PRIVATE_KEY) {
-      this.privateKey = process.env.NETSUITE_PRIVATE_KEY;
+      this.privateKey = NetSuiteM2M.normalizePrivateKey(process.env.NETSUITE_PRIVATE_KEY);
     } else {
       // Try to read from file
       try {
         const keyPath = path.join(process.cwd(), 'netsuite_private_key.pem');
         if (fs.existsSync(keyPath)) {
-          this.privateKey = fs.readFileSync(keyPath, 'utf8');
+          this.privateKey = NetSuiteM2M.normalizePrivateKey(fs.readFileSync(keyPath, 'utf8'));
           console.log('NetSuite M2M: Private key loaded from file');
         } else {
           this.privateKey = '';
@@ -97,6 +97,27 @@ export class NetSuiteM2M {
     if (!this.privateKey) {
       console.warn('NetSuite M2M: Private key not configured - certificate-based auth will not work');
     }
+  }
+
+  /**
+   * Normalize a PEM private key so it is valid regardless of how it was stored.
+   * Secrets stored in env vars often lose their line breaks (becoming a single
+   * line) or have them escaped as literal "\n", which makes the PEM unparseable.
+   * This rebuilds a properly line-wrapped PEM from the BEGIN/END markers and the
+   * base64 body.
+   */
+  private static normalizePrivateKey(raw: string): string {
+    if (!raw) return '';
+    const key = raw.trim().replace(/\\n/g, '\n');
+    const match = key.match(/-----BEGIN ([A-Z0-9 ]+?)-----([\s\S]*?)-----END \1-----/);
+    if (!match) {
+      // Not a recognizable PEM; return as-is and let downstream surface errors.
+      return key;
+    }
+    const type = match[1].trim();
+    const body = match[2].replace(/[^A-Za-z0-9+/=]/g, '');
+    const wrapped = body.match(/.{1,64}/g)?.join('\n') ?? body;
+    return `-----BEGIN ${type}-----\n${wrapped}\n-----END ${type}-----\n`;
   }
 
   /**
