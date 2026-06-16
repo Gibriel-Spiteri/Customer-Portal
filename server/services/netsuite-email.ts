@@ -65,7 +65,7 @@ export class NetSuiteEmailService {
         });
 
         return await response.json();
-      });
+      }, 'restlet');
       
       if (result.success) {
         console.log(`Email sent successfully via NetSuite to ${params.email}`);

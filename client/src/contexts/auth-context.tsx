@@ -10,6 +10,7 @@ interface User {
   companyName?: string;
   isNetSuiteUser?: boolean;
   netsuiteCustomerId?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {

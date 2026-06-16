@@ -1,15 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  FileText, 
-  CreditCard, 
-  Star, 
-  Settings, 
+import { useAuth } from "@/contexts/auth-context";
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  FileText,
+  CreditCard,
+  Star,
+  Settings,
   HelpCircle,
   Calculator,
-  Bath
+  Bath,
+  BarChart3
 } from "lucide-react";
 
 interface NavigationItem {
@@ -59,6 +61,7 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
 
   return (
     <nav className="hidden lg:flex lg:flex-shrink-0">
@@ -94,6 +97,21 @@ export function Sidebar() {
                   </Link>
                 );
               })}
+              {user?.isAdmin && (
+                <Link href="/admin">
+                  <div
+                    className={cn(
+                      "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                      location.startsWith('/admin')
+                        ? "bg-blue-100 text-blue-900 border-l-4 border-blue-600 font-semibold"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    )}
+                  >
+                    <BarChart3 className="mr-3 h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                    Admin Metrics
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
         </div>

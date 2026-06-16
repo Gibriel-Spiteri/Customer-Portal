@@ -137,7 +137,7 @@ export class NetSuiteClient {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
-      }));
+      }), 'other');
 
       console.log('📡 Response Status:', response.status);
       console.log('📋 Response Headers:', Object.fromEntries(response.headers.entries()));

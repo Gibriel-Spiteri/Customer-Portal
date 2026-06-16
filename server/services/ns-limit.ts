@@ -25,6 +25,7 @@
  * transitively call nsLimit again.
  */
 import pLimit from 'p-limit';
+import { recordNsRequest, recordConcurrency, type NsRequestKind } from './ns-metrics';
 
 /**
  * Maximum simultaneous in-flight NetSuite requests this app may have.
@@ -39,9 +40,16 @@ const limit = pLimit(NS_MAX_CONCURRENCY);
  * Run a single NetSuite HTTP round-trip under the global concurrency cap.
  * Pass a thunk that performs exactly ONE fetch (+ its response parse) and
  * does NOT itself call nsLimit (no re-entrancy — see module note).
+ *
+ * `kind` labels the request for metrics (token/suiteql/record/restlet/oidc).
  */
-export function nsLimit<T>(fn: () => Promise<T>): Promise<T> {
-  return limit(fn);
+export function nsLimit<T>(fn: () => Promise<T>, kind: NsRequestKind = 'other'): Promise<T> {
+  return limit(() => {
+    // Inside the slot: count the request and sample the high-water concurrency.
+    recordNsRequest(kind);
+    recordConcurrency(limit.activeCount);
+    return fn();
+  });
 }
 
 /** Observability: how many slots are in use / queued right now. */

@@ -29,6 +29,7 @@ import NetSuiteDebug from "@/pages/netsuite-debug";
 import OAuthDebugPage from "@/pages/oauth-debug";
 import ConsumersCash from "@/pages/consumers-cash";
 import ExpressBath from "@/pages/express-bath";
+import AdminMetrics from "@/pages/admin-metrics";
 
 function Router() {
   return (
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/netsuite-test" component={NetSuiteTest} />
       <Route path="/netsuite-debug" component={NetSuiteDebug} />
       <Route path="/oauth-debug" component={OAuthDebugPage} />
+      <Route path="/admin" component={AdminMetrics} />
       <Route component={NotFound} />
     </Switch>
   );

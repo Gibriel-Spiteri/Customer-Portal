@@ -14,6 +14,10 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { netsuiteClient } from "./services/netsuite-simple";
+import { invalidateCustomer } from "./services/ns-cache";
+import { getMetricsSnapshot } from "./services/ns-metrics";
+import { nsLimitStatus } from "./services/ns-limit";
+import { startMetricsFlusher, getMetricsTimeSeries } from "./services/ns-metrics-store";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
@@ -41,18 +45,27 @@ const authenticateToken = async (req: any, res: any, next: any) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    req.user = { 
-      id: user.id, 
+    req.user = {
+      id: user.id,
       username: user.username,
       netsuiteCustomerId: decoded.netsuiteCustomerId,
       isNetSuiteUser: decoded.isNetSuiteUser,
-      ssoUser: decoded.ssoUser || false
+      ssoUser: decoded.ssoUser || false,
+      isAdmin: user.isAdmin,
     };
     next();
   } catch (error) {
     console.error('Token verification error:', error);
     return res.status(403).json({ message: 'Invalid token' });
   }
+};
+
+// Middleware to require admin access (use after authenticateToken).
+const requireAdmin = (req: any, res: any, next: any) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
 };
 
 // Short-TTL cache of customer account/status, keyed by NetSuite customer ID.
@@ -145,6 +158,9 @@ const validateCustomerAccess = async (req: any, res: any, next: any) => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+
+  // Begin persisting NetSuite request metrics to per-minute buckets (admin dashboard).
+  startMetricsFlusher();
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -871,6 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyName: user.companyName || '',
         netsuiteCustomerId: user.netsuiteCustomerId,
         isNetSuiteUser: !!user.netsuiteCustomerId,
+        isAdmin: user.isAdmin,
       });
     } catch (error) {
       console.error('Profile fetch error:', error);
@@ -2859,6 +2876,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Internal server error',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Manual cache refresh — drops this customer's cached NetSuite data so the next
+  // load repopulates live. This is the escape hatch from the TTL window (no
+  // NetSuite-side push invalidation). Optional body { entityTypes: string[] } to
+  // scope it (e.g. ['account','orders']); omitted clears everything for the customer.
+  // Frontends should call this, then refetch their react-query keys.
+  app.post('/api/cache/refresh', authenticateToken, async (req: any, res) => {
+    try {
+      const customerId = req.user?.netsuiteCustomerId;
+      if (!customerId) {
+        return res.status(400).json({ success: false, message: 'No NetSuite customer for this user' });
+      }
+      const entityTypes = Array.isArray(req.body?.entityTypes) ? req.body.entityTypes : undefined;
+      await invalidateCustomer(customerId, entityTypes);
+      // Also drop the in-memory status/account cache (validateCustomerAccess) for this customer.
+      customerAccountCache.delete(customerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Cache refresh error:', error);
+      res.status(500).json({ success: false, message: 'Failed to refresh cache' });
+    }
+  });
+
+  // Admin: NetSuite request-volume metrics — live snapshot (this instance) plus the
+  // persisted per-minute time-series (aggregated across instances). Admin-gated.
+  app.get('/api/admin/metrics', authenticateToken, requireAdmin, async (req: any, res) => {
+    try {
+      const hours = Math.min(Math.max(parseInt(req.query.hours as string) || 24, 1), 24 * 7);
+      const series = await getMetricsTimeSeries(hours);
+      res.json({
+        live: {
+          snapshot: getMetricsSnapshot(),
+          concurrency: nsLimitStatus(),
+        },
+        series,
+        rangeHours: hours,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Admin metrics error:', error);
+      res.status(500).json({ message: 'Failed to load metrics' });
     }
   });
 
