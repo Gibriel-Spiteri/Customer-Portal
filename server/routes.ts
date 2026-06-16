@@ -14,6 +14,7 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { netsuiteClient } from "./services/netsuite-simple";
+import { invalidateCustomer } from "./services/ns-cache";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
@@ -2859,6 +2860,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Internal server error',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Manual cache refresh — drops this customer's cached NetSuite data so the next
+  // load repopulates live. This is the escape hatch from the TTL window (no
+  // NetSuite-side push invalidation). Optional body { entityTypes: string[] } to
+  // scope it (e.g. ['account','orders']); omitted clears everything for the customer.
+  // Frontends should call this, then refetch their react-query keys.
+  app.post('/api/cache/refresh', authenticateToken, async (req: any, res) => {
+    try {
+      const customerId = req.user?.netsuiteCustomerId;
+      if (!customerId) {
+        return res.status(400).json({ success: false, message: 'No NetSuite customer for this user' });
+      }
+      const entityTypes = Array.isArray(req.body?.entityTypes) ? req.body.entityTypes : undefined;
+      await invalidateCustomer(customerId, entityTypes);
+      // Also drop the in-memory status/account cache (validateCustomerAccess) for this customer.
+      customerAccountCache.delete(customerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Cache refresh error:', error);
+      res.status(500).json({ success: false, message: 'Failed to refresh cache' });
     }
   });
 

@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { nsLimit } from './ns-limit';
+import { cached, TTL } from './ns-cache';
 
 interface TokenResponse {
   access_token: string;
@@ -217,7 +218,7 @@ export class NetSuiteM2M {
       }
 
       return (await response.json()) as TokenResponse;
-    });
+    }, 'token');
 
     // Cache the token (static — subtract 60s for safety).
     NetSuiteM2M.accessToken = data.access_token;
@@ -261,7 +262,7 @@ export class NetSuiteM2M {
         }
 
         return (await response.json()) as SuiteQLResponse;
-      });
+      }, 'suiteql');
 
       console.log(`NetSuite M2M: Query returned ${data.items.length} items`);
 
@@ -299,7 +300,7 @@ export class NetSuiteM2M {
         }
 
         return await response.json();
-      });
+      }, 'record');
     } catch (error) {
       console.error('NetSuite M2M: Error fetching record field:', error);
       return null;
@@ -342,6 +343,12 @@ export class NetSuiteM2M {
    * Fetch estimates for a specific customer
    */
   async getCustomerEstimates(customerId: string, limit: number = 1000): Promise<any[]> {
+    return cached({
+      key: `estimates:list:${customerId}:${limit}`,
+      customerId,
+      entityType: 'estimates',
+      ttl: TTL.VOLATILE,
+      loader: async () => {
     const query = `
       SELECT 
         transaction.id,
@@ -368,6 +375,8 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+      },
+    });
   }
 
   /**
@@ -404,6 +413,13 @@ export class NetSuiteM2M {
    * Fetch estimate details including line items
    */
   async getEstimateDetails(estimateId: string): Promise<any> {
+    return cached({
+      key: `estimate:detail:${estimateId}`,
+      customerId: (d: any) => String(d?.customerid ?? 'unknown'),
+      entityType: 'estimate_detail',
+      // Open estimates (status A) are still changing -> short TTL; otherwise immutable.
+      ttl: (d: any) => (d?.status === 'A') ? TTL.VOLATILE : TTL.HISTORY,
+      loader: async () => {
     // Main estimate query - only using available fields
     const mainQuery = `
       SELECT 
@@ -488,12 +504,20 @@ export class NetSuiteM2M {
       discounttotal: discounttotal.toString(),
       items: linesResult.items
     };
+      },
+    });
   }
 
   /**
    * Fetch customer sales orders
    */
   async getCustomerOrders(customerId: string, limit: number = 1000): Promise<any[]> {
+    return cached({
+      key: `orders:list:${customerId}:${limit}`,
+      customerId,
+      entityType: 'orders',
+      ttl: TTL.VOLATILE,
+      loader: async () => {
     const query = `
       SELECT DISTINCT
         transaction.id,
@@ -521,6 +545,8 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+      },
+    });
   }
 
   async getSalesRepNamesForOrders(orderIds: string[]): Promise<Record<string, string>> {
@@ -560,6 +586,13 @@ export class NetSuiteM2M {
    * Fetch order details including line items
    */
   async getOrderDetails(orderId: string): Promise<any> {
+    return cached({
+      key: `order:detail:${orderId}`,
+      customerId: (d: any) => String(d?.customerid ?? 'unknown'),
+      entityType: 'order_detail',
+      // Closed (H) / fully billed (G) orders are immutable -> long TTL; open orders short.
+      ttl: (d: any) => (d?.status === 'H' || d?.status === 'G') ? TTL.HISTORY : TTL.VOLATILE,
+      loader: async () => {
     // Main order query
     const mainQuery = `
       SELECT 
@@ -706,12 +739,20 @@ export class NetSuiteM2M {
       praDetails: praResult.items,
       files: filesResult.items
     };
+      },
+    });
   }
 
   /**
    * Fetch customer invoices
    */
   async getCustomerInvoices(customerId: string, limit: number = 1000): Promise<any[]> {
+    return cached({
+      key: `invoices:list:${customerId}:${limit}`,
+      customerId,
+      entityType: 'invoices',
+      ttl: TTL.VOLATILE,
+      loader: async () => {
     const query = `
       SELECT DISTINCT
         transaction.id,
@@ -736,12 +777,20 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+      },
+    });
   }
 
   /**
    * Fetch customer payments
    */
   async getCustomerPayments(customerId: string, limit: number = 1000): Promise<any[]> {
+    return cached({
+      key: `payments:list:${customerId}:${limit}`,
+      customerId,
+      entityType: 'payments',
+      ttl: TTL.VOLATILE,
+      loader: async () => {
     const query = `
       SELECT DISTINCT
         transaction.id,
@@ -764,12 +813,20 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+      },
+    });
   }
 
   /**
    * Fetch customer contacts
    */
   async getCustomerContacts(customerId: string): Promise<any[]> {
+    return cached({
+      key: `contacts:${customerId}`,
+      customerId,
+      entityType: 'contacts',
+      ttl: TTL.PROFILE,
+      loader: async () => {
     const query = `
       SELECT 
         contact.id,
@@ -797,6 +854,8 @@ export class NetSuiteM2M {
     const result = await this.executeSuiteQL(query, 100, 0);
     console.log('NetSuite M2M: Raw contact data from NetSuite:', JSON.stringify(result.items, null, 2));
     return result.items || [];
+      },
+    });
   }
 
   /**
@@ -887,6 +946,12 @@ export class NetSuiteM2M {
    * Fetch customer support cases
    */
   async getCustomerCases(customerId: string, customerEmail?: string, limit = 30): Promise<any[]> {
+    return cached({
+      key: `cases:list:${customerId}:${limit}`,
+      customerId,
+      entityType: 'cases',
+      ttl: TTL.VOLATILE,
+      loader: async () => {
     // Search by custom field custevent_svcsjpr_customer that links cases to customers
     // Filter by custevent_jprtype = 1 and exclude closed cases (status != 5)
     const query = `
@@ -924,6 +989,8 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+      },
+    });
   }
 
   /**
@@ -949,6 +1016,12 @@ export class NetSuiteM2M {
     activeEstimates: number;
     openCases: number;
   }> {
+    return cached({
+      key: `counts:${customerId}`,
+      customerId,
+      entityType: 'counts',
+      ttl: TTL.VOLATILE,
+      loader: async () => {
     const txnCountQuery = `
       SELECT
         SUM(CASE WHEN transaction.type = 'SalesOrd' AND transaction.status NOT IN ('C', 'G', 'H') THEN 1 ELSE 0 END) AS activeorders,
@@ -989,6 +1062,8 @@ export class NetSuiteM2M {
       activeEstimates: parseInt(txn.activeestimates ?? '0', 10) || 0,
       openCases: parseInt(cases.opencases ?? '0', 10) || 0,
     };
+      },
+    });
   }
 
   async discoverExpressBathField(): Promise<SuiteQLResponse> {
