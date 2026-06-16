@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as client from 'openid-client';
+import { nsLimit } from './ns-limit';
 
 interface OIDCConfig {
   clientId: string;
@@ -28,12 +29,25 @@ class NetSuiteOIDCService {
     try {
       // Discover NetSuite OIDC configuration
       const discoveryUrl = new URL('https://1212804.suitetalk.api.netsuite.com/.well-known/openid-configuration');
-      
+
+      // Route every openid-client HTTP call (discovery, token exchange, userinfo,
+      // refresh) through the global NetSuite concurrency limiter. openid-client v6
+      // accepts a custom fetch via the customFetch symbol — pass it to discovery
+      // and set it on the resulting Configuration so all operations are capped.
+      const limitedFetch = (input: any, init?: any) => nsLimit(() => fetch(input, init));
+
       // For openid-client v6, discovery returns the configuration object directly
-      this.configuration = await client.discovery(discoveryUrl, this.config.clientId, this.config.clientSecret);
-      
-      // Fetch the server metadata to log it
-      const serverMetadata = await fetch(discoveryUrl.href).then(r => r.json());
+      this.configuration = await client.discovery(
+        discoveryUrl,
+        this.config.clientId,
+        this.config.clientSecret,
+        undefined,
+        { [client.customFetch]: limitedFetch as any }
+      );
+      this.configuration[client.customFetch] = limitedFetch;
+
+      // Fetch the server metadata to log it (also capped)
+      const serverMetadata: any = await nsLimit(() => fetch(discoveryUrl.href)).then(r => r.json());
       console.log('NetSuite OIDC Configuration discovered:', {
         issuer: serverMetadata.issuer,
         authorizationEndpoint: serverMetadata.authorization_endpoint,

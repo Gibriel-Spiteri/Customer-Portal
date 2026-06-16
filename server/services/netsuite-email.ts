@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { nsLimit } from './ns-limit';
 
 interface NetSuiteEmailParams {
   type: 'password_reset' | 'welcome';
@@ -44,22 +45,27 @@ export class NetSuiteEmailService {
       const { NetSuiteM2M } = await import('./netsuite-m2m');
       const m2m = new NetSuiteM2M();
       
-      // Get OAuth access token for the request
+      // Get OAuth access token for the request (acquires its own limiter slot,
+      // OUTSIDE the RESTlet slot below — non-reentrant, see ns-limit.ts).
       const accessToken = await m2m.getAccessToken();
-      
-      // Make request to RESTlet using the direct URL
-      const response = await fetch(this.restletUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-          'Prefer': 'transient'
-        },
-        body: JSON.stringify(params)
-      });
 
-      const result = await response.json();
+      // Make request to RESTlet using the direct URL. This RESTlet POST is a
+      // real inbound NetSuite call (and uses node-fetch, NOT global fetch), so
+      // it must go through the same global concurrency limiter as everything else.
+      const result: any = await nsLimit(async () => {
+        const response = await fetch(this.restletUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'Prefer': 'transient'
+          },
+          body: JSON.stringify(params)
+        });
+
+        return await response.json();
+      });
       
       if (result.success) {
         console.log(`Email sent successfully via NetSuite to ${params.email}`);

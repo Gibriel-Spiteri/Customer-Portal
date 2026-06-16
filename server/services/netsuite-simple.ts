@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { nsLimit } from './ns-limit';
 
 /**
  * Simple NetSuite REST API Client
@@ -127,15 +128,16 @@ export class NetSuiteClient {
     try {
       const authHeader = this.createAuthHeader('GET', url);
       console.log('🔐 Generated Auth Header:', authHeader.substring(0, 100) + '...');
-      
-      const response = await fetch(url, {
+
+      // Admin-only connection test, but still a real inbound NetSuite call — cap it.
+      const response = await nsLimit(() => fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': authHeader,
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
-      });
+      }));
 
       console.log('📡 Response Status:', response.status);
       console.log('📋 Response Headers:', Object.fromEntries(response.headers.entries()));

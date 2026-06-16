@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { nsLimit } from './ns-limit';
 
 interface TokenResponse {
   access_token: string;
@@ -31,8 +32,17 @@ export class NetSuiteM2M {
   private privateKey: string;
   private tokenUrl: string;
   private apiBaseUrl: string;
-  private accessToken: string | null = null;
-  private tokenExpiry: Date | null = null;
+  // Token cache is STATIC (process-wide) so it survives across the per-request
+  // `new NetSuiteM2M()` instances created in routes.ts (28 sites) and in
+  // netsuite-email.ts. All instances share one env-derived OAuth2 config, so one
+  // cached token is valid for all of them. These were previously per-instance,
+  // so the cache was discarded every request, firing an OAuth token POST (an
+  // inbound NetSuite call counting against concurrency) on nearly every request.
+  private static accessToken: string | null = null;
+  private static tokenExpiry: Date | null = null;
+  // Single-flight guard: collapses a burst of concurrent getAccessToken() calls
+  // (e.g. the dashboard's parallel fan-out on a cold cache) into ONE token POST.
+  private static tokenInFlight: Promise<string> | null = null;
 
   constructor() {
     // Extract account ID from full URL if provided as URL
@@ -130,35 +140,58 @@ export class NetSuiteM2M {
    * Get access token using OAuth2 client credentials flow
    */
   async getAccessToken(): Promise<string> {
-    // Check if we have a valid cached token
-    if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
-      return this.accessToken;
+    // Fast path: valid cached token (static — shared across all instances).
+    if (NetSuiteM2M.accessToken && NetSuiteM2M.tokenExpiry && new Date() < NetSuiteM2M.tokenExpiry) {
+      return NetSuiteM2M.accessToken;
     }
 
+    // Single-flight: if a token fetch is already in progress, await THAT instead
+    // of firing another inbound NetSuite call. (No await between this check and
+    // the assignment below, so it is race-free on Node's single thread.)
+    if (NetSuiteM2M.tokenInFlight) {
+      return NetSuiteM2M.tokenInFlight;
+    }
+
+    NetSuiteM2M.tokenInFlight = this.fetchAccessToken();
     try {
-      const clientAssertion = this.generateClientAssertion();
-      
-      // Decode the JWT to verify its structure
-      const [header, payload] = clientAssertion.split('.').slice(0, 2).map(part => 
-        JSON.parse(Buffer.from(part, 'base64').toString())
-      );
-      
-      console.log('NetSuite M2M: JWT Header:', JSON.stringify(header, null, 2));
-      console.log('NetSuite M2M: JWT Payload decoded:', JSON.stringify(payload, null, 2));
-      console.log('NetSuite M2M: Certificate ID in JWT:', header.kid);
-      
-      const params = new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-        client_assertion: clientAssertion
-      });
+      return await NetSuiteM2M.tokenInFlight;
+    } finally {
+      // Always clear so a failed fetch never poisons future callers (we never
+      // cache a rejected token) and a fresh attempt can be made next time.
+      NetSuiteM2M.tokenInFlight = null;
+    }
+  }
 
-      console.log('NetSuite M2M: Request parameters:');
-      console.log('  grant_type:', 'client_credentials');
-      console.log('  client_assertion_type:', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
-      console.log('  client_assertion length:', clientAssertion.length);
-      console.log('NetSuite M2M: Requesting access token from:', this.tokenUrl);
+  /**
+   * Perform the actual OAuth2 token POST. Wrapped in the global limiter so the
+   * token call counts against the shared NetSuite concurrency budget.
+   *
+   * NON-REENTRANT: this acquires and RELEASES its own limiter slot. Callers
+   * (executeSuiteQL/getRecordField) must invoke getAccessToken() BEFORE they
+   * acquire a query slot — never while holding one — or a wide parallel fan-out
+   * would deadlock (all query slots held, none free for the token fetch).
+   */
+  private async fetchAccessToken(): Promise<string> {
+    const clientAssertion = this.generateClientAssertion();
 
+    // Decode the JWT to verify its structure
+    const [header, payload] = clientAssertion.split('.').slice(0, 2).map(part =>
+      JSON.parse(Buffer.from(part, 'base64').toString())
+    );
+
+    console.log('NetSuite M2M: JWT Header:', JSON.stringify(header, null, 2));
+    console.log('NetSuite M2M: JWT Payload decoded:', JSON.stringify(payload, null, 2));
+    console.log('NetSuite M2M: Certificate ID in JWT:', header.kid);
+
+    const params = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+      client_assertion: clientAssertion
+    });
+
+    console.log('NetSuite M2M: Requesting access token from:', this.tokenUrl);
+
+    const data: TokenResponse = await nsLimit(async () => {
       const response = await fetch(this.tokenUrl, {
         method: 'POST',
         headers: {
@@ -171,8 +204,6 @@ export class NetSuiteM2M {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('NetSuite M2M: Token request failed:', response.status, errorText);
-        
-        // Try to parse error details
         try {
           const errorData = JSON.parse(errorText);
           console.error('NetSuite M2M: Error details:', errorData);
@@ -182,23 +213,19 @@ export class NetSuiteM2M {
         } catch (e) {
           // If not JSON, just use the raw text
         }
-        
         throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
       }
 
-      const data: TokenResponse = await response.json();
-      
-      // Cache the token
-      this.accessToken = data.access_token;
-      this.tokenExpiry = new Date(Date.now() + (data.expires_in - 60) * 1000); // Subtract 60 seconds for safety
-      
-      console.log('NetSuite M2M: Access token obtained, expires at:', this.tokenExpiry);
-      
-      return data.access_token;
-    } catch (error) {
-      console.error('NetSuite M2M: Error getting access token:', error);
-      throw error;
-    }
+      return (await response.json()) as TokenResponse;
+    });
+
+    // Cache the token (static — subtract 60s for safety).
+    NetSuiteM2M.accessToken = data.access_token;
+    NetSuiteM2M.tokenExpiry = new Date(Date.now() + (data.expires_in - 60) * 1000);
+
+    console.log('NetSuite M2M: Access token obtained, expires at:', NetSuiteM2M.tokenExpiry);
+
+    return data.access_token;
   }
 
   /**
@@ -206,32 +233,38 @@ export class NetSuiteM2M {
    */
   async executeSuiteQL(query: string, limit: number = 100, offset: number = 0): Promise<SuiteQLResponse> {
     try {
+      // Acquire the token OUTSIDE the query's limiter slot (getAccessToken takes
+      // and releases its own slot). NON-REENTRANT: never hold a query slot while
+      // fetching the token — that would deadlock a wide parallel fan-out.
       const accessToken = await this.getAccessToken();
-      
+
       const url = `${this.apiBaseUrl}/query/v1/suiteql?limit=${limit}&offset=${offset}`;
-      
+
       console.log('NetSuite M2M: Executing SuiteQL query:', query.substring(0, 100) + '...');
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'transient'
-        },
-        body: JSON.stringify({ q: query })
+
+      // Only the query round-trip holds a global NetSuite concurrency slot.
+      const data: SuiteQLResponse = await nsLimit(async () => {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'transient'
+          },
+          body: JSON.stringify({ q: query })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('NetSuite M2M: SuiteQL query failed:', response.status, errorText);
+          throw new Error(`SuiteQL query failed: ${response.status} ${errorText}`);
+        }
+
+        return (await response.json()) as SuiteQLResponse;
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('NetSuite M2M: SuiteQL query failed:', response.status, errorText);
-        throw new Error(`SuiteQL query failed: ${response.status} ${errorText}`);
-      }
-
-      const data: SuiteQLResponse = await response.json();
-      
       console.log(`NetSuite M2M: Query returned ${data.items.length} items`);
-      
+
       return data;
     } catch (error) {
       console.error('NetSuite M2M: Error executing SuiteQL:', error);
@@ -244,25 +277,29 @@ export class NetSuiteM2M {
    */
   async getRecordField(recordType: string, recordId: string, fields: string[]): Promise<any> {
     try {
+      // Token acquired OUTSIDE the query slot (non-reentrant — see getAccessToken).
       const accessToken = await this.getAccessToken();
       const fieldsParam = fields.join(',');
       const url = `${this.apiBaseUrl}/record/v1/${recordType}/${recordId}?fields=${fieldsParam}`;
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+
+      // Only the record round-trip holds a global NetSuite concurrency slot.
+      return await nsLimit(async () => {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('NetSuite M2M: Record API call failed:', response.status, errorText);
+          return null;
+        }
+
+        return await response.json();
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('NetSuite M2M: Record API call failed:', response.status, errorText);
-        return null;
-      }
-
-      return await response.json();
     } catch (error) {
       console.error('NetSuite M2M: Error fetching record field:', error);
       return null;
@@ -887,6 +924,71 @@ export class NetSuiteM2M {
 
     const result = await this.executeSuiteQL(query, limit, 0);
     return result.items;
+  }
+
+  /**
+   * Exact dashboard count metrics, computed via SuiteQL aggregates rather than
+   * by counting a capped (limit 100) list in JS — so counts are correct for
+   * customers with >100 records. Two NetSuite calls (both capped by nsLimit):
+   * one `transaction` aggregate (orders + estimates, same table) and one
+   * `supportcase` count.
+   *
+   * Status codes mirror the dashboard's mapOrderStatus logic:
+   *   activeOrders    = SalesOrd NOT IN C(cancelled)/G(fully billed)/H(closed)
+   *   pendingOrders   = SalesOrd IN A(pending)/B(pending approval)/F(pending fulfillment)
+   *   activeEstimates = Estimate status A (open) — matches getCustomerEstimates' filter
+   *   openCases       = supportcase status != 5 (closed) — matches getCustomerCases
+   *
+   * NOTE: these aggregate queries were authored offline and should be validated
+   * against the live NetSuite account. Callers should treat a thrown error as
+   * "counts unavailable" and fall back to list-derived counts.
+   */
+  async getDashboardCounts(customerId: string): Promise<{
+    activeOrders: number;
+    pendingOrders: number;
+    activeEstimates: number;
+    openCases: number;
+  }> {
+    const txnCountQuery = `
+      SELECT
+        SUM(CASE WHEN transaction.type = 'SalesOrd' AND transaction.status NOT IN ('C', 'G', 'H') THEN 1 ELSE 0 END) AS activeorders,
+        SUM(CASE WHEN transaction.type = 'SalesOrd' AND transaction.status IN ('A', 'B', 'F') THEN 1 ELSE 0 END) AS pendingorders,
+        SUM(CASE WHEN transaction.type = 'Estimate' AND transaction.status = 'A' THEN 1 ELSE 0 END) AS activeestimates
+      FROM
+        transaction
+      WHERE
+        transaction.entity = ${customerId}
+        AND (
+          (transaction.type = 'SalesOrd' AND transaction.custbody_orig_salesorder IS NULL)
+          OR transaction.type = 'Estimate'
+        )
+    `.trim();
+
+    const caseCountQuery = `
+      SELECT
+        COUNT(*) AS opencases
+      FROM
+        supportcase
+      WHERE
+        supportcase.custevent_svcsjpr_customer = ${customerId}
+        AND supportcase.custevent_jprtype = 1
+        AND supportcase.status != 5
+    `.trim();
+
+    const [txnResult, caseResult] = await Promise.all([
+      this.executeSuiteQL(txnCountQuery, 1, 0),
+      this.executeSuiteQL(caseCountQuery, 1, 0),
+    ]);
+
+    const txn: any = txnResult.items[0] || {};
+    const cases: any = caseResult.items[0] || {};
+
+    return {
+      activeOrders: parseInt(txn.activeorders ?? '0', 10) || 0,
+      pendingOrders: parseInt(txn.pendingorders ?? '0', 10) || 0,
+      activeEstimates: parseInt(txn.activeestimates ?? '0', 10) || 0,
+      openCases: parseInt(cases.opencases ?? '0', 10) || 0,
+    };
   }
 
   async discoverExpressBathField(): Promise<SuiteQLResponse> {
