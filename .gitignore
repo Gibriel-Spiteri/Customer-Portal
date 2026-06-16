@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Secrets — never commit. NetSuite M2M private key / certificate and env files.
+# The private key must be supplied via the NETSUITE_PRIVATE_KEY env var (Replit
+# Secrets), NOT a file in the repo. See netsuite-m2m.ts constructor.
+*.pem
+.env
+.env.local
+.env.*.local
