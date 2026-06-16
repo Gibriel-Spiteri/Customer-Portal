@@ -10,7 +10,9 @@ import { sql, gte, lt } from 'drizzle-orm';
 import { drainForFlush } from './ns-metrics';
 
 const FLUSH_INTERVAL_MS = 60_000;
-const RETENTION_DAYS = 7;
+// Keep enough history that the day/week/month rollups are meaningful, not just
+// the per-minute view. Per-minute rows are tiny so this stays well-bounded.
+const RETENTION_DAYS = 120;
 
 let timer: NodeJS.Timeout | null = null;
 let flushTicks = 0;
@@ -86,4 +88,61 @@ export function startMetricsFlusher(): void {
 export async function getMetricsTimeSeries(hours: number): Promise<NsMetricsRow[]> {
   const since = new Date(Date.now() - hours * 60 * 60 * 1000);
   return db.select().from(nsMetrics).where(gte(nsMetrics.bucket, since)).orderBy(nsMetrics.bucket);
+}
+
+export type Granularity = 'minute' | 'hour' | 'day' | 'week' | 'month';
+
+// How far back to look for each granularity (in hours). Bounded by RETENTION_DAYS.
+const LOOKBACK_HOURS: Record<Granularity, number> = {
+  minute: 2,
+  hour: 48,
+  day: 24 * 30,
+  week: 24 * 120,
+  month: 24 * 120,
+};
+
+/**
+ * Per-bucket rollup at the requested granularity, oldest first. The per-minute
+ * rows are aggregated server-side with date_trunc (sums for counts, max for the
+ * peak-concurrency high-water mark).
+ */
+export async function getMetricsRollup(granularity: Granularity): Promise<NsMetricsRow[]> {
+  const since = new Date(Date.now() - LOOKBACK_HOURS[granularity] * 60 * 60 * 1000);
+
+  if (granularity === 'minute') {
+    return getMetricsTimeSeries(LOOKBACK_HOURS.minute);
+  }
+
+  const result = await db.execute(sql`
+    SELECT
+      date_trunc(${granularity}, bucket) AS bucket,
+      SUM(req_token)::int        AS "reqToken",
+      SUM(req_suiteql)::int      AS "reqSuiteql",
+      SUM(req_record)::int       AS "reqRecord",
+      SUM(req_restlet)::int      AS "reqRestlet",
+      SUM(req_oidc)::int         AS "reqOidc",
+      SUM(req_other)::int        AS "reqOther",
+      SUM(cache_hit)::int        AS "cacheHit",
+      SUM(cache_miss)::int       AS "cacheMiss",
+      SUM(cache_stale)::int      AS "cacheStale",
+      MAX(peak_concurrency)::int AS "peakConcurrency"
+    FROM ns_metrics
+    WHERE bucket >= ${since}
+    GROUP BY 1
+    ORDER BY 1
+  `);
+
+  return (result.rows as any[]).map((r) => ({
+    bucket: new Date(r.bucket),
+    reqToken: r.reqToken,
+    reqSuiteql: r.reqSuiteql,
+    reqRecord: r.reqRecord,
+    reqRestlet: r.reqRestlet,
+    reqOidc: r.reqOidc,
+    reqOther: r.reqOther,
+    cacheHit: r.cacheHit,
+    cacheMiss: r.cacheMiss,
+    cacheStale: r.cacheStale,
+    peakConcurrency: r.peakConcurrency,
+  })) as NsMetricsRow[];
 }

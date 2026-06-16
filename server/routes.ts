@@ -17,7 +17,7 @@ import { netsuiteClient } from "./services/netsuite-simple";
 import { invalidateCustomer } from "./services/ns-cache";
 import { getMetricsSnapshot } from "./services/ns-metrics";
 import { nsLimitStatus } from "./services/ns-limit";
-import { startMetricsFlusher, getMetricsTimeSeries } from "./services/ns-metrics-store";
+import { startMetricsFlusher, getMetricsRollup } from "./services/ns-metrics-store";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
@@ -2905,15 +2905,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // persisted per-minute time-series (aggregated across instances). Admin-gated.
   app.get('/api/admin/metrics', authenticateToken, requireAdmin, async (req: any, res) => {
     try {
-      const hours = Math.min(Math.max(parseInt(req.query.hours as string) || 24, 1), 24 * 7);
-      const series = await getMetricsTimeSeries(hours);
+      const allowed = ['minute', 'hour', 'day', 'week', 'month'] as const;
+      const granularity = (allowed as readonly string[]).includes(req.query.granularity as string)
+        ? (req.query.granularity as typeof allowed[number])
+        : 'minute';
+      const series = await getMetricsRollup(granularity);
       res.json({
         live: {
           snapshot: getMetricsSnapshot(),
           concurrency: nsLimitStatus(),
         },
         series,
-        rangeHours: hours,
+        granularity,
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {

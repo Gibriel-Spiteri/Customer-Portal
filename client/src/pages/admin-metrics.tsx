@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Activity, Database, Gauge, ServerCog } from "lucide-react";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
 interface MetricsResponse {
@@ -33,9 +33,11 @@ interface MetricsResponse {
     cacheHit: number; cacheMiss: number; cacheStale: number;
     peakConcurrency: number;
   }>;
-  rangeHours: number;
+  granularity: Granularity;
   generatedAt: string;
 }
+
+type Granularity = "minute" | "hour" | "day" | "week" | "month";
 
 // Stacked by NetSuite request kind.
 const KIND_SERIES: Array<{ key: keyof MetricsResponse["series"][number]; label: string; color: string }> = [
@@ -47,12 +49,34 @@ const KIND_SERIES: Array<{ key: keyof MetricsResponse["series"][number]; label: 
   { key: "reqOther", label: "Other", color: "#6b7280" },
 ];
 
-const RANGES = [
-  { label: "1h", hours: 1 },
-  { label: "6h", hours: 6 },
-  { label: "24h", hours: 24 },
-  { label: "7d", hours: 24 * 7 },
+const GRANULARITIES: Array<{ label: string; value: Granularity }> = [
+  { label: "Minute", value: "minute" },
+  { label: "Hour", value: "hour" },
+  { label: "Day", value: "day" },
+  { label: "Week", value: "week" },
+  { label: "Month", value: "month" },
 ];
+
+// How to format the x-axis / tooltip label for each granularity.
+function formatBucket(bucket: string, granularity: Granularity): string {
+  const d = new Date(bucket);
+  switch (granularity) {
+    case "minute":
+    case "hour":
+      return d.toLocaleString([], {
+        month: granularity === "hour" ? "short" : undefined,
+        day: granularity === "hour" ? "numeric" : undefined,
+        hour: "2-digit",
+        minute: granularity === "minute" ? "2-digit" : undefined,
+      });
+    case "day":
+      return d.toLocaleDateString([], { month: "short", day: "numeric" });
+    case "week":
+      return `Wk of ${d.toLocaleDateString([], { month: "short", day: "numeric" })}`;
+    case "month":
+      return d.toLocaleDateString([], { month: "short", year: "numeric" });
+  }
+}
 
 function StatCard({ icon, label, value, sub }: { icon: ReactNode; label: string; value: string; sub?: string }) {
   return (
@@ -73,10 +97,10 @@ function StatCard({ icon, label, value, sub }: { icon: ReactNode; label: string;
 
 export default function AdminMetrics() {
   const { user } = useAuth();
-  const [hours, setHours] = useState(24);
+  const [granularity, setGranularity] = useState<Granularity>("minute");
 
   const { data, isLoading, error } = useQuery<MetricsResponse>({
-    queryKey: [`/api/admin/metrics?hours=${hours}`],
+    queryKey: [`/api/admin/metrics?granularity=${granularity}`],
     enabled: !!user?.isAdmin,
     refetchInterval: 15000, // poll our own server (not NetSuite) for a near-live view
   });
@@ -98,12 +122,13 @@ export default function AdminMetrics() {
   const chartData = (data?.series ?? []).map((row) => {
     const total = row.reqToken + row.reqSuiteql + row.reqRecord + row.reqRestlet + row.reqOidc + row.reqOther;
     return {
-      time: new Date(row.bucket).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: formatBucket(row.bucket, granularity),
       total,
       ...row,
     };
   });
   const totalInRange = chartData.reduce((a, r) => a + r.total, 0);
+  const granularityLabel = GRANULARITIES.find((g) => g.value === granularity)?.label.toLowerCase() ?? granularity;
 
   return (
     <MobileLayout>
@@ -116,14 +141,14 @@ export default function AdminMetrics() {
             </p>
           </div>
           <div className="flex gap-1">
-            {RANGES.map((r) => (
+            {GRANULARITIES.map((g) => (
               <Button
-                key={r.label}
+                key={g.value}
                 size="sm"
-                variant={hours === r.hours ? "default" : "outline"}
-                onClick={() => setHours(r.hours)}
+                variant={granularity === g.value ? "default" : "outline"}
+                onClick={() => setGranularity(g.value)}
               >
-                {r.label}
+                {g.label}
               </Button>
             ))}
           </div>
@@ -149,7 +174,7 @@ export default function AdminMetrics() {
           />
           <StatCard
             icon={<ServerCog className="h-5 w-5" />}
-            label={`Requests (last ${data?.rangeHours ?? hours}h)`}
+            label={`Requests (per-${granularityLabel} view)`}
             value={totalInRange.toLocaleString()}
             sub={snap ? `${snap.netsuite.totalRequests.toLocaleString()} since startup` : undefined}
           />
@@ -164,7 +189,7 @@ export default function AdminMetrics() {
         {/* Requests-per-minute, stacked by kind */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">NetSuite requests per minute</CardTitle>
+            <CardTitle className="text-base">NetSuite requests per {granularityLabel}</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -174,25 +199,22 @@ export default function AdminMetrics() {
             ) : (
               <div style={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
-                  <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                    <XAxis dataKey="time" tick={{ fontSize: 11 }} minTickGap={32} />
+                    <XAxis dataKey="time" tick={{ fontSize: 11 }} minTickGap={24} />
                     <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                     <Tooltip />
                     <Legend />
                     {KIND_SERIES.map((s) => (
-                      <Area
+                      <Bar
                         key={s.key as string}
-                        type="monotone"
                         dataKey={s.key as string}
                         name={s.label}
                         stackId="1"
-                        stroke={s.color}
                         fill={s.color}
-                        fillOpacity={0.55}
                       />
                     ))}
-                  </AreaChart>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
@@ -200,8 +222,8 @@ export default function AdminMetrics() {
         </Card>
 
         <p className="text-xs text-gray-400">
-          Live cards reflect this server instance; the chart is the persisted per-minute rollup
-          (aggregated across instances). Auto-refreshes every 15s.
+          Live cards reflect this server instance; the chart is the persisted rollup
+          (aggregated across instances), grouped by {granularityLabel}. Auto-refreshes every 15s.
         </p>
       </div>
     </MobileLayout>
