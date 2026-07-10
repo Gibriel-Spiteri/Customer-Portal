@@ -11,7 +11,9 @@ import {
   HelpCircle,
   Calculator,
   Bath,
-  BarChart3
+  BarChart3,
+  ServerCog,
+  Users
 } from "lucide-react";
 
 interface NavigationItem {
@@ -59,6 +61,20 @@ const navigation: NavigationItem[] = [
   },
 ];
 
+// Sub-menu items shown under "Admin Metrics" for admin users only.
+const adminNavigation: NavigationItem[] = [
+  {
+    name: 'NetSuite Requests',
+    href: '/admin/netsuite',
+    icon: ServerCog,
+  },
+  {
+    name: 'User Metrics',
+    href: '/admin/users',
+    icon: Users,
+  },
+];
+
 export function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
@@ -98,19 +114,30 @@ export function Sidebar() {
                 );
               })}
               {user?.isAdmin && (
-                <Link href="/admin">
-                  <div
-                    className={cn(
-                      "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
-                      location.startsWith('/admin')
-                        ? "bg-blue-100 text-blue-900 border-l-4 border-blue-600 font-semibold"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    )}
-                  >
+                <div>
+                  <div className="group flex items-center px-3 py-2 text-sm font-medium text-gray-600">
                     <BarChart3 className="mr-3 h-5 w-5 flex-shrink-0" aria-hidden="true" />
                     Admin Metrics
                   </div>
-                </Link>
+                  {adminNavigation.map((item) => {
+                    const isActive = location.startsWith(item.href);
+                    return (
+                      <Link key={item.name} href={item.href}>
+                        <div
+                          className={cn(
+                            "group flex items-center pl-11 pr-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                            isActive
+                              ? "bg-blue-100 text-blue-900 border-l-4 border-blue-600 font-semibold"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          )}
+                        >
+                          <item.icon className="mr-2 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                          {item.name}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>

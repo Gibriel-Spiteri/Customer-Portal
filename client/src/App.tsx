@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -53,7 +53,9 @@ function Router() {
       <Route path="/netsuite-test" component={NetSuiteTest} />
       <Route path="/netsuite-debug" component={NetSuiteDebug} />
       <Route path="/oauth-debug" component={OAuthDebugPage} />
-      <Route path="/admin" component={AdminMetrics} />
+      <Route path="/admin/netsuite">{() => <AdminMetrics section="netsuite" />}</Route>
+      <Route path="/admin/users">{() => <AdminMetrics section="users" />}</Route>
+      <Route path="/admin">{() => <Redirect to="/admin/netsuite" />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

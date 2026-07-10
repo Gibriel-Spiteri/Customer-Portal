@@ -115,19 +115,19 @@ function StatCard({ icon, label, value, sub }: { icon: ReactNode; label: string;
   );
 }
 
-export default function AdminMetrics() {
+export default function AdminMetrics({ section = "netsuite" }: { section?: "netsuite" | "users" }) {
   const { user } = useAuth();
   const [granularity, setGranularity] = useState<Granularity>("minute");
 
   const { data, isLoading, error } = useQuery<MetricsResponse>({
     queryKey: [`/api/admin/metrics?granularity=${granularity}`],
-    enabled: !!user?.isAdmin,
+    enabled: !!user?.isAdmin && section === "netsuite",
     refetchInterval: 15000, // poll our own server (not NetSuite) for a near-live view
   });
 
   const { data: userMetrics, isLoading: userMetricsLoading, error: userMetricsError } = useQuery<UserMetricsResponse>({
     queryKey: ["/api/admin/user-metrics"],
-    enabled: !!user?.isAdmin,
+    enabled: !!user?.isAdmin && section === "users",
     refetchInterval: 60000, // user activity changes slowly; refresh once a minute
   });
 
@@ -159,6 +159,7 @@ export default function AdminMetrics() {
   return (
     <MobileLayout>
       <div className="space-y-6">
+        {section === "netsuite" && (<>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">NetSuite Request Metrics</h1>
@@ -251,10 +252,11 @@ export default function AdminMetrics() {
           Live cards reflect this server instance; the chart is the persisted rollup
           (aggregated across instances), grouped by {granularityLabel}. Auto-refreshes every 15s.
         </p>
+        </>)}
 
-        {/* ── User Metrics ─────────────────────────────────────────────── */}
-        <div className="pt-2">
-          <h2 className="text-2xl font-bold text-gray-900">User Metrics</h2>
+        {section === "users" && (<>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">User Metrics</h1>
           <p className="text-sm text-gray-500">Portal accounts and sign-in activity.</p>
         </div>
 
@@ -365,6 +367,7 @@ export default function AdminMetrics() {
             )}
           </CardContent>
         </Card>
+        </>)}
       </div>
     </MobileLayout>
   );
