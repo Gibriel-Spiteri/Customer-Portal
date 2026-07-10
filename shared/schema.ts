@@ -14,6 +14,8 @@ export const users = pgTable('users', {
   companyName: varchar('company_name', { length: 255 }),
   isActive: boolean('is_active').default(true).notNull(),
   isAdmin: boolean('is_admin').default(false).notNull(), // gates the /admin metrics dashboard
+  lastLoginAt: timestamp('last_login_at'), // set on each successful login (admin user metrics)
+  loginCount: integer('login_count').default(0).notNull(), // lifetime successful logins
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

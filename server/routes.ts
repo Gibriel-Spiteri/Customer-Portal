@@ -18,6 +18,8 @@ import { invalidateCustomer } from "./services/ns-cache";
 import { getMetricsSnapshot } from "./services/ns-metrics";
 import { nsLimitStatus } from "./services/ns-limit";
 import { startMetricsFlusher, getMetricsRollup } from "./services/ns-metrics-store";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
 
@@ -819,6 +821,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         console.log(`Created local user ${user.id} for NetSuite customer ${customerId}`);
       }
+
+      // Record the sign-in atomically so concurrent logins can't undercount.
+      await db.execute(sql`
+        UPDATE users SET last_login_at = NOW(), login_count = login_count + 1
+        WHERE id = ${user.id}
+      `);
 
       const token = jwt.sign(
         { 
@@ -2923,6 +2931,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Admin metrics error:', error);
       res.status(500).json({ message: 'Failed to load metrics' });
+    }
+  });
+
+  // Admin: portal user metrics — totals, signups per day, and recent sign-ins.
+  app.get('/api/admin/user-metrics', authenticateToken, requireAdmin, async (_req: any, res) => {
+    try {
+      const totalsResult = await db.execute(sql`
+        SELECT
+          COUNT(*)::int                                                            AS "totalUsers",
+          COUNT(*) FILTER (WHERE is_active)::int                                   AS "activeUsers",
+          COUNT(*) FILTER (WHERE is_admin)::int                                    AS "adminUsers",
+          COUNT(*) FILTER (WHERE last_login_at >= NOW() - INTERVAL '24 hours')::int AS "signedIn24h",
+          COUNT(*) FILTER (WHERE last_login_at >= NOW() - INTERVAL '7 days')::int   AS "signedIn7d",
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int     AS "newUsers30d"
+        FROM users
+      `);
+
+      const signupsResult = await db.execute(sql`
+        SELECT date_trunc('day', created_at) AS day, COUNT(*)::int AS signups
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY 1
+        ORDER BY 1
+      `);
+
+      const recentResult = await db.execute(sql`
+        SELECT email, company_name AS "companyName", last_login_at AS "lastLoginAt",
+               login_count AS "loginCount", is_admin AS "isAdmin"
+        FROM users
+        WHERE last_login_at IS NOT NULL
+        ORDER BY last_login_at DESC
+        LIMIT 10
+      `);
+
+      res.json({
+        totals: totalsResult.rows[0],
+        signupsByDay: signupsResult.rows,
+        recentSignIns: recentResult.rows,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Admin user metrics error:', error);
+      res.status(500).json({ message: 'Failed to load user metrics' });
     }
   });
 
