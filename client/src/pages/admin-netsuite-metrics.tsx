@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Activity, Database, Gauge, ServerCog, Users, UserCheck, LogIn, UserPlus } from "lucide-react";
+import { Activity, Database, Gauge, ServerCog } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
@@ -38,26 +38,6 @@ interface MetricsResponse {
 }
 
 type Granularity = "minute" | "hour" | "day" | "week" | "month";
-
-interface UserMetricsResponse {
-  totals: {
-    totalUsers: number;
-    activeUsers: number;
-    adminUsers: number;
-    signedIn24h: number;
-    signedIn7d: number;
-    newUsers30d: number;
-  };
-  signupsByDay: Array<{ day: string; signups: number }>;
-  recentSignIns: Array<{
-    email: string;
-    companyName: string | null;
-    lastLoginAt: string;
-    loginCount: number;
-    isAdmin: boolean;
-  }>;
-  generatedAt: string;
-}
 
 // Stacked by NetSuite request kind.
 const KIND_SERIES: Array<{ key: keyof MetricsResponse["series"][number]; label: string; color: string }> = [
@@ -98,7 +78,8 @@ function formatBucket(bucket: string, granularity: Granularity): string {
   }
 }
 
-function StatCard({ icon, label, value, sub }: { icon: ReactNode; label: string; value: string; sub?: string }) {
+// Shared stat card used by both admin metrics pages.
+export function StatCard({ icon, label, value, sub }: { icon: ReactNode; label: string; value: string; sub?: string }) {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -115,32 +96,31 @@ function StatCard({ icon, label, value, sub }: { icon: ReactNode; label: string;
   );
 }
 
-export default function AdminMetrics({ section = "netsuite" }: { section?: "netsuite" | "users" }) {
+// Shared "admins only" guard used by both admin metrics pages.
+export function AdminOnly() {
+  return (
+    <MobileLayout>
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-gray-700">Admin access required.</p>
+        </CardContent>
+      </Card>
+    </MobileLayout>
+  );
+}
+
+export default function AdminNetsuiteMetrics() {
   const { user } = useAuth();
   const [granularity, setGranularity] = useState<Granularity>("minute");
 
   const { data, isLoading, error } = useQuery<MetricsResponse>({
     queryKey: [`/api/admin/metrics?granularity=${granularity}`],
-    enabled: !!user?.isAdmin && section === "netsuite",
+    enabled: !!user?.isAdmin,
     refetchInterval: 15000, // poll our own server (not NetSuite) for a near-live view
   });
 
-  const { data: userMetrics, isLoading: userMetricsLoading, error: userMetricsError } = useQuery<UserMetricsResponse>({
-    queryKey: ["/api/admin/user-metrics"],
-    enabled: !!user?.isAdmin && section === "users",
-    refetchInterval: 60000, // user activity changes slowly; refresh once a minute
-  });
-
   if (!user?.isAdmin) {
-    return (
-      <MobileLayout>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-gray-700">Admin access required.</p>
-          </CardContent>
-        </Card>
-      </MobileLayout>
-    );
+    return <AdminOnly />;
   }
 
   const snap = data?.live.snapshot;
@@ -159,7 +139,6 @@ export default function AdminMetrics({ section = "netsuite" }: { section?: "nets
   return (
     <MobileLayout>
       <div className="space-y-6">
-        {section === "netsuite" && (<>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">NetSuite Request Metrics</h1>
@@ -213,7 +192,7 @@ export default function AdminMetrics({ section = "netsuite" }: { section?: "nets
           />
         </div>
 
-        {/* Requests-per-minute, stacked by kind */}
+        {/* Requests over time, stacked by kind */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">NetSuite requests per {granularityLabel}</CardTitle>
@@ -252,122 +231,6 @@ export default function AdminMetrics({ section = "netsuite" }: { section?: "nets
           Live cards reflect this server instance; the chart is the persisted rollup
           (aggregated across instances), grouped by {granularityLabel}. Auto-refreshes every 15s.
         </p>
-        </>)}
-
-        {section === "users" && (<>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Metrics</h1>
-          <p className="text-sm text-gray-500">Portal accounts and sign-in activity.</p>
-        </div>
-
-        {userMetricsError && (
-          <Card><CardContent className="pt-6 text-red-600">Failed to load user metrics.</CardContent></Card>
-        )}
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            icon={<Users className="h-5 w-5" />}
-            label="Total users"
-            value={userMetrics ? userMetrics.totals.totalUsers.toLocaleString() : "—"}
-            sub={userMetrics ? `${userMetrics.totals.adminUsers} admin${userMetrics.totals.adminUsers === 1 ? "" : "s"}` : undefined}
-          />
-          <StatCard
-            icon={<LogIn className="h-5 w-5" />}
-            label="Signed in (24h)"
-            value={userMetrics ? userMetrics.totals.signedIn24h.toLocaleString() : "—"}
-          />
-          <StatCard
-            icon={<UserCheck className="h-5 w-5" />}
-            label="Signed in (7 days)"
-            value={userMetrics ? userMetrics.totals.signedIn7d.toLocaleString() : "—"}
-          />
-          <StatCard
-            icon={<UserPlus className="h-5 w-5" />}
-            label="New users (30 days)"
-            value={userMetrics ? userMetrics.totals.newUsers30d.toLocaleString() : "—"}
-          />
-        </div>
-
-        {/* New accounts per day */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">New accounts per day (last 30 days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {userMetricsLoading ? (
-              <p className="text-gray-400 text-sm py-12 text-center">Loading…</p>
-            ) : (userMetrics?.signupsByDay ?? []).length === 0 ? (
-              <p className="text-gray-400 text-sm py-12 text-center">No new accounts in the last 30 days.</p>
-            ) : (
-              <div style={{ width: "100%", height: 240 }}>
-                <ResponsiveContainer>
-                  <BarChart
-                    data={(userMetrics?.signupsByDay ?? []).map((r) => ({
-                      day: new Date(r.day).toLocaleDateString([], { month: "short", day: "numeric" }),
-                      signups: r.signups,
-                    }))}
-                    margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                    <XAxis dataKey="day" tick={{ fontSize: 11 }} minTickGap={24} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip />
-                    <Bar dataKey="signups" name="New accounts" fill="#2563eb" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent sign-ins */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent sign-ins</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {userMetricsLoading ? (
-              <p className="text-gray-400 text-sm py-8 text-center">Loading…</p>
-            ) : (userMetrics?.recentSignIns ?? []).length === 0 ? (
-              <p className="text-gray-400 text-sm py-8 text-center">
-                No sign-ins recorded yet. Sign-in tracking starts from today.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-gray-500">
-                      <th className="py-2 pr-4 font-medium">User</th>
-                      <th className="py-2 pr-4 font-medium">Company</th>
-                      <th className="py-2 pr-4 font-medium">Last sign-in</th>
-                      <th className="py-2 font-medium text-right">Total sign-ins</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(userMetrics?.recentSignIns ?? []).map((u) => (
-                      <tr key={u.email} className="border-b last:border-0">
-                        <td className="py-2 pr-4">
-                          <span className="text-gray-900">{u.email}</span>
-                          {u.isAdmin && (
-                            <span className="ml-2 rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-600">admin</span>
-                          )}
-                        </td>
-                        <td className="py-2 pr-4 text-gray-600">{u.companyName || "—"}</td>
-                        <td className="py-2 pr-4 text-gray-600">
-                          {new Date(u.lastLoginAt).toLocaleString([], {
-                            month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="py-2 text-right text-gray-600">{u.loginCount.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        </>)}
       </div>
     </MobileLayout>
   );

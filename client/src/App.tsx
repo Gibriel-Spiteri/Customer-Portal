@@ -27,7 +27,8 @@ import NetSuiteDebug from "@/pages/netsuite-debug";
 import OAuthDebugPage from "@/pages/oauth-debug";
 import ConsumersCash from "@/pages/consumers-cash";
 import ExpressBath from "@/pages/express-bath";
-import AdminMetrics from "@/pages/admin-metrics";
+import AdminNetsuiteMetrics from "@/pages/admin-netsuite-metrics";
+import AdminUserMetrics from "@/pages/admin-user-metrics";
 
 function Router() {
   return (
@@ -53,8 +54,8 @@ function Router() {
       <Route path="/netsuite-test" component={NetSuiteTest} />
       <Route path="/netsuite-debug" component={NetSuiteDebug} />
       <Route path="/oauth-debug" component={OAuthDebugPage} />
-      <Route path="/admin/netsuite">{() => <AdminMetrics section="netsuite" />}</Route>
-      <Route path="/admin/users">{() => <AdminMetrics section="users" />}</Route>
+      <Route path="/admin/netsuite" component={AdminNetsuiteMetrics} />
+      <Route path="/admin/users" component={AdminUserMetrics} />
       <Route path="/admin">{() => <Redirect to="/admin/netsuite" />}</Route>
       <Route component={NotFound} />
     </Switch>
