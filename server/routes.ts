@@ -838,7 +838,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: user.firstName,
           lastName: user.lastName,
           companyName: user.companyName,
-          netsuiteCustomerId: customerId
+          netsuiteCustomerId: customerId,
+          isAdmin: user.isAdmin,
         },
       });
     } catch (error) {
