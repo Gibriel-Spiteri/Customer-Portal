@@ -1,4 +1,4 @@
-const CACHE_NAME = 'customer-portal-v4';
+const CACHE_NAME = 'customer-portal-v5';
 const urlsToCache = [
   '/manifest.json',
   '/icon-192.png',
