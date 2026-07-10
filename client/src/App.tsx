@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,6 +27,7 @@ import NetSuiteDebug from "@/pages/netsuite-debug";
 import OAuthDebugPage from "@/pages/oauth-debug";
 import ConsumersCash from "@/pages/consumers-cash";
 import ExpressBath from "@/pages/express-bath";
+import AdminOverview from "@/pages/admin-overview";
 import AdminNetsuiteMetrics from "@/pages/admin-netsuite-metrics";
 import AdminUserMetrics from "@/pages/admin-user-metrics";
 
@@ -56,7 +57,7 @@ function Router() {
       <Route path="/oauth-debug" component={OAuthDebugPage} />
       <Route path="/admin/netsuite" component={AdminNetsuiteMetrics} />
       <Route path="/admin/users" component={AdminUserMetrics} />
-      <Route path="/admin">{() => <Redirect to="/admin/netsuite" />}</Route>
+      <Route path="/admin" component={AdminOverview} />
       <Route component={NotFound} />
     </Switch>
   );
