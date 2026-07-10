@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { nsLimit } from './ns-limit';
 
 interface NetSuiteConfig {
   accountId: string;
@@ -130,11 +131,13 @@ export class NetSuiteService {
       console.log('OAuth Debug - Consumer Key:', oauthMatch ? oauthMatch[1].substring(0, 8) + '...' : 'not found');
       console.log('OAuth Debug - Token ID:', tokenMatch ? tokenMatch[1].substring(0, 8) + '...' : 'not found');
 
-      const response = await fetch(url, {
+      // Global cap: every NetSuite round-trip must go through nsLimit so the
+      // app never exceeds NS_MAX_CONCURRENCY in-flight requests account-wide.
+      const response = await nsLimit(() => fetch(url, {
         method,
         headers,
         body: data ? JSON.stringify(data) : undefined,
-      });
+      }), 'record');
 
       const rateLimitRemaining = parseInt(response.headers.get('X-Rate-Limit-Remaining') || '0');
 

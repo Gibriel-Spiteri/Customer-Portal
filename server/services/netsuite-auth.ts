@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { storage } from '../storage';
+import { nsLimit } from './ns-limit';
 
 interface OAuth2Config {
   clientId: string;
@@ -79,14 +80,14 @@ export class NetSuiteOAuth2Service {
       code_verifier: codeVerifier
     });
 
-    const response = await fetch(this.config.tokenUrl, {
+    const response = await nsLimit(() => fetch(this.config.tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64')}`
       },
       body: params.toString()
-    });
+    }), 'token');
 
     if (!response.ok) {
       const error = await response.text();
@@ -105,14 +106,14 @@ export class NetSuiteOAuth2Service {
       refresh_token: refreshToken
     });
 
-    const response = await fetch(this.config.tokenUrl, {
+    const response = await nsLimit(() => fetch(this.config.tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64')}`
       },
       body: params.toString()
-    });
+    }), 'token');
 
     if (!response.ok) {
       const error = await response.text();
@@ -127,11 +128,11 @@ export class NetSuiteOAuth2Service {
    */
   async getCustomerInfo(accessToken: string): Promise<any> {
     // NetSuite OAuth 2.0 returns user info through the /tokeninfo endpoint
-    const tokenInfoResponse = await fetch(`https://${this.config.accountId}.app.netsuite.com/app/login/oauth2/tokeninfo`, {
+    const tokenInfoResponse = await nsLimit(() => fetch(`https://${this.config.accountId}.app.netsuite.com/app/login/oauth2/tokeninfo`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       }
-    });
+    }), 'token');
 
     if (tokenInfoResponse.ok) {
       const tokenInfo = await tokenInfoResponse.json();
@@ -152,13 +153,13 @@ export class NetSuiteOAuth2Service {
 
     // Fallback to REST API if tokeninfo fails
     try {
-      const customerResponse = await fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer`, {
+      const customerResponse = await nsLimit(() => fetch(`https://${this.config.accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'prefer': 'respond-async=false'
         }
-      });
+      }), 'record');
 
       if (customerResponse.ok) {
         const customers = await customerResponse.json();

@@ -10,9 +10,10 @@
  * issues an HTTP request to NetSuite must funnel through. It is the single
  * source of truth for how much of the shared pool this app may consume.
  *
- * Total account governance is ~4-5 concurrent; we deliberately cap this app at
- * NS_MAX_CONCURRENCY so other integrations always have headroom. Lower this
- * constant to 2 if other integrations need more of the pool.
+ * The account pool is shared with other integrations (e.g. Appointment
+ * Scheduling), so we deliberately cap this app at NS_MAX_CONCURRENCY to leave
+ * headroom. Capped at 2 after the account hit its 10-concurrency governance
+ * limit on Jul 10, 2026.
  *
  * IMPORTANT — keep usage NON-REENTRANT. A single logical NetSuite operation
  * (e.g. "run a SuiteQL query") may need TWO inbound calls: first an OAuth token
@@ -29,10 +30,11 @@ import { recordNsRequest, recordConcurrency, type NsRequestKind } from './ns-met
 
 /**
  * Maximum simultaneous in-flight NetSuite requests this app may have.
- * Single named constant so it can be tuned in one place. Account-wide
- * governance is ~4-5; 3 leaves 1-2 for other integrations.
+ * Single named constant so it can be tuned in one place. Hard-capped at 2 so
+ * this portal can never consume more than 2 slots of the shared account pool,
+ * regardless of how many users are online.
  */
-export const NS_MAX_CONCURRENCY = 3;
+export const NS_MAX_CONCURRENCY = 2;
 
 const limit = pLimit(NS_MAX_CONCURRENCY);
 
