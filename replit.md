@@ -36,6 +36,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication and Authorization
 - **Primary Login: NetSuite Customer Email + custentity_legpw**: Users log in with their NetSuite customer email as the username and the `custentity_legpw` custom entity field as the password. Credentials are verified in real-time via SuiteQL query against NetSuite. Local user records are auto-created or synced on first/subsequent logins.
+- **Admin Access via ADMIN_EMAILS**: There are no separate admin credentials. Admin (the `/admin` metrics dashboard) is an `is_admin` flag on regular user accounts. The `ADMIN_EMAILS` environment variable (comma-separated, case-insensitive) auto-grants the flag on login. Promote-only: removing an email from the list does not demote an existing admin. Current admins: gspiteri@consumersmail.com, jbalogajr@consumersmail.com.
 - **NetSuite Customer Center SAML SSO**: Compliant with official NetSuite Customer Center guidelines
 - **NetSuite M2M OAuth2 Authentication**: Certificate-based machine-to-machine authentication with PS256 algorithm (WORKING as of Aug 12, 2025)
 - **Direct NetSuite Customer Authentication**: Customers authenticate with NetSuite Customer Center credentials

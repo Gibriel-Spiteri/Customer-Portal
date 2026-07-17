@@ -21,7 +21,12 @@ import { startMetricsFlusher, getMetricsRollup } from "./services/ns-metrics-sto
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
-const JWT_SECRET = process.env.JWT_SECRET || "customer-portal-secret-key-2025";
+// Fail fast if the signing secret is missing — a hardcoded fallback would let
+// anyone who reads the source forge session tokens (including admin sessions).
+const JWT_SECRET = process.env.JWT_SECRET!;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable must be set');
+}
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; username: string };
@@ -788,6 +793,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const customerEmail = (customer.email || '').toString().toLowerCase();
 
+      // Auto-grant admin to emails listed in ADMIN_EMAILS (comma-separated,
+      // case-insensitive). Promote-only: removing an email from the list does
+      // NOT demote an existing admin, and admins flagged directly in the DB
+      // are unaffected. This survives republishes since production user rows
+      // are separate from development.
+      const adminEmails = (process.env.ADMIN_EMAILS || '')
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      // Anchor the grant to the email of the NetSuite record the user actually
+      // proved credentials for — never the typed identifier.
+      const shouldBeAdmin = adminEmails.includes(customerEmail);
+
       let user = await storage.getUserByNetSuiteCustomerId(customerId);
 
       if (!user && customerEmail) {
@@ -808,6 +826,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user.netsuiteCustomerId !== customerId) {
           updates.netsuiteCustomerId = customerId;
         }
+        if (shouldBeAdmin && !user.isAdmin) {
+          updates.isAdmin = true;
+          console.log(`Granting admin access to ${user.email} (listed in ADMIN_EMAILS)`);
+        }
         user = (await storage.updateUser(user.id, updates)) || user;
       } else {
         user = await storage.createUser({
@@ -818,8 +840,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: customer.lastname || null,
           companyName: customer.companyname || null,
           isActive: true,
+          isAdmin: shouldBeAdmin,
         });
-        console.log(`Created local user ${user.id} for NetSuite customer ${customerId}`);
+        console.log(`Created local user ${user.id} for NetSuite customer ${customerId}${shouldBeAdmin ? ' (admin via ADMIN_EMAILS)' : ''}`);
       }
 
       // Record the sign-in atomically so concurrent logins can't undercount.
