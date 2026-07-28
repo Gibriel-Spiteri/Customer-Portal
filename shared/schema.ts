@@ -146,6 +146,27 @@ export const quickQuoteFiles = pgTable('quick_quote_files', {
 export type QuickQuoteRequest = typeof quickQuoteRequests.$inferSelect;
 export type QuickQuoteFile = typeof quickQuoteFiles.$inferSelect;
 
+// Client Concierge appointment requests (trade customers booking a showroom
+// visit for their client). Delivered as a NetSuite task like quick quotes.
+export const conciergeRequests = pgTable('concierge_requests', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  storeName: varchar('store_name', { length: 100 }).notNull(),
+  salesRepId: varchar('sales_rep_id', { length: 50 }).notNull(),
+  salesRepName: varchar('sales_rep_name', { length: 200 }).notNull(),
+  salesRepEmail: varchar('sales_rep_email', { length: 255 }),
+  clientName: varchar('client_name', { length: 200 }).notNull(),
+  clientEmail: varchar('client_email', { length: 255 }),
+  clientPhone: varchar('client_phone', { length: 50 }),
+  preferredDate: varchar('preferred_date', { length: 50 }).notNull(),
+  preferredTime: varchar('preferred_time', { length: 50 }), // Morning | Afternoon
+  projectDetails: text('project_details'),
+  netsuiteTaskId: varchar('netsuite_task_id', { length: 50 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type ConciergeRequest = typeof conciergeRequests.$inferSelect;
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

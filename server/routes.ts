@@ -22,7 +22,7 @@ import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import multer from "multer";
 import crypto from "crypto";
-import { quickQuoteRequests, quickQuoteFiles } from "@shared/schema";
+import { quickQuoteRequests, quickQuoteFiles, conciergeRequests } from "@shared/schema";
 import {
   getSalespeopleByStore,
   findSalesRep,
@@ -2379,6 +2379,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // Client Concierge: showroom appointment request for a trade customer's client.
+  // Delivered as a NetSuite task assigned to the selected salesperson.
+  app.post('/api/client-concierge', authenticateToken, async (req: any, res) => {
+    try {
+      const schema = z.object({
+        storeName: z.string().min(1),
+        salesRepId: z.string().min(1),
+        clientName: z.string().min(1).max(200),
+        clientEmail: z.string().email().max(255).optional().or(z.literal('')),
+        clientPhone: z.string().max(50).optional().default(''),
+        preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date').refine((d) => {
+          const date = new Date(`${d}T00:00:00`);
+          if (isNaN(date.getTime())) return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return date > today; // appointments must be tomorrow or later
+        }, 'Preferred date must be in the future'),
+        preferredTime: z.enum(['Morning', 'Afternoon']).optional(),
+        projectDetails: z.string().max(5000).optional().default(''),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: 'Invalid form data', errors: parsed.error.flatten().fieldErrors });
+      }
+      const data = parsed.data;
+
+      const rep = await findSalesRep(data.storeName, data.salesRepId);
+      if (!rep) {
+        return res.status(400).json({ message: 'Selected salesperson not found for that store' });
+      }
+
+      const user = await storage.getUser(req.user.id);
+      if (!user) return res.status(401).json({ message: 'User not found' });
+
+      // Save first so nothing is lost if NetSuite errors
+      const [request] = await db.insert(conciergeRequests).values({
+        userId: user.id,
+        storeName: data.storeName,
+        salesRepId: rep.id,
+        salesRepName: rep.name,
+        salesRepEmail: rep.email,
+        clientName: data.clientName,
+        clientEmail: data.clientEmail || null,
+        clientPhone: data.clientPhone || null,
+        preferredDate: data.preferredDate,
+        preferredTime: data.preferredTime || null,
+        projectDetails: data.projectDetails || null,
+      }).returning();
+
+      const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+      const lines = [
+        `Client Concierge appointment request from the customer portal`,
+        ``,
+        `Trade Customer: ${customerName}`,
+        `Customer #: ${user.netsuiteCustomerId}`,
+        `Email: ${user.email}`,
+        `Store: ${data.storeName}`,
+        ``,
+        `Client Name: ${data.clientName}`,
+        `Client Email: ${data.clientEmail || '—'}`,
+        `Client Phone: ${data.clientPhone || '—'}`,
+        `Preferred Date: ${data.preferredDate}`,
+        `Preferred Time: ${data.preferredTime || '—'}`,
+        ``,
+        `IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.`,
+        ``,
+        `Project Details:`,
+        data.projectDetails || '—',
+      ];
+
+      let netsuiteError: string | null = null;
+      try {
+        const customerInternalId = await getCustomerInternalId(String(user.netsuiteCustomerId));
+        if (!customerInternalId) {
+          throw new Error(`Could not resolve NetSuite customer for ${user.netsuiteCustomerId}`);
+        }
+        const netsuiteTaskId = await createQuickQuoteTask({
+          salesRepId: rep.id,
+          customerInternalId,
+          title: `Client Concierge - Showroom Appointment - ${customerName}`,
+          message: lines.join('\n'),
+        });
+        await db.update(conciergeRequests)
+          .set({ netsuiteTaskId })
+          .where(eq(conciergeRequests.id, request.id));
+      } catch (err: any) {
+        console.error('Client concierge NetSuite task error:', err);
+        netsuiteError = err?.message || 'NetSuite task creation failed';
+      }
+
+      if (netsuiteError) {
+        return res.status(502).json({
+          message: 'Your request was saved, but we could not notify the salesperson automatically. Please call the store to follow up.',
+          requestId: request.id,
+        });
+      }
+
+      res.status(201).json({
+        message: `Your appointment request was sent to ${rep.name} at ${data.storeName}.`,
+        requestId: request.id,
+      });
+    } catch (error) {
+      console.error('Client concierge submit error:', error);
+      res.status(500).json({ message: 'Failed to submit appointment request' });
+    }
+  });
 
   // Tokenized file download (no portal login required — the salesperson opens
   // this from the NetSuite task email; tokens are 48-hex-char unguessable).

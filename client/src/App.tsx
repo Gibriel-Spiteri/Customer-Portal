@@ -22,6 +22,7 @@ import AccountSettings from "@/pages/account-settings";
 import Support from "@/pages/support";
 import QuickQuote from "@/pages/quick-quote";
 import ProjectQuote from "@/pages/project-quote";
+import ClientConcierge from "@/pages/client-concierge";
 import OAuthCallback from "@/pages/oauth-callback";
 import Debug from "@/pages/debug";
 import { NetSuiteTest } from "@/pages/netsuite-test";
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/account" component={AccountSettings} />
       <Route path="/quick-quote" component={ProjectQuote} />
       <Route path="/quick-quote/request" component={QuickQuote} />
+      <Route path="/client-concierge" component={ClientConcierge} />
       <Route path="/support" component={Support} />
       <Route path="/debug" component={Debug} />
       <Route path="/netsuite-test" component={NetSuiteTest} />
