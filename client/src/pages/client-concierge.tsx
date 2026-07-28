@@ -158,7 +158,7 @@ export default function ClientConcierge() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Book a showroom appointment</CardTitle>
+            <CardTitle>Request a showroom appointment</CardTitle>
           </CardHeader>
           <CardContent>
             <form
