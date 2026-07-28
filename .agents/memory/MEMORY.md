@@ -1,2 +1,3 @@
 - [NetSuite M2M private key](netsuite-private-key.md) — key file is gitignored & wiped on env reconciliation; keep it in NETSUITE_PRIVATE_KEY secret and normalize the single-line PEM before signing.
+- [NetSuite task delivery](netsuite-task-delivery.md) — tasks need custevent_crm_recordtype + employee internal id; task sendEmail=true is the only way to email employees (RESTlet is fixed-type, no attachments).
 - [NetSuite concurrency cap](netsuite-concurrency-cap.md) — nsLimit semaphore is per-process (cap 2); autoscale multiplies it, so max machines must be 1 and new NetSuite calls must route through it.

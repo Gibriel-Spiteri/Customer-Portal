@@ -19,7 +19,16 @@ import { getMetricsSnapshot } from "./services/ns-metrics";
 import { nsLimitStatus } from "./services/ns-limit";
 import { startMetricsFlusher, getMetricsRollup } from "./services/ns-metrics-store";
 import { db } from "./db";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
+import multer from "multer";
+import crypto from "crypto";
+import { quickQuoteRequests, quickQuoteFiles } from "@shared/schema";
+import {
+  getSalespeopleByStore,
+  findSalesRep,
+  getCustomerInternalId,
+  createQuickQuoteTask,
+} from "./services/quick-quote";
 
 // Fail fast if the signing secret is missing — a hardcoded fallback would let
 // anyone who reads the source forge session tokens (including admin sessions).
@@ -2179,6 +2188,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Create support ticket error:', error);
       res.status(500).json({ message: 'Failed to create support ticket' });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Quick Quote: customer picks a store + salesperson, fills in project info,
+  // uploads measurements/photos. Files persist in Postgres; delivery is a
+  // NetSuite task assigned to the rep (sendEmail=true) logged on the customer.
+  // ---------------------------------------------------------------------------
+
+  const quickQuoteUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024, files: 10 }, // 10MB/file, 10 files max
+    fileFilter: (_req, file, cb) => {
+      const allowed = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/gif',
+        'application/pdf',
+      ];
+      if (allowed.includes(file.mimetype)) return cb(null, true);
+      cb(new Error(`File type not allowed: ${file.mimetype}. Use photos (JPG/PNG/HEIC) or PDF.`));
+    },
+  });
+
+  // Store + salesperson list (cached 10 min server-side)
+  app.get('/api/quick-quote/salespeople', authenticateToken, async (_req: any, res) => {
+    try {
+      const stores = await getSalespeopleByStore();
+      res.json({ stores });
+    } catch (error) {
+      console.error('Quick quote salespeople error:', error);
+      res.status(500).json({ message: 'Failed to load salespeople' });
+    }
+  });
+
+  app.post(
+    '/api/quick-quote',
+    authenticateToken,
+    (req: any, res, next) => {
+      quickQuoteUpload.fields([
+        { name: 'measurements', maxCount: 5 },
+        { name: 'photos', maxCount: 5 },
+      ])(req, res, (err: any) => {
+        if (err) return res.status(400).json({ message: err.message || 'File upload failed' });
+        next();
+      });
+    },
+    async (req: any, res) => {
+      try {
+        const schema = z.object({
+          storeName: z.string().min(1),
+          salesRepId: z.string().min(1),
+          projectType: z.enum(['Kitchen', 'Bath', 'Other']),
+          budget: z.string().max(100).optional().default(''),
+          timeFrame: z.enum(['0-3 months', '4-6 months', '7+ months']).optional(),
+          brandPreference: z.string().max(255).optional().default(''),
+          comments: z.string().max(5000).optional().default(''),
+        });
+        const parsed = schema.safeParse(req.body);
+        if (!parsed.success) {
+          return res.status(400).json({ message: 'Invalid form data', errors: parsed.error.flatten().fieldErrors });
+        }
+        const data = parsed.data;
+
+        // Validate the rep actually belongs to the selected store (server-side truth)
+        const rep = await findSalesRep(data.storeName, data.salesRepId);
+        if (!rep) {
+          return res.status(400).json({ message: 'Selected salesperson not found for that store' });
+        }
+
+        const user = await storage.getUser(req.user.id);
+        if (!user) return res.status(401).json({ message: 'User not found' });
+
+        // Save the request + files first so nothing is lost if NetSuite errors
+        const [request] = await db.insert(quickQuoteRequests).values({
+          userId: user.id,
+          storeName: data.storeName,
+          salesRepId: rep.id,
+          salesRepName: rep.name,
+          salesRepEmail: rep.email,
+          projectType: data.projectType,
+          budget: data.budget || null,
+          timeFrame: data.timeFrame || null,
+          brandPreference: data.brandPreference || null,
+          comments: data.comments || null,
+        }).returning();
+
+        // Content sniffing: the download endpoint is unauthenticated (tokenized),
+        // so never trust the client-provided MIME type — verify magic numbers.
+        const sniffOk = (buf: Buffer): boolean => {
+          if (buf.length < 12) return false;
+          if (buf.slice(0, 4).toString('latin1') === '%PDF') return true;            // PDF
+          if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true;    // JPEG
+          if (buf[0] === 0x89 && buf.slice(1, 4).toString('latin1') === 'PNG') return true; // PNG
+          if (buf.slice(0, 3).toString('latin1') === 'GIF') return true;             // GIF
+          if (buf.slice(0, 4).toString('latin1') === 'RIFF' && buf.slice(8, 12).toString('latin1') === 'WEBP') return true; // WEBP
+          if (buf.slice(4, 8).toString('latin1') === 'ftyp') return true;            // HEIC/HEIF (ISO BMFF)
+          return false;
+        };
+
+        const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
+        for (const kind of ['measurements', 'photos'] as const) {
+          for (const f of files?.[kind] || []) {
+            if (!sniffOk(f.buffer)) {
+              return res.status(400).json({ message: `"${f.originalname}" does not look like a valid PDF or image file.` });
+            }
+          }
+        }
+        const savedFiles: { kind: string; fileName: string; token: string; size: number }[] = [];
+        for (const kind of ['measurements', 'photos'] as const) {
+          for (const f of files?.[kind] || []) {
+            const token = crypto.randomBytes(24).toString('hex');
+            await db.insert(quickQuoteFiles).values({
+              requestId: request.id,
+              kind,
+              fileName: f.originalname,
+              mimeType: f.mimetype,
+              fileSize: f.size,
+              downloadToken: token,
+              data: f.buffer,
+            });
+            savedFiles.push({ kind, fileName: f.originalname, token, size: f.size });
+          }
+        }
+
+        // Build the NetSuite task
+        const baseUrl = process.env.APP_URL
+          || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
+        const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+        const lines = [
+          `Quick Quote request from the customer portal`,
+          ``,
+          `Customer: ${customerName}`,
+          `Customer #: ${user.netsuiteCustomerId}`,
+          `Email: ${user.email}`,
+          `Store: ${data.storeName}`,
+          ``,
+          `Project Type: ${data.projectType}`,
+          `Budget: ${data.budget || '—'}`,
+          `Time Frame: ${data.timeFrame || '—'}`,
+          `Brand Preference: ${data.brandPreference || '—'}`,
+          ``,
+          `Comments:`,
+          data.comments || '—',
+        ];
+        if (savedFiles.length > 0) {
+          lines.push('', 'Attached files:');
+          for (const sf of savedFiles) {
+            lines.push(`- [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
+          }
+        }
+
+        let netsuiteTaskId: string | null = null;
+        let netsuiteError: string | null = null;
+        try {
+          const customerInternalId = await getCustomerInternalId(String(user.netsuiteCustomerId));
+          if (!customerInternalId) {
+            // The task must be logged on the customer record; without it,
+            // fail delivery explicitly (request stays saved for follow-up).
+            throw new Error(`Could not resolve NetSuite customer for ${user.netsuiteCustomerId}`);
+          }
+          netsuiteTaskId = await createQuickQuoteTask({
+            salesRepId: rep.id,
+            customerInternalId,
+            title: `Quick Quote - ${data.projectType} - ${customerName}`,
+            message: lines.join('\n'),
+          });
+          await db.update(quickQuoteRequests)
+            .set({ netsuiteTaskId })
+            .where(eq(quickQuoteRequests.id, request.id));
+        } catch (err: any) {
+          // Request + files are saved; surface the delivery failure explicitly
+          console.error('Quick quote NetSuite task error:', err);
+          netsuiteError = err?.message || 'NetSuite task creation failed';
+        }
+
+        if (netsuiteError) {
+          return res.status(502).json({
+            message: 'Your request was saved, but we could not notify the salesperson automatically. Please call the store to follow up.',
+            requestId: request.id,
+          });
+        }
+
+        res.status(201).json({
+          message: `Your request was sent to ${rep.name} at ${data.storeName}.`,
+          requestId: request.id,
+        });
+      } catch (error) {
+        console.error('Quick quote submit error:', error);
+        res.status(500).json({ message: 'Failed to submit quick quote request' });
+      }
+    }
+  );
+
+  // Tokenized file download (no portal login required — the salesperson opens
+  // this from the NetSuite task email; tokens are 48-hex-char unguessable).
+  app.get('/api/quick-quote/files/:token', async (req, res) => {
+    try {
+      const token = String(req.params.token || '');
+      if (!/^[a-f0-9]{48}$/.test(token)) return res.status(404).json({ message: 'File not found' });
+      const [file] = await db.select().from(quickQuoteFiles).where(eq(quickQuoteFiles.downloadToken, token));
+      if (!file) return res.status(404).json({ message: 'File not found' });
+      res.setHeader('Content-Type', file.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${file.fileName.replace(/[^\w.\- ]/g, '_')}"`);
+      res.send(file.data);
+    } catch (error) {
+      console.error('Quick quote file download error:', error);
+      res.status(500).json({ message: 'Failed to download file' });
     }
   });
 

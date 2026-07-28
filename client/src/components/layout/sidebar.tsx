@@ -13,7 +13,8 @@ import {
   Bath,
   BarChart3,
   ServerCog,
-  Users
+  Users,
+  Zap
 } from "lucide-react";
 
 interface NavigationItem {
@@ -48,6 +49,11 @@ const navigation: NavigationItem[] = [
     name: 'Consumers Cash',
     href: '/consumers-cash',
     icon: Star,
+  },
+  {
+    name: 'Quick Quote',
+    href: '/quick-quote',
+    icon: Zap,
   },
   {
     name: 'Support',

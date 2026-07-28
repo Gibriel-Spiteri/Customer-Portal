@@ -7,7 +7,8 @@ import {
   HeadphonesIcon,
   DollarSign,
   User,
-  Bath
+  Bath,
+  Zap
 } from "lucide-react";
 
 const bottomNavItems = [
@@ -28,6 +29,12 @@ const bottomNavItems = [
     href: '/estimates',
     icon: CalculatorIcon,
     label: 'Estimates'
+  },
+  {
+    name: 'Quick Quote',
+    href: '/quick-quote',
+    icon: Zap,
+    label: 'Quote'
   },
   {
     name: 'Support',

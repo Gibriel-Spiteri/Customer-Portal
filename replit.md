@@ -34,6 +34,10 @@ Preferred communication style: Simple, everyday language.
 - **Database schema** includes users, accounts, orders, invoices, payments, sync jobs, and support tickets
 - **Data freshness tracking** with 'live' and 'cached' indicators for different sync strategies
 
+### Quick Quote
+- Logged-in customers pick a store (East Meadow, Commack, Patchogue, Copiague, Franklin Square) and a salesperson (NetSuite employees with the Sales Rep flag at that location, cached 10 min), fill out project info (Kitchen/Bath/Other, budget, timeframe, brand, comments) and upload measurement PDFs/photos (max 5 each, 10MB, magic-number validated).
+- Requests + files are stored in Postgres (`quick_quote_requests`/`quick_quote_files`); delivery is a NetSuite task assigned to the rep (sendEmail=true, Task Type "RFQ Activity", logged on the customer record) containing tokenized unauthenticated file-download links (`/api/quick-quote/files/:token`). Task type overridable via `QUICK_QUOTE_TASK_TYPE_ID`.
+
 ### Authentication and Authorization
 - **Primary Login: NetSuite Customer Email + custentity_legpw**: Users log in with their NetSuite customer email as the username and the `custentity_legpw` custom entity field as the password. Credentials are verified in real-time via SuiteQL query against NetSuite. Local user records are auto-created or synced on first/subsequent logins.
 - **Admin Access via ADMIN_EMAILS**: There are no separate admin credentials. Admin (the `/admin` metrics dashboard) is an `is_admin` flag on regular user accounts. The `ADMIN_EMAILS` environment variable (comma-separated, case-insensitive) auto-grants the flag on login. Promote-only: removing an email from the list does not demote an existing admin. Current admins: gspiteri@consumersmail.com, jbalogajr@consumersmail.com.
