@@ -49,7 +49,7 @@ const conciergeSchema = z.object({
     .max(255)
     .optional()
     .or(z.literal("")),
-  clientPhone: z.string().max(50).optional(),
+  clientPhone: z.string().min(1, "Please enter your client's phone number").max(50),
   preferredDate: z.string().min(1, "Please choose a preferred date"),
   preferredTime: z.enum(["Morning", "Afternoon"]).optional(),
   projectDetails: z.string().max(5000).optional(),
@@ -169,7 +169,7 @@ export default function ClientConcierge() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Store className="h-4 w-4 text-gray-500" />
-                  Showroom
+                  Showroom<span className="text-orange-500">*</span>
                 </Label>
                 {loadingReps ? (
                   <Skeleton className="h-10 w-full" />
@@ -210,7 +210,7 @@ export default function ClientConcierge() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-500" />
-                  Salesperson
+                  Salesperson<span className="text-orange-500">*</span>
                 </Label>
                 <Controller
                   control={form.control}
@@ -249,7 +249,9 @@ export default function ClientConcierge() {
 
               {/* Client info */}
               <div className="space-y-2">
-                <Label htmlFor="clientName">Client Name</Label>
+                <Label htmlFor="clientName">
+                  Client Name<span className="text-orange-500">*</span>
+                </Label>
                 <Input
                   id="clientName"
                   placeholder="Who is the appointment for?"
@@ -265,7 +267,24 @@ export default function ClientConcierge() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="clientEmail">Client Email (optional)</Label>
+                  <Label htmlFor="clientPhone">
+                    Client Phone<span className="text-orange-500">*</span>
+                  </Label>
+                  <Input
+                    id="clientPhone"
+                    type="tel"
+                    placeholder="(555) 555-5555"
+                    data-testid="input-client-phone"
+                    {...form.register("clientPhone")}
+                  />
+                  {form.formState.errors.clientPhone && (
+                    <p className="text-sm text-red-600">
+                      {form.formState.errors.clientPhone.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientEmail">Client Email</Label>
                   <Input
                     id="clientEmail"
                     type="email"
@@ -279,22 +298,14 @@ export default function ClientConcierge() {
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientPhone">Client Phone (optional)</Label>
-                  <Input
-                    id="clientPhone"
-                    type="tel"
-                    placeholder="(555) 555-5555"
-                    data-testid="input-client-phone"
-                    {...form.register("clientPhone")}
-                  />
-                </div>
               </div>
 
               {/* Date / time */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="preferredDate">Preferred Date</Label>
+                  <Label htmlFor="preferredDate">
+                    Preferred Date<span className="text-orange-500">*</span>
+                  </Label>
                   <Input
                     id="preferredDate"
                     type="date"
@@ -309,7 +320,7 @@ export default function ClientConcierge() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Preferred Time (optional)</Label>
+                  <Label>Preferred Time</Label>
                   <Controller
                     control={form.control}
                     name="preferredTime"
@@ -330,9 +341,7 @@ export default function ClientConcierge() {
 
               {/* Project details */}
               <div className="space-y-2">
-                <Label htmlFor="projectDetails">
-                  Project Details (optional)
-                </Label>
+                <Label htmlFor="projectDetails">Project Details</Label>
                 <Textarea
                   id="projectDetails"
                   rows={4}

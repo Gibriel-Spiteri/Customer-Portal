@@ -277,7 +277,7 @@ export default function QuickQuote() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Store className="h-4 w-4 text-gray-500" />
-                  Store
+                  Store<span className="text-orange-500">*</span>
                 </Label>
                 {loadingReps ? (
                   <Skeleton className="h-10 w-full" />
@@ -318,7 +318,7 @@ export default function QuickQuote() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-500" />
-                  Salesperson
+                  Salesperson<span className="text-orange-500">*</span>
                 </Label>
                 <Controller
                   control={form.control}
@@ -359,7 +359,9 @@ export default function QuickQuote() {
 
               {/* Project type */}
               <div className="space-y-2">
-                <Label>Project Type</Label>
+                <Label>
+                  Project Type<span className="text-orange-500">*</span>
+                </Label>
                 <Controller
                   control={form.control}
                   name="projectType"

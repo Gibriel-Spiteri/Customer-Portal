@@ -2389,7 +2389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         salesRepId: z.string().min(1),
         clientName: z.string().min(1).max(200),
         clientEmail: z.string().email().max(255).optional().or(z.literal('')),
-        clientPhone: z.string().max(50).optional().default(''),
+        clientPhone: z.string().min(1).max(50),
         preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date').refine((d) => {
           const date = new Date(`${d}T00:00:00`);
           if (isNaN(date.getTime())) return false;
