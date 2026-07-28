@@ -14,7 +14,7 @@ import {
   BarChart3,
   ServerCog,
   Users,
-  Zap
+  ClipboardList
 } from "lucide-react";
 
 interface NavigationItem {
@@ -53,7 +53,7 @@ const navigation: NavigationItem[] = [
   {
     name: 'Get a Project Quote',
     href: '/quick-quote',
-    icon: Zap,
+    icon: ClipboardList,
   },
   {
     name: 'Support',

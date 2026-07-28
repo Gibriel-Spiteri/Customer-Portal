@@ -8,7 +8,7 @@ import {
   DollarSign,
   User,
   Bath,
-  Zap
+  ClipboardList
 } from "lucide-react";
 
 const bottomNavItems = [
@@ -33,7 +33,7 @@ const bottomNavItems = [
   {
     name: 'Get a Project Quote',
     href: '/quick-quote',
-    icon: Zap,
+    icon: ClipboardList,
     label: 'Quote'
   },
   {

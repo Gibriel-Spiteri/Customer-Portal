@@ -16,7 +16,7 @@ import {
   HeadphonesIcon,
   CalculatorIcon,
   Package,
-  Zap,
+  ClipboardList,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -299,7 +299,7 @@ export default function Dashboard() {
             <Link href="/quick-quote" data-testid="link-project-quote">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-amber-100 rounded-full">
-                  <Zap className="h-7 w-7 text-amber-600" />
+                  <ClipboardList className="h-7 w-7 text-amber-600" />
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900">Get a Project Quote</h3>
