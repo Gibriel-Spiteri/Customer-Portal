@@ -69,6 +69,19 @@ const BRAND_OPTIONS = [
   "No Preference",
 ];
 
+const BUDGET_OPTIONS = [
+  "Under $5,000",
+  "$5,000 - $10,000",
+  "$10,000 - $15,000",
+  "$15,000 - $20,000",
+  "$20,000 - $25,000",
+  "$25,000 - $30,000",
+  "$30,000 - $40,000",
+  "$40,000 - $50,000",
+  "$50,000 +",
+  "Undecided",
+];
+
 const MAX_FILE_MB = 10;
 const MAX_FILES_PER_KIND = 5;
 const ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif";
@@ -379,11 +392,24 @@ export default function QuickQuote() {
               {/* Budget + Time frame */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Budget</Label>
-                  <Input
-                    id="budget"
-                    placeholder="e.g. $15,000 - $25,000"
-                    {...form.register("budget")}
+                  <Label>Budget</Label>
+                  <Controller
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger data-testid="select-budget">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BUDGET_OPTIONS.map((b) => (
+                            <SelectItem key={b} value={b}>
+                              {b}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
                 <div className="space-y-2">
