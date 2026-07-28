@@ -75,65 +75,65 @@
 
 @layer utilities {
   .netsuite-blue {
-    color: hsl(var(--netsuite-blue));
+    color: var(--netsuite-blue);
   }
   
   .bg-netsuite-blue {
-    background-color: hsl(var(--netsuite-blue));
+    background-color: var(--netsuite-blue);
   }
   
   .hover\:bg-netsuite-light:hover {
-    background-color: hsl(var(--netsuite-light));
+    background-color: var(--netsuite-light);
   }
   
   .bg-success {
-    background-color: hsl(var(--success));
+    background-color: var(--success);
   }
   
   .hover\:bg-success\/90:hover {
-    background-color: hsl(var(--success) / 0.9);
+    background-color: color-mix(in srgb, var(--success) 90%, transparent);
   }
 }
 
 @layer components {
   .netsuite-blue {
-    color: hsl(var(--netsuite-blue));
+    color: var(--netsuite-blue);
   }
   
   .bg-netsuite-blue {
-    background-color: hsl(var(--netsuite-blue));
+    background-color: var(--netsuite-blue);
   }
   
   .netsuite-light {
-    color: hsl(var(--netsuite-light));
+    color: var(--netsuite-light);
   }
   
   .bg-netsuite-light {
-    background-color: hsl(var(--netsuite-light));
+    background-color: var(--netsuite-light);
   }
   
   .text-success {
-    color: hsl(var(--success));
+    color: var(--success);
   }
   
   .bg-success {
-    background-color: hsl(var(--success));
+    background-color: var(--success);
   }
   
   .text-warning {
-    color: hsl(var(--warning));
+    color: var(--warning);
   }
   
   .bg-warning {
-    background-color: hsl(var(--warning));
+    background-color: var(--warning);
   }
   
   .text-error {
-    color: hsl(var(--error));
+    color: var(--error);
   }
   
   .bg-error {
-    background-color: hsl(var(--error));
+    background-color: var(--error);
   }
 
   .data-badge {
