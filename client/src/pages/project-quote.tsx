@@ -26,10 +26,9 @@ export default function ProjectQuote() {
               </Button>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Send your measurements, project details, and a wish list. We'll
-              email you back a complete customer presentation, including retail
-              pricing to show your client, and PRO pricing to protect your
-              profit.
+              Send your measurements, project details, and wish list. We'll
+              email a complete customer presentation, including retail pricing
+              for your client and PRO pricing to protect your profit.
             </p>
           </CardContent>
         </Card>
