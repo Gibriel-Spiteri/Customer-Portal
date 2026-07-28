@@ -303,7 +303,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-gray-900">Get a Project Quote</h3>
-                  <p className="text-sm text-gray-600">Quick Quote or Client Concierge</p>
+                  <p className="text-sm text-gray-600 truncate">Start a new request</p>
                 </div>
               </div>
             </Link>
