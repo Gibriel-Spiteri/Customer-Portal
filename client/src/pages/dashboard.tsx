@@ -16,6 +16,7 @@ import {
   HeadphonesIcon,
   CalculatorIcon,
   Package,
+  Zap,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -218,6 +219,27 @@ export default function Dashboard() {
           <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
         </div>
       )}
+
+      {/* Get a Project Quote CTA */}
+      <div className="mb-4">
+        <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <Link href="/quick-quote" data-testid="link-project-quote">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-amber-100 rounded-full">
+                  <Zap className="h-7 w-7 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">Get a Project Quote</h3>
+                  <p className="text-sm text-gray-600">
+                    Request a Quick Quote or book a Client Concierge appointment
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quick Access Summary Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
