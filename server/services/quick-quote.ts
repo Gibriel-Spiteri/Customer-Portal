@@ -59,6 +59,7 @@ export async function getSalespeopleByStore(): Promise<StoreWithReps[]> {
     FROM employee
     WHERE employee.isinactive = 'F'
       AND employee.issalesrep = 'T'
+      AND employee.releasedate IS NULL
       AND BUILTIN.DF(employee.location) IN (${storeList})
     ORDER BY employee.lastname, employee.firstname
   `;
