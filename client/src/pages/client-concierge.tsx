@@ -133,8 +133,8 @@ export default function ClientConcierge() {
         </h1>
         <p className="mt-1 text-gray-600">
           Request a showroom appointment for your client. We'll guide their
-          design and product selections on your behalf, only show them retail
-          pricing, and send your profit-protected estimates via email.
+          design and product selections, show only retail pricing, and email
+          your profit-protected estimates.
         </p>
       </div>
 

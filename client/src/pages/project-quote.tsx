@@ -43,10 +43,9 @@ export default function ProjectQuote() {
               </Button>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Request a showroom appointment for your client at any of our
-              locations. We'll guide their design and product selections on
-              your behalf, only show them retail pricing, and send your
-              profit-protected estimates via email.
+              Request a showroom appointment for your client. We'll guide
+              their design and product selections, show only retail pricing,
+              and email your profit-protected estimates.
             </p>
           </CardContent>
         </Card>
