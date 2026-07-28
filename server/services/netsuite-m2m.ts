@@ -161,6 +161,11 @@ export class NetSuiteM2M {
   /**
    * Get access token using OAuth2 client credentials flow
    */
+  /** Sanitized REST base URL (handles NETSUITE_ACCOUNT_ID being a full URL). */
+  getApiBaseUrl(): string {
+    return this.apiBaseUrl;
+  }
+
   async getAccessToken(): Promise<string> {
     // Fast path: valid cached token (static — shared across all instances).
     if (NetSuiteM2M.accessToken && NetSuiteM2M.tokenExpiry && new Date() < NetSuiteM2M.tokenExpiry) {

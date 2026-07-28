@@ -178,8 +178,7 @@ export interface QuickQuoteTaskParams {
 export async function createQuickQuoteTask(params: QuickQuoteTaskParams): Promise<string> {
   const m2m = new NetSuiteM2M();
   const accessToken = await m2m.getAccessToken();
-  const accountId = process.env.NETSUITE_ACCOUNT_ID || '1212804';
-  const url = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/task`;
+  const url = `${m2m.getApiBaseUrl()}/record/v1/task`;
 
   const body: any = {
     title: params.title,
