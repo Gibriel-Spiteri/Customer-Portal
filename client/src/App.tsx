@@ -21,6 +21,7 @@ import Loyalty from "@/pages/loyalty";
 import AccountSettings from "@/pages/account-settings";
 import Support from "@/pages/support";
 import QuickQuote from "@/pages/quick-quote";
+import ProjectQuote from "@/pages/project-quote";
 import OAuthCallback from "@/pages/oauth-callback";
 import Debug from "@/pages/debug";
 import { NetSuiteTest } from "@/pages/netsuite-test";
@@ -51,7 +52,8 @@ function Router() {
       <Route path="/express-bath" component={ExpressBath} />
       <Route path="/consumers-cash" component={ConsumersCash} />
       <Route path="/account" component={AccountSettings} />
-      <Route path="/quick-quote" component={QuickQuote} />
+      <Route path="/quick-quote" component={ProjectQuote} />
+      <Route path="/quick-quote/request" component={QuickQuote} />
       <Route path="/support" component={Support} />
       <Route path="/debug" component={Debug} />
       <Route path="/netsuite-test" component={NetSuiteTest} />
