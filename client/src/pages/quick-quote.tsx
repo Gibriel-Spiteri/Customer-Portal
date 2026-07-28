@@ -56,6 +56,19 @@ const quickQuoteSchema = z.object({
 
 type QuickQuoteForm = z.infer<typeof quickQuoteSchema>;
 
+const BRAND_OPTIONS = [
+  "Avance",
+  "Covered Bridge",
+  "Fabuwood",
+  "Kraftmaid",
+  "Nova South",
+  "Pivot by Mid-Continent",
+  "Starmark",
+  "Ultracraft",
+  "Wellborn Forest",
+  "No Preference",
+];
+
 const MAX_FILE_MB = 10;
 const MAX_FILES_PER_KIND = 5;
 const ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.gif";
@@ -396,11 +409,24 @@ export default function QuickQuote() {
 
               {/* Brand preference */}
               <div className="space-y-2">
-                <Label htmlFor="brandPreference">Brand Preference</Label>
-                <Input
-                  id="brandPreference"
-                  placeholder="e.g. Fabuwood, Wolf, no preference"
-                  {...form.register("brandPreference")}
+                <Label>Brand Preference</Label>
+                <Controller
+                  control={form.control}
+                  name="brandPreference"
+                  render={({ field }) => (
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                      <SelectTrigger data-testid="select-brand-preference">
+                        <SelectValue placeholder="Choose a brand (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BRAND_OPTIONS.map((b) => (
+                          <SelectItem key={b} value={b}>
+                            {b}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
               </div>
 
