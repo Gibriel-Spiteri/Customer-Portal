@@ -31,7 +31,7 @@ const bottomNavItems = [
     label: 'Estimates'
   },
   {
-    name: 'Quick Quote',
+    name: 'Get a Quote',
     href: '/quick-quote',
     icon: Zap,
     label: 'Quote'

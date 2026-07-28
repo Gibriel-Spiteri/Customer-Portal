@@ -51,7 +51,7 @@ const navigation: NavigationItem[] = [
     icon: Star,
   },
   {
-    name: 'Quick Quote',
+    name: 'Get a Quote',
     href: '/quick-quote',
     icon: Zap,
   },
