@@ -89,6 +89,64 @@ export async function getSalespeopleByStore(): Promise<StoreWithReps[]> {
   return data;
 }
 
+// The shared "Consumers Kitchens" employee record (info@consumersmail.com).
+// Every form submission is copied here via a sendEmail task.
+export const INFO_MAILBOX_EMPLOYEE_ID = process.env.INFO_MAILBOX_EMPLOYEE_ID || '271683';
+
+// Store managers change rarely; cache alongside the reps list.
+let managersCache: { data: Map<string, SalesRep>; fetchedAt: number } | null = null;
+
+/**
+ * Look up the store manager for a location. Prefers title "STORE MANAGER";
+ * Franklin Square has none, so any "<x> MANAGER" title (e.g. Sales Manager)
+ * is the fallback. Returns null if the store has no manager in NetSuite.
+ */
+export async function getStoreManager(storeName: string): Promise<SalesRep | null> {
+  if (!managersCache || Date.now() - managersCache.fetchedAt >= CACHE_TTL_MS) {
+    const m2m = new NetSuiteM2M();
+    const storeList = QUICK_QUOTE_STORES.map((s) => `'${s}'`).join(', ');
+    const query = `
+      SELECT
+        employee.id,
+        employee.firstname,
+        employee.lastname,
+        employee.email,
+        employee.title,
+        BUILTIN.DF(employee.location) AS location
+      FROM employee
+      WHERE employee.isinactive = 'F'
+        AND employee.releasedate IS NULL
+        AND BUILTIN.DF(employee.location) IN (${storeList})
+        AND UPPER(employee.title) LIKE '%MANAGER%'
+    `;
+    const result = await m2m.executeSuiteQL(query, 100, 0);
+    const byStore = new Map<string, SalesRep>();
+    // Deterministic preference order; within a tier, lowest internal id wins.
+    const tier = (title: string) => {
+      if (title === 'STORE MANAGER') return 0;
+      if (title === 'SALES MANAGER') return 1;
+      if (title.includes('ASSISTANT')) return 3;
+      return 2; // any other manager title
+    };
+    const rows = (result.items || []).slice().sort((a: any, b: any) => {
+      const t = tier(String(a.title || '').toUpperCase()) - tier(String(b.title || '').toUpperCase());
+      return t !== 0 ? t : Number(a.id) - Number(b.id);
+    });
+    for (const row of rows) {
+      const store = row.location as string;
+      const title = String(row.title || '').toUpperCase();
+      if (byStore.has(store) || title.includes('ASSISTANT')) continue;
+      byStore.set(store, {
+        id: String(row.id),
+        name: [row.firstname, row.lastname].filter(Boolean).join(' '),
+        email: (row.email as string) || null,
+      });
+    }
+    managersCache = { data: byStore, fetchedAt: Date.now() };
+  }
+  return managersCache.data.get(storeName) || null;
+}
+
 /** Look up a single rep (validates the client-submitted rep belongs to the store). */
 export async function findSalesRep(storeName: string, repId: string): Promise<SalesRep | null> {
   const stores = await getSalespeopleByStore();

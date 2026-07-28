@@ -28,6 +28,8 @@ import {
   findSalesRep,
   getCustomerInternalId,
   createQuickQuoteTask,
+  getStoreManager,
+  INFO_MAILBOX_EMPLOYEE_ID,
 } from "./services/quick-quote";
 
 // Fail fast if the signing secret is missing — a hardcoded fallback would let
@@ -2224,6 +2226,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return false;
   };
 
+  // Copy a form submission to the store manager of the selected location and
+  // the shared info@ mailbox (each gets its own sendEmail task — NetSuite
+  // tasks only email the assignee). Copies are best-effort: a failure is
+  // logged but never fails the submission, since the salesperson was notified.
+  const sendCopyTasks = async (params: {
+    storeName: string;
+    salesRepId: string;
+    customerInternalId: string;
+    title: string;
+    message: string;
+  }) => {
+    const copyIds = new Set<string>([INFO_MAILBOX_EMPLOYEE_ID]);
+    try {
+      const manager = await getStoreManager(params.storeName);
+      if (manager) copyIds.add(manager.id);
+    } catch (err) {
+      console.error('Store manager lookup failed:', err);
+    }
+    copyIds.delete(params.salesRepId); // don't double-email the assignee
+    for (const id of Array.from(copyIds)) {
+      try {
+        await createQuickQuoteTask({
+          salesRepId: id,
+          customerInternalId: params.customerInternalId,
+          title: `Copy: ${params.title}`,
+          message: `[Copy for your records — assigned salesperson has the original task]\n\n${params.message}`,
+        });
+      } catch (err) {
+        console.error(`Copy task to employee ${id} failed:`, err);
+      }
+    }
+  };
+
   app.get('/api/quick-quote/salespeople', authenticateToken, async (_req: any, res) => {
     try {
       const stores = await getSalespeopleByStore();
@@ -2272,6 +2307,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.user.id);
         if (!user) return res.status(401).json({ message: 'User not found' });
 
+        // Validate file signatures BEFORE saving anything, so a rejected
+        // submission leaves no orphaned request row behind.
+        const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
+        for (const kind of ['measurements', 'photos'] as const) {
+          for (const f of files?.[kind] || []) {
+            if (!sniffOk(f.buffer)) {
+              return res.status(400).json({ message: `"${f.originalname}" does not look like a valid PDF or image file.` });
+            }
+          }
+        }
+
         // Save the request + files first so nothing is lost if NetSuite errors
         const [request] = await db.insert(quickQuoteRequests).values({
           userId: user.id,
@@ -2286,14 +2332,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           comments: data.comments || null,
         }).returning();
 
-        const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
-        for (const kind of ['measurements', 'photos'] as const) {
-          for (const f of files?.[kind] || []) {
-            if (!sniffOk(f.buffer)) {
-              return res.status(400).json({ message: `"${f.originalname}" does not look like a valid PDF or image file.` });
-            }
-          }
-        }
         const savedFiles: { kind: string; fileName: string; token: string; size: number }[] = [];
         for (const kind of ['measurements', 'photos'] as const) {
           for (const f of files?.[kind] || []) {
@@ -2347,15 +2385,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // fail delivery explicitly (request stays saved for follow-up).
             throw new Error(`Could not resolve NetSuite customer for ${user.netsuiteCustomerId}`);
           }
+          const title = `Quick Quote - ${data.projectType} - ${customerName}`;
           netsuiteTaskId = await createQuickQuoteTask({
             salesRepId: rep.id,
             customerInternalId,
-            title: `Quick Quote - ${data.projectType} - ${customerName}`,
+            title,
             message: lines.join('\n'),
           });
           await db.update(quickQuoteRequests)
             .set({ netsuiteTaskId })
             .where(eq(quickQuoteRequests.id, request.id));
+          // Fire-and-forget: copies are best-effort and must not delay the response
+          void sendCopyTasks({
+            storeName: data.storeName,
+            salesRepId: rep.id,
+            customerInternalId,
+            title,
+            message: lines.join('\n'),
+          });
         } catch (err: any) {
           // Request + files are saved; surface the delivery failure explicitly
           console.error('Quick quote NetSuite task error:', err);
@@ -2430,6 +2477,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(req.user.id);
       if (!user) return res.status(401).json({ message: 'User not found' });
 
+      // Validate file signatures BEFORE saving anything, so a rejected
+      // submission leaves no orphaned request row behind.
+      const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
+      for (const kind of ['measurements', 'photos'] as const) {
+        for (const f of files?.[kind] || []) {
+          if (!sniffOk(f.buffer)) {
+            return res.status(400).json({ message: `"${f.originalname}" does not look like a valid PDF or image file.` });
+          }
+        }
+      }
+
       // Save first so nothing is lost if NetSuite errors
       const [request] = await db.insert(conciergeRequests).values({
         userId: user.id,
@@ -2449,15 +2507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectDetails: data.projectDetails || null,
       }).returning();
 
-      // Validate + save uploaded files (same pattern as quick quote)
-      const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
-      for (const kind of ['measurements', 'photos'] as const) {
-        for (const f of files?.[kind] || []) {
-          if (!sniffOk(f.buffer)) {
-            return res.status(400).json({ message: `"${f.originalname}" does not look like a valid PDF or image file.` });
-          }
-        }
-      }
+      // Save uploaded files (same pattern as quick quote)
       const savedFiles: { kind: string; fileName: string; token: string; size: number }[] = [];
       for (const kind of ['measurements', 'photos'] as const) {
         for (const f of files?.[kind] || []) {
@@ -2515,15 +2565,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!customerInternalId) {
           throw new Error(`Could not resolve NetSuite customer for ${user.netsuiteCustomerId}`);
         }
+        const title = `Client Concierge - Showroom Appointment - ${customerName}`;
         const netsuiteTaskId = await createQuickQuoteTask({
           salesRepId: rep.id,
           customerInternalId,
-          title: `Client Concierge - Showroom Appointment - ${customerName}`,
+          title,
           message: lines.join('\n'),
         });
         await db.update(conciergeRequests)
           .set({ netsuiteTaskId })
           .where(eq(conciergeRequests.id, request.id));
+        // Fire-and-forget: copies are best-effort and must not delay the response
+        void sendCopyTasks({
+          storeName: data.storeName,
+          salesRepId: rep.id,
+          customerInternalId,
+          title,
+          message: lines.join('\n'),
+        });
       } catch (err: any) {
         console.error('Client concierge NetSuite task error:', err);
         netsuiteError = err?.message || 'NetSuite task creation failed';
