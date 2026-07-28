@@ -22,7 +22,7 @@ import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import multer from "multer";
 import crypto from "crypto";
-import { quickQuoteRequests, quickQuoteFiles, conciergeRequests } from "@shared/schema";
+import { quickQuoteRequests, quickQuoteFiles, conciergeRequests, conciergeFiles } from "@shared/schema";
 import {
   getSalespeopleByStore,
   findSalesRep,
@@ -2211,6 +2211,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Store + salesperson list (cached 10 min server-side)
+  // Content sniffing: the download endpoint is unauthenticated (tokenized),
+  // so never trust the client-provided MIME type — verify magic numbers.
+  const sniffOk = (buf: Buffer): boolean => {
+    if (buf.length < 12) return false;
+    if (buf.slice(0, 4).toString('latin1') === '%PDF') return true;            // PDF
+    if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true;    // JPEG
+    if (buf[0] === 0x89 && buf.slice(1, 4).toString('latin1') === 'PNG') return true; // PNG
+    if (buf.slice(0, 3).toString('latin1') === 'GIF') return true;             // GIF
+    if (buf.slice(0, 4).toString('latin1') === 'RIFF' && buf.slice(8, 12).toString('latin1') === 'WEBP') return true; // WEBP
+    if (buf.slice(4, 8).toString('latin1') === 'ftyp') return true;            // HEIC/HEIF (ISO BMFF)
+    return false;
+  };
+
   app.get('/api/quick-quote/salespeople', authenticateToken, async (_req: any, res) => {
     try {
       const stores = await getSalespeopleByStore();
@@ -2272,19 +2285,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           brandPreference: data.brandPreference || null,
           comments: data.comments || null,
         }).returning();
-
-        // Content sniffing: the download endpoint is unauthenticated (tokenized),
-        // so never trust the client-provided MIME type — verify magic numbers.
-        const sniffOk = (buf: Buffer): boolean => {
-          if (buf.length < 12) return false;
-          if (buf.slice(0, 4).toString('latin1') === '%PDF') return true;            // PDF
-          if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true;    // JPEG
-          if (buf[0] === 0x89 && buf.slice(1, 4).toString('latin1') === 'PNG') return true; // PNG
-          if (buf.slice(0, 3).toString('latin1') === 'GIF') return true;             // GIF
-          if (buf.slice(0, 4).toString('latin1') === 'RIFF' && buf.slice(8, 12).toString('latin1') === 'WEBP') return true; // WEBP
-          if (buf.slice(4, 8).toString('latin1') === 'ftyp') return true;            // HEIC/HEIF (ISO BMFF)
-          return false;
-        };
 
         const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
         for (const kind of ['measurements', 'photos'] as const) {
@@ -2382,7 +2382,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Client Concierge: showroom appointment request for a trade customer's client.
   // Delivered as a NetSuite task assigned to the selected salesperson.
-  app.post('/api/client-concierge', authenticateToken, async (req: any, res) => {
+  app.post(
+    '/api/client-concierge',
+    authenticateToken,
+    (req: any, res, next) => {
+      quickQuoteUpload.fields([
+        { name: 'measurements', maxCount: 5 },
+        { name: 'photos', maxCount: 5 },
+      ])(req, res, (err: any) => {
+        if (err) return res.status(400).json({ message: err.message || 'File upload failed' });
+        next();
+      });
+    },
+    async (req: any, res) => {
     try {
       const schema = z.object({
         storeName: z.string().min(1),
@@ -2390,6 +2402,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientName: z.string().min(1).max(200),
         clientEmail: z.string().email().max(255).optional().or(z.literal('')),
         clientPhone: z.string().min(1).max(50),
+        projectType: z.enum(['Kitchen', 'Bath', 'Other']).optional(),
+        budget: z.string().max(100).optional().default(''),
+        timeFrame: z.enum(['0-3 months', '4-6 months', '7+ months']).optional(),
+        brandPreference: z.string().max(255).optional().default(''),
         preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date').refine((d) => {
           const date = new Date(`${d}T00:00:00`);
           if (isNaN(date.getTime())) return false;
@@ -2426,8 +2442,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientPhone: data.clientPhone || null,
         preferredDate: data.preferredDate,
         preferredTime: data.preferredTime || null,
+        projectType: data.projectType || null,
+        budget: data.budget || null,
+        timeFrame: data.timeFrame || null,
+        brandPreference: data.brandPreference || null,
         projectDetails: data.projectDetails || null,
       }).returning();
+
+      // Validate + save uploaded files (same pattern as quick quote)
+      const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
+      for (const kind of ['measurements', 'photos'] as const) {
+        for (const f of files?.[kind] || []) {
+          if (!sniffOk(f.buffer)) {
+            return res.status(400).json({ message: `"${f.originalname}" does not look like a valid PDF or image file.` });
+          }
+        }
+      }
+      const savedFiles: { kind: string; fileName: string; token: string; size: number }[] = [];
+      for (const kind of ['measurements', 'photos'] as const) {
+        for (const f of files?.[kind] || []) {
+          const token = crypto.randomBytes(24).toString('hex');
+          await db.insert(conciergeFiles).values({
+            requestId: request.id,
+            kind,
+            fileName: f.originalname,
+            mimeType: f.mimetype,
+            fileSize: f.size,
+            downloadToken: token,
+            data: f.buffer,
+          });
+          savedFiles.push({ kind, fileName: f.originalname, token, size: f.size });
+        }
+      }
 
       const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
       const lines = [
@@ -2444,11 +2490,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `Preferred Date: ${data.preferredDate}`,
         `Preferred Time: ${data.preferredTime || '—'}`,
         ``,
+        `Project Type: ${data.projectType || '—'}`,
+        `Budget: ${data.budget || '—'}`,
+        `Time Frame: ${data.timeFrame || '—'}`,
+        `Brand Preference: ${data.brandPreference || '—'}`,
+        ``,
         `IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.`,
         ``,
         `Project Details:`,
         data.projectDetails || '—',
       ];
+      if (savedFiles.length > 0) {
+        const baseUrl = process.env.APP_URL
+          || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
+        lines.push('', 'Attached files:');
+        for (const sf of savedFiles) {
+          lines.push(`- [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
+        }
+      }
 
       let netsuiteError: string | null = null;
       try {
@@ -2493,7 +2552,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const token = String(req.params.token || '');
       if (!/^[a-f0-9]{48}$/.test(token)) return res.status(404).json({ message: 'File not found' });
-      const [file] = await db.select().from(quickQuoteFiles).where(eq(quickQuoteFiles.downloadToken, token));
+      let [file]: Array<{ mimeType: string; fileName: string; data: Buffer }> =
+        await db.select().from(quickQuoteFiles).where(eq(quickQuoteFiles.downloadToken, token));
+      if (!file) {
+        [file] = await db.select().from(conciergeFiles).where(eq(conciergeFiles.downloadToken, token));
+      }
       if (!file) return res.status(404).json({ message: 'File not found' });
       res.setHeader('Content-Type', file.mimeType);
       res.setHeader('Content-Disposition', `attachment; filename="${file.fileName.replace(/[^\w.\- ]/g, '_')}"`);

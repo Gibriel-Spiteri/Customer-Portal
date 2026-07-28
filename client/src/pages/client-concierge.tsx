@@ -1,4 +1,11 @@
 import { useState } from "react";
+import {
+  FilePicker,
+  BUDGET_OPTIONS,
+  BRAND_OPTIONS,
+  MAX_FILE_MB,
+  MAX_FILES_PER_KIND,
+} from "@/components/quote-form-shared";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { MobileLayout } from "@/components/layout/mobile-layout";
@@ -26,6 +33,8 @@ import {
   Loader2,
   CheckCircle,
   AlertTriangle,
+  Ruler,
+  Camera,
 } from "lucide-react";
 
 interface SalesRep {
@@ -52,6 +61,10 @@ const conciergeSchema = z.object({
   clientPhone: z.string().min(1, "Please enter your client's phone number").max(50),
   preferredDate: z.string().min(1, "Please choose a preferred date"),
   preferredTime: z.enum(["Morning", "Afternoon"]).optional(),
+  projectType: z.enum(["Kitchen", "Bath", "Other"]).optional(),
+  budget: z.string().max(100).optional(),
+  timeFrame: z.enum(["0-3 months", "4-6 months", "7+ months"]).optional(),
+  brandPreference: z.string().max(255).optional(),
   projectDetails: z.string().max(5000).optional(),
 });
 
@@ -61,6 +74,8 @@ export default function ClientConcierge() {
   const { user, token } = useAuth();
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState<{ message: string; savedOnly: boolean } | null>(null);
+  const [measurementFiles, setMeasurementFiles] = useState<File[]>([]);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
 
   const { data, isLoading: loadingReps } = useQuery<{ stores: StoreWithReps[] }>({
     queryKey: ["/api/quick-quote/salespeople"],
@@ -77,6 +92,8 @@ export default function ClientConcierge() {
       clientEmail: "",
       clientPhone: "",
       preferredDate: "",
+      budget: "",
+      brandPreference: "",
       projectDetails: "",
     },
   });
@@ -87,13 +104,17 @@ export default function ClientConcierge() {
 
   const submitMutation = useMutation({
     mutationFn: async (values: ConciergeForm) => {
+      const fd = new FormData();
+      Object.entries(values).forEach(([k, v]) => {
+        if (v) fd.append(k, v);
+      });
+      measurementFiles.forEach((f) => fd.append("measurements", f));
+      photoFiles.forEach((f) => fd.append("photos", f));
+
       const response = await fetch("/api/client-concierge", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
       });
       const body = await response.json();
       // 502 = request saved but salesperson not notified; treat as partial
@@ -105,6 +126,8 @@ export default function ClientConcierge() {
     onSuccess: (body) => {
       setSubmitted({ message: body.message, savedOnly: body.savedOnly });
       form.reset();
+      setMeasurementFiles([]);
+      setPhotoFiles([]);
     },
     onError: (error: Error) => {
       toast({
@@ -339,6 +362,102 @@ export default function ClientConcierge() {
                 </div>
               </div>
 
+              {/* Project type */}
+              <div className="space-y-2">
+                <Label>Project Type</Label>
+                <Controller
+                  control={form.control}
+                  name="projectType"
+                  render={({ field }) => (
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["Kitchen", "Bath", "Other"] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() =>
+                            field.onChange(field.value === t ? undefined : t)
+                          }
+                          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                            field.value === t
+                              ? "border-netsuite-blue bg-blue-50 text-netsuite-blue"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                />
+              </div>
+
+              {/* Budget + Time frame */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Budget</Label>
+                  <Controller
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger data-testid="select-budget">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BUDGET_OPTIONS.map((b) => (
+                            <SelectItem key={b} value={b}>
+                              {b}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Time Frame</Label>
+                  <Controller
+                    control={form.control}
+                    name="timeFrame"
+                    render={({ field }) => (
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger data-testid="select-time-frame">
+                          <SelectValue placeholder="When does the project start?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0-3 months">0-3 months</SelectItem>
+                          <SelectItem value="4-6 months">4-6 months</SelectItem>
+                          <SelectItem value="7+ months">7+ months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Brand preference */}
+              <div className="space-y-2">
+                <Label>Brand Preference</Label>
+                <Controller
+                  control={form.control}
+                  name="brandPreference"
+                  render={({ field }) => (
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                      <SelectTrigger data-testid="select-brand-preference">
+                        <SelectValue placeholder="Choose a brand" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BRAND_OPTIONS.map((b) => (
+                          <SelectItem key={b} value={b}>
+                            {b}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+
               {/* Project details */}
               <div className="space-y-2">
                 <Label htmlFor="projectDetails">Project Details</Label>
@@ -348,6 +467,24 @@ export default function ClientConcierge() {
                   placeholder="What is the client shopping for? Style preferences, budget guidance, anything the salesperson should know."
                   data-testid="input-project-details"
                   {...form.register("projectDetails")}
+                />
+              </div>
+
+              {/* Uploads */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FilePicker
+                  label="Room Measurements"
+                  icon={<Ruler className="h-4 w-4 text-gray-500" />}
+                  files={measurementFiles}
+                  setFiles={setMeasurementFiles}
+                  hint={`PDF or photos, up to ${MAX_FILES_PER_KIND} files (${MAX_FILE_MB} MB each)`}
+                />
+                <FilePicker
+                  label="Photos"
+                  icon={<Camera className="h-4 w-4 text-gray-500" />}
+                  files={photoFiles}
+                  setFiles={setPhotoFiles}
+                  hint={`Up to ${MAX_FILES_PER_KIND} photos (${MAX_FILE_MB} MB each)`}
                 />
               </div>
 

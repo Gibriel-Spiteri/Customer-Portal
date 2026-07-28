@@ -160,12 +160,32 @@ export const conciergeRequests = pgTable('concierge_requests', {
   clientPhone: varchar('client_phone', { length: 50 }),
   preferredDate: varchar('preferred_date', { length: 50 }).notNull(),
   preferredTime: varchar('preferred_time', { length: 50 }), // Morning | Afternoon
+  projectType: varchar('project_type', { length: 50 }),
+  budget: varchar('budget', { length: 100 }),
+  timeFrame: varchar('time_frame', { length: 50 }),
+  brandPreference: varchar('brand_preference', { length: 255 }),
   projectDetails: text('project_details'),
   netsuiteTaskId: varchar('netsuite_task_id', { length: 50 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Uploaded files for a concierge request (same pattern as quickQuoteFiles).
+export const conciergeFiles = pgTable('concierge_files', {
+  id: serial('id').primaryKey(),
+  requestId: integer('request_id').notNull().references(() => conciergeRequests.id, { onDelete: 'cascade' }),
+  kind: varchar('kind', { length: 20 }).notNull(), // 'measurements' | 'photos'
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  mimeType: varchar('mime_type', { length: 100 }).notNull(),
+  fileSize: integer('file_size').notNull(),
+  downloadToken: varchar('download_token', { length: 64 }).notNull().unique(),
+  data: bytea('data').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  requestIdx: index('concierge_files_request_idx').on(t.requestId),
+}));
+
 export type ConciergeRequest = typeof conciergeRequests.$inferSelect;
+export type ConciergeFile = typeof conciergeFiles.$inferSelect;
 
 // Types
 export type User = typeof users.$inferSelect;
