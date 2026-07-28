@@ -7,7 +7,8 @@ import {
   Star,
   Settings, 
   HelpCircle,
-  Bath
+  Bath,
+  ClipboardList
 } from "lucide-react";
 
 const navigation = [
@@ -35,6 +36,11 @@ const navigation = [
     name: 'Consumers Cash',
     href: '/loyalty',
     icon: Star,
+  },
+  {
+    name: 'Get a Project Quote',
+    href: '/quick-quote',
+    icon: ClipboardList,
   },
   {
     name: 'Support',
