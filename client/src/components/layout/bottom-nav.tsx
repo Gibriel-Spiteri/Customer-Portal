@@ -32,7 +32,7 @@ const bottomNavItems = [
     name: 'Get a Project Quote',
     href: '/quick-quote',
     icon: ClipboardList,
-    label: 'Quote'
+    label: 'Get Quote'
   },
   {
     name: 'Consumers Cash',
