@@ -29,8 +29,8 @@ export function Header() {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
+        <div className="flex justify-between items-center h-16 gap-2">
+          <div className="flex items-center min-w-0">
             {/* Mobile menu button */}
             <Sheet>
               <SheetTrigger asChild>
@@ -48,22 +48,22 @@ export function Header() {
               </SheetContent>
             </Sheet>
             
-            <div className="flex-shrink-0">
+            <div className="min-w-0 shrink">
               <img 
                 src="https://1212804.app.netsuite.com/core/media/media.nl?id=9641134&c=1212804&h=mTEBmvmdDKM4h0mgbLpG789NURbPi4V1b2DrTREho5ho_PnP"
                 alt="Company Logo"
-                className="h-10 w-auto"
+                className="h-8 sm:h-10 w-auto max-w-[140px] sm:max-w-none object-contain"
               />
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-0 shrink">
             {/* User Menu */}
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <span className="font-medium uppercase">
+                  <Button variant="ghost" className="flex items-center space-x-2 min-w-0 px-2 sm:px-4">
+                    <span className="font-medium uppercase truncate max-w-[40vw] sm:max-w-none text-sm sm:text-base">
                       {user.companyName || 'Account'}
                     </span>
                     <ChevronDown className="h-4 w-4" />
