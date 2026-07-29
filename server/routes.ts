@@ -2213,6 +2213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Store + salesperson list (cached 10 min server-side)
+  // Task messages are rendered as HTML in NetSuite's notification email, so
+  // escape user-supplied text to prevent HTML/markup injection.
+  const esc = (s: any) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   // Content sniffing: the download endpoint is unauthenticated (tokenized),
   // so never trust the client-provided MIME type — verify magic numbers.
   const sniffOk = (buf: Buffer): boolean => {
@@ -2251,7 +2255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           salesRepId: id,
           customerInternalId: params.customerInternalId,
           title: `Copy: ${params.title}`,
-          message: `[Copy for your records — assigned salesperson has the original task]\n\n${params.message}`,
+          message: `[Copy for your records — assigned salesperson has the original task]<br><br>${params.message}`,
         });
       } catch (err) {
         console.error(`Copy task to employee ${id} failed:`, err);
@@ -2353,27 +2357,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const baseUrl = process.env.APP_URL
           || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
         const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
-        // NetSuite's task-notification email collapses newlines into one
-        // paragraph, so every line starts with a bullet to stay legible.
+        // NetSuite's task-notification email collapses plain newlines but
+        // renders HTML — use <br> line breaks and <b> labels (verified live).
         const lines = [
-          `QUICK QUOTE REQUEST from the customer portal`,
+          `<b>QUICK QUOTE REQUEST from the customer portal</b>`,
           ``,
-          `• Customer: ${customerName}`,
-          `• Customer #: ${user.netsuiteCustomerId}`,
-          `• Email: ${user.email}`,
-          `• Store: ${data.storeName}`,
+          `<b>Customer:</b> ${esc(customerName)}`,
+          `<b>Customer #:</b> ${user.netsuiteCustomerId}`,
+          `<b>Email:</b> ${esc(user.email)}`,
+          `<b>Store:</b> ${data.storeName}`,
           ``,
-          `• Project Type: ${data.projectType}`,
-          `• Budget: ${data.budget || '—'}`,
-          `• Time Frame: ${data.timeFrame || '—'}`,
-          `• Brand Preference: ${data.brandPreference || '—'}`,
+          `<b>Project Type:</b> ${data.projectType}`,
+          `<b>Budget:</b> ${data.budget || '—'}`,
+          `<b>Time Frame:</b> ${data.timeFrame || '—'}`,
+          `<b>Brand Preference:</b> ${data.brandPreference || '—'}`,
           ``,
-          `• Comments: ${data.comments || '—'}`,
+          `<b>Comments:</b> ${esc(data.comments) || '—'}`,
         ];
         if (savedFiles.length > 0) {
-          lines.push('', '• Attached files:');
+          lines.push('', '<b>Attached files:</b>');
           for (const sf of savedFiles) {
-            lines.push(`• [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
+            lines.push(`[${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${esc(sf.fileName)} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
           }
         }
 
@@ -2391,7 +2395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             salesRepId: rep.id,
             customerInternalId,
             title,
-            message: lines.join('\n'),
+            message: lines.join('<br>'),
           });
           await db.update(quickQuoteRequests)
             .set({ netsuiteTaskId })
@@ -2402,7 +2406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             salesRepId: rep.id,
             customerInternalId,
             title,
-            message: lines.join('\n'),
+            message: lines.join('<br>'),
           });
         } catch (err: any) {
           // Request + files are saved; surface the delivery failure explicitly
@@ -2527,37 +2531,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
-      // NetSuite's task-notification email collapses newlines into one
-      // paragraph, so every line starts with a bullet to stay legible.
+      // NetSuite's task-notification email collapses plain newlines but
+      // renders HTML — use <br> line breaks and <b> labels (verified live).
       const lines = [
-        `CLIENT CONCIERGE appointment request from the customer portal`,
+        `<b>CLIENT CONCIERGE appointment request from the customer portal</b>`,
         ``,
-        `• Trade Customer: ${customerName}`,
-        `• Customer #: ${user.netsuiteCustomerId}`,
-        `• Email: ${user.email}`,
-        `• Store: ${data.storeName}`,
+        `<b>Trade Customer:</b> ${esc(customerName)}`,
+        `<b>Customer #:</b> ${user.netsuiteCustomerId}`,
+        `<b>Email:</b> ${esc(user.email)}`,
+        `<b>Store:</b> ${data.storeName}`,
         ``,
-        `• Client Name: ${data.clientName}`,
-        `• Client Email: ${data.clientEmail || '—'}`,
-        `• Client Phone: ${data.clientPhone || '—'}`,
-        `• Preferred Date: ${data.preferredDate}`,
-        `• Preferred Time: ${data.preferredTime || '—'}`,
+        `<b>Client Name:</b> ${esc(data.clientName)}`,
+        `<b>Client Email:</b> ${esc(data.clientEmail) || '—'}`,
+        `<b>Client Phone:</b> ${esc(data.clientPhone) || '—'}`,
+        `<b>Preferred Date:</b> ${data.preferredDate}`,
+        `<b>Preferred Time:</b> ${data.preferredTime || '—'}`,
         ``,
-        `• Project Type: ${data.projectType || '—'}`,
-        `• Budget: ${data.budget || '—'}`,
-        `• Time Frame: ${data.timeFrame || '—'}`,
-        `• Brand Preference: ${data.brandPreference || '—'}`,
+        `<b>Project Type:</b> ${data.projectType || '—'}`,
+        `<b>Budget:</b> ${data.budget || '—'}`,
+        `<b>Time Frame:</b> ${data.timeFrame || '—'}`,
+        `<b>Brand Preference:</b> ${data.brandPreference || '—'}`,
         ``,
-        `• IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.`,
+        `<b>IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.</b>`,
         ``,
-        `• Project Details: ${data.projectDetails || '—'}`,
+        `<b>Project Details:</b> ${esc(data.projectDetails) || '—'}`,
       ];
       if (savedFiles.length > 0) {
         const baseUrl = process.env.APP_URL
           || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
-        lines.push('', '• Attached files:');
+        lines.push('', '<b>Attached files:</b>');
         for (const sf of savedFiles) {
-          lines.push(`• [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
+          lines.push(`[${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${esc(sf.fileName)} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
         }
       }
 
@@ -2572,7 +2576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           salesRepId: rep.id,
           customerInternalId,
           title,
-          message: lines.join('\n'),
+          message: lines.join('<br>'),
         });
         await db.update(conciergeRequests)
           .set({ netsuiteTaskId })
@@ -2583,7 +2587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           salesRepId: rep.id,
           customerInternalId,
           title,
-          message: lines.join('\n'),
+          message: lines.join('<br>'),
         });
       } catch (err: any) {
         console.error('Client concierge NetSuite task error:', err);

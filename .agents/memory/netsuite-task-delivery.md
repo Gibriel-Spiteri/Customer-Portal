@@ -9,4 +9,4 @@ description: What's required to create tasks via NetSuite REST in this account, 
 
 **How to apply:** Any new "notify a salesperson/employee" feature should create a task with sendEmail rather than trying to send email directly. Wrap the fetch in `nsLimit(..., 'record')`.
 
-**Email formatting:** NetSuite's task-notification email collapses all newlines in the message into one paragraph — prefix every line with a "• " bullet so it stays legible. Build task URLs from `m2m.getApiBaseUrl()` (NETSUITE_ACCOUNT_ID env var is a full URL, not a bare id). Download links in task messages must use `APP_URL` (set to the production domain) — dev-domain links die when the workspace sleeps.
+**Email formatting:** NetSuite's task-notification email collapses plain newlines but RENDERS HTML in the task message (verified live) — join lines with `<br>` and use `<b>` labels; always HTML-escape user-supplied text before interpolating. Build task URLs from `m2m.getApiBaseUrl()` (NETSUITE_ACCOUNT_ID env var is a full URL, not a bare id). Download links in task messages must use `APP_URL` (set to the production domain) — dev-domain links die when the workspace sleeps.
