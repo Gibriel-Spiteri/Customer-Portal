@@ -76,7 +76,7 @@ export function BottomNav() {
                   aria-hidden="true"
                 />
                 <span className={cn(
-                  "text-xs font-medium truncate w-full text-center",
+                  "text-[10px] leading-tight font-medium truncate w-full text-center",
                   isActive ? "text-blue-600" : "text-gray-500"
                 )}>
                   {item.label}
