@@ -2353,26 +2353,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const baseUrl = process.env.APP_URL
           || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
         const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+        // NetSuite's task-notification email collapses newlines into one
+        // paragraph, so every line starts with a bullet to stay legible.
         const lines = [
-          `Quick Quote request from the customer portal`,
+          `QUICK QUOTE REQUEST from the customer portal`,
           ``,
-          `Customer: ${customerName}`,
-          `Customer #: ${user.netsuiteCustomerId}`,
-          `Email: ${user.email}`,
-          `Store: ${data.storeName}`,
+          `• Customer: ${customerName}`,
+          `• Customer #: ${user.netsuiteCustomerId}`,
+          `• Email: ${user.email}`,
+          `• Store: ${data.storeName}`,
           ``,
-          `Project Type: ${data.projectType}`,
-          `Budget: ${data.budget || '—'}`,
-          `Time Frame: ${data.timeFrame || '—'}`,
-          `Brand Preference: ${data.brandPreference || '—'}`,
+          `• Project Type: ${data.projectType}`,
+          `• Budget: ${data.budget || '—'}`,
+          `• Time Frame: ${data.timeFrame || '—'}`,
+          `• Brand Preference: ${data.brandPreference || '—'}`,
           ``,
-          `Comments:`,
-          data.comments || '—',
+          `• Comments: ${data.comments || '—'}`,
         ];
         if (savedFiles.length > 0) {
-          lines.push('', 'Attached files:');
+          lines.push('', '• Attached files:');
           for (const sf of savedFiles) {
-            lines.push(`- [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
+            lines.push(`• [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
           }
         }
 
@@ -2526,36 +2527,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+      // NetSuite's task-notification email collapses newlines into one
+      // paragraph, so every line starts with a bullet to stay legible.
       const lines = [
-        `Client Concierge appointment request from the customer portal`,
+        `CLIENT CONCIERGE appointment request from the customer portal`,
         ``,
-        `Trade Customer: ${customerName}`,
-        `Customer #: ${user.netsuiteCustomerId}`,
-        `Email: ${user.email}`,
-        `Store: ${data.storeName}`,
+        `• Trade Customer: ${customerName}`,
+        `• Customer #: ${user.netsuiteCustomerId}`,
+        `• Email: ${user.email}`,
+        `• Store: ${data.storeName}`,
         ``,
-        `Client Name: ${data.clientName}`,
-        `Client Email: ${data.clientEmail || '—'}`,
-        `Client Phone: ${data.clientPhone || '—'}`,
-        `Preferred Date: ${data.preferredDate}`,
-        `Preferred Time: ${data.preferredTime || '—'}`,
+        `• Client Name: ${data.clientName}`,
+        `• Client Email: ${data.clientEmail || '—'}`,
+        `• Client Phone: ${data.clientPhone || '—'}`,
+        `• Preferred Date: ${data.preferredDate}`,
+        `• Preferred Time: ${data.preferredTime || '—'}`,
         ``,
-        `Project Type: ${data.projectType || '—'}`,
-        `Budget: ${data.budget || '—'}`,
-        `Time Frame: ${data.timeFrame || '—'}`,
-        `Brand Preference: ${data.brandPreference || '—'}`,
+        `• Project Type: ${data.projectType || '—'}`,
+        `• Budget: ${data.budget || '—'}`,
+        `• Time Frame: ${data.timeFrame || '—'}`,
+        `• Brand Preference: ${data.brandPreference || '—'}`,
         ``,
-        `IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.`,
+        `• IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.`,
         ``,
-        `Project Details:`,
-        data.projectDetails || '—',
+        `• Project Details: ${data.projectDetails || '—'}`,
       ];
       if (savedFiles.length > 0) {
         const baseUrl = process.env.APP_URL
           || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
-        lines.push('', 'Attached files:');
+        lines.push('', '• Attached files:');
         for (const sf of savedFiles) {
-          lines.push(`- [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
+          lines.push(`• [${sf.kind === 'measurements' ? 'Measurements' : 'Photo'}] ${sf.fileName} (${(sf.size / 1024 / 1024).toFixed(1)} MB): ${baseUrl}/api/quick-quote/files/${sf.token}`);
         }
       }
 

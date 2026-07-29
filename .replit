@@ -53,3 +53,4 @@ timeoutMs = 20000
 [userenv.shared]
 ADMIN_EMAILS = "gspiteri@consumersmail.com,jbalogajr@consumersmail.com"
 JWT_SECRET = "GDca37OC-NDGMAigyHHzWl_pQlgLc6r_Mbf5l_VOTplvtI2rch0R6Vx2wFzRJJlE"
+APP_URL = "https://ckbproportal.com"

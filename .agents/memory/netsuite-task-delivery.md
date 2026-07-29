@@ -8,3 +8,5 @@ description: What's required to create tasks via NetSuite REST in this account, 
 **Why:** The email RESTlet (`netsuite-email.ts`) only supports fixed types (`password_reset`, `welcome`) and no attachments; it's a NetSuite-side script we can't modify. File attachments can't go through REST either — the portal serves files itself via tokenized links included in the task message.
 
 **How to apply:** Any new "notify a salesperson/employee" feature should create a task with sendEmail rather than trying to send email directly. Wrap the fetch in `nsLimit(..., 'record')`.
+
+**Email formatting:** NetSuite's task-notification email collapses all newlines in the message into one paragraph — prefix every line with a "• " bullet so it stays legible. Build task URLs from `m2m.getApiBaseUrl()` (NETSUITE_ACCOUNT_ID env var is a full URL, not a bare id). Download links in task messages must use `APP_URL` (set to the production domain) — dev-domain links die when the workspace sleeps.
