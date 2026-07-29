@@ -4,10 +4,8 @@ import {
   LayoutDashboard, 
   ShoppingCart, 
   CalculatorIcon,
-  HeadphonesIcon,
   DollarSign,
   User,
-  Bath,
   ClipboardList
 } from "lucide-react";
 
@@ -35,18 +33,6 @@ const bottomNavItems = [
     href: '/quick-quote',
     icon: ClipboardList,
     label: 'Quote'
-  },
-  {
-    name: 'Support',
-    href: '/support',
-    icon: HeadphonesIcon,
-    label: 'Support'
-  },
-  {
-    name: 'Express Bath',
-    href: '/express-bath',
-    icon: Bath,
-    label: 'Bath'
   },
   {
     name: 'Consumers Cash',
