@@ -376,7 +376,7 @@ export default function QuickQuote() {
                 <Button
                   type="submit"
                   disabled={submitMutation.isPending}
-                  className="w-full sm:w-auto bg-netsuite-blue hover:bg-netsuite-light"
+                  className="w-full sm:w-auto"
                 >
                   {submitMutation.isPending ? (
                     <>
