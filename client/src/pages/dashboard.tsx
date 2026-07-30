@@ -224,15 +224,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {/* Estimates Card */}
         <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
+          <CardContent className="p-4">
             <Link href="/estimates">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-100 rounded-full">
-                  <CalculatorIcon className="h-7 w-7 text-orange-600" />
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-orange-100 rounded-full">
+                  <CalculatorIcon className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Estimates</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Estimates</h3>
+                  <p className="text-xs text-gray-600 whitespace-nowrap">
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
@@ -247,15 +247,15 @@ export default function Dashboard() {
 
         {/* Sales Orders Card */}
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
+          <CardContent className="p-4">
             <Link href="/orders">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <ShoppingCart className="h-7 w-7 text-blue-600" />
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-100 rounded-full">
+                  <ShoppingCart className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Sales Orders</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Sales Orders</h3>
+                  <p className="text-xs text-gray-600 whitespace-nowrap">
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
@@ -270,15 +270,15 @@ export default function Dashboard() {
 
         {/* Consumers Cash Card */}
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
+          <CardContent className="p-4">
             <Link href="/consumers-cash">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <DollarSign className="h-7 w-7 text-green-600" />
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-green-100 rounded-full">
+                  <DollarSign className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Consumers Cash</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Consumers Cash</h3>
+                  <p className="text-xs text-gray-600 whitespace-nowrap">
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : dashboardData?.account?.crdRebateBalance ? (
@@ -295,14 +295,14 @@ export default function Dashboard() {
 
         {/* Get a Project Quote Card */}
         <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
+          <CardContent className="p-4">
             <Link href="/quick-quote" data-testid="link-project-quote">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-amber-100 rounded-full">
-                  <ClipboardList className="h-7 w-7 text-amber-600" />
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-100 rounded-full">
+                  <ClipboardList className="h-6 w-6 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Get a Project Quote</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Get a Project Quote</h3>
                   <p className="text-sm text-gray-600 truncate">Start a new request</p>
                 </div>
               </div>
@@ -312,15 +312,15 @@ export default function Dashboard() {
 
         {/* Support Cases Card */}
         <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-5">
+          <CardContent className="p-4">
             <Link href="/support">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <HeadphonesIcon className="h-7 w-7 text-purple-600" />
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-purple-100 rounded-full">
+                  <HeadphonesIcon className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Support</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Support</h3>
+                  <p className="text-xs text-gray-600 whitespace-nowrap">
                     {isLoading ? (
                       <Skeleton className="h-4 w-20" />
                     ) : (
