@@ -221,7 +221,7 @@ export default function Dashboard() {
       )}
 
       {/* Quick Access Summary Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {/* Estimates Card */}
         <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200 hover:shadow-md transition-shadow">
           <CardContent className="p-5">
