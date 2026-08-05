@@ -308,14 +308,15 @@ function ExpressBathContent() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">{itemName(item)}</h3>
-                  <p className="text-xs text-gray-400 font-mono mt-0.5">{item.itemnumber}</p>
+                  <p className="text-xs text-gray-400 font-mono mt-0.5 whitespace-nowrap truncate">{item.itemnumber}</p>
+                  <Badge variant="outline" className={`text-xs mt-1 sm:hidden ${si.cls}`}>{si.label}</Badge>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <Badge variant="outline" className={`text-xs ${si.cls}`}>{si.label}</Badge>
+                  <Badge variant="outline" className={`text-xs hidden sm:inline-flex ${si.cls}`}>{si.label}</Badge>
                   {item.baseprice ? (
-                    <span className="text-base font-bold text-gray-900 w-24 text-right">${parseFloat(item.baseprice).toFixed(2)}</span>
+                    <span className="text-base font-bold text-gray-900 sm:w-24 text-right">${parseFloat(item.baseprice).toFixed(2)}</span>
                   ) : (
-                    <span className="text-sm text-gray-400 w-24 text-right">N/A</span>
+                    <span className="text-sm text-gray-400 sm:w-24 text-right">N/A</span>
                   )}
                 </div>
               </div>
