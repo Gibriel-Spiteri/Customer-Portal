@@ -5,8 +5,8 @@ generated = []
 id = "K00g37fsBwN6J6WpybeQp"
 uri = "file://tmp/video/portal-feature-tour.mp4"
 type = "video"
-title = "Consumers PRO — Portal Feature Tour (v4)"
-description = "Bold Anton titles, small white watermark bottom-left, original hand cursor, home-screen Estimates tap, visible scrolling in Consumers Cash and Express Bath, shorter quote form, updated quote tagline, and a clean 'Log in and take it for a spin' outro."
+title = "Consumers PRO — Portal Feature Tour (v5)"
+description = "Quote section now fills the three required fields, taps Submit, shows the green 'Request sent!' confirmation, and fades out."
 
 [[outputs]]
 id = "7GCQW2IJ1SOPIhU2VaV5p"

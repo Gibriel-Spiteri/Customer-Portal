@@ -207,6 +207,9 @@ async function run() {
   // ---- 4. Get a Project Quote: splash -> tap Quick Quote -> fill form in order
   {
     const { ctx, page } = await newContext(browser, 'quote');
+    // Intercept the submit so no real request/email is ever sent (visual only)
+    await ctx.route('**/api/quick-quote', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ message: 'Your quote request has been sent!' }) }));
     const t0 = Date.now();
     await page.goto(BASE + '/quick-quote', { waitUntil: 'domcontentloaded' });
     await installBlur(page);
@@ -233,7 +236,14 @@ async function run() {
     await pickSelect(triggers.nth(0));           // Store
     await pickSelect(triggers.nth(1));           // Salesperson
     await tap(page, page.getByText('Kitchen', { exact: true }).first()); // Project type
-    await sleep(1200);
+    await sleep(700);
+    // scroll to the submit button and tap it (request is intercepted above)
+    const submit = page.locator('button[type="submit"]');
+    await submit.scrollIntoViewIfNeeded();
+    await sleep(600);
+    await tap(page, submit);
+    await page.getByText('Request sent!').waitFor({ timeout: 8000 }).catch(() => {});
+    await sleep(1600);
     await saveClip(ctx, page, 'quote');
   }
 
