@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "K00g37fsBwN6J6WpybeQp"
+uri = "file://tmp/video/portal-feature-tour.mp4"
+type = "video"
+title = "Consumers PRO — Portal Feature Tour"
+description = "Instructional walkthrough video (1080x1920, ~1m42s): Estimates, Sales Orders, Consumers Cash, Get a Project Quote, and Express Bath — real mobile screen recordings with on-screen text, company name blurred."
