@@ -5,5 +5,12 @@ generated = []
 id = "K00g37fsBwN6J6WpybeQp"
 uri = "file://tmp/video/portal-feature-tour.mp4"
 type = "video"
-title = "Consumers PRO — Portal Feature Tour"
-description = "Instructional walkthrough video (1080x1920, ~1m42s): Estimates, Sales Orders, Consumers Cash, Get a Project Quote, and Express Bath — real mobile screen recordings with on-screen text, company name blurred."
+title = "Consumers PRO — Portal Feature Tour (v2)"
+description = "Updated tour (~1m06s): CKB PRO logo intro, title card before each feature with its benefit, pointing-hand cursor tapping through the app, faster-paced captures, upbeat instrumental, Express Bath last."
+
+[[outputs]]
+id = "7GCQW2IJ1SOPIhU2VaV5p"
+uri = "file://tmp/video/music.mp3"
+type = "audio"
+title = "portal tour bed"
+description = "Generated music: Upbeat, business-friendly corporate instrumental: bright acoustic guitar plucks, light piano, warm synth pads, claps and a driving but polished beat. Optimistic, energetic, modern ma…"
