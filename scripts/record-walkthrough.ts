@@ -87,8 +87,8 @@ async function installCursor(page: Page) {
     if (document.getElementById('__tapHand')) return;
     const d = document.createElement('div');
     d.id = '__tapHand';
-    d.innerHTML = '<svg width="54" height="54" viewBox="0 0 24 24"><path fill="#F5A623" stroke="#7A4E00" stroke-width="0.6" d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>';
-    d.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;transform:translate(200px,700px);transition:transform 0.55s cubic-bezier(.4,0,.2,1), scale 0.15s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));';
+    d.textContent = '\u{1F446}';
+    d.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;font-size:44px;pointer-events:none;transform:translate(200px,700px);transition:transform 0.55s cubic-bezier(.4,0,.2,1), scale 0.15s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));';
     document.body.appendChild(d);
     window.__moveHand = (x, y) => { d.style.transform = 'translate(' + (x - 8) + 'px,' + (y + 6) + 'px)'; };
     window.__pressHand = (down) => { d.style.scale = down ? '0.8' : '1'; };
@@ -120,10 +120,14 @@ async function saveClip(ctx: BrowserContext, page: Page, name: string) {
 }
 
 async function smoothScroll(page: Page, px: number, steps = 20) {
-  for (let i = 0; i < steps; i++) {
-    await page.mouse.wheel(0, px / steps);
-    await sleep(50);
-  }
+  await page.evaluate(`(() => {
+    const cands = [document.scrollingElement, ...document.querySelectorAll('main,div')];
+    let el = document.scrollingElement;
+    for (const c of cands) { if (c && c.scrollHeight > c.clientHeight + 60) { el = c; break; } }
+    let i = 0;
+    const iv = setInterval(() => { el.scrollBy(0, ${px} / ${steps}); if (++i >= ${steps}) clearInterval(iv); }, 50);
+  })()`);
+  await sleep(steps * 50 + 200);
 }
 
 const timings: Record<string, number> = {};
@@ -142,8 +146,9 @@ async function run() {
     await installCursor(page);
     await page.waitForLoadState('networkidle').catch(() => {});
     await sleep(1200);
-    // tap Estimates in bottom nav
-    await tap(page, page.getByText('Estimates', { exact: true }).last());
+    // tap the Estimates card on the home screen (not the bottom nav)
+    const estCard = page.locator('main >> text=Estimates >> visible=true').first();
+    await tap(page, (await estCard.count()) ? estCard : page.getByText('Estimates', { exact: true }).first());
     await page.waitForLoadState('networkidle');
     await sleep(1500);
     await smoothScroll(page, 350, 10);
@@ -152,7 +157,7 @@ async function run() {
     const row = page.locator('text=/ES\\d{5,}/ >> visible=true').first();
     timings.estimates = (Date.now() - t0) / 1000;
     await tap(page, row); await sleep(1200);
-    await page.locator('[role="dialog"] >> text=/\\$\\d/').first().waitFor({ timeout: 15000 }).catch(() => {});
+    await page.locator('[role="dialog"] >> text=/\\d+ \u00d7 \\$/').first().waitFor({ timeout: 20000 }).catch(() => {});
     await sleep(1200); await smoothScroll(page, 500, 12); await sleep(900);
     await saveClip(ctx, page, 'estimates');
   }
@@ -175,7 +180,7 @@ async function run() {
     const row = page.locator('text=/SO\\d{5,}/ >> visible=true').first();
     timings.orders = (Date.now() - t0) / 1000;
     await tap(page, row); await sleep(1200);
-    await page.locator('[role="dialog"] >> text=/\\$\\d/').first().waitFor({ timeout: 15000 }).catch(() => {});
+    await page.locator('[role="dialog"] >> text=/\\d+ \u00d7 \\$/').first().waitFor({ timeout: 20000 }).catch(() => {});
     await sleep(1200); await smoothScroll(page, 500, 12); await sleep(800);
     await saveClip(ctx, page, 'orders');
   }
@@ -190,10 +195,12 @@ async function run() {
     await page.waitForLoadState('networkidle').catch(() => {});
     await sleep(1400);
     timings.cash = (Date.now() - t0) / 1000;
-    await smoothScroll(page, 550, 12);
+    await smoothScroll(page, 700, 14);
     await sleep(700);
-    await smoothScroll(page, 700, 12);
-    await sleep(1000);
+    await smoothScroll(page, 900, 14);
+    await sleep(800);
+    await smoothScroll(page, -700, 12);
+    await sleep(800);
     await saveClip(ctx, page, 'cash');
   }
 
@@ -226,13 +233,7 @@ async function run() {
     await pickSelect(triggers.nth(0));           // Store
     await pickSelect(triggers.nth(1));           // Salesperson
     await tap(page, page.getByText('Kitchen', { exact: true }).first()); // Project type
-    await sleep(500);
-    await smoothScroll(page, 350, 8);
-    await sleep(300);
-    await pickSelect(page.locator('button[role="combobox"] >> visible=true').nth(2)); // Budget
-    await pickSelect(page.locator('button[role="combobox"] >> visible=true').nth(3)); // Time frame
-    await smoothScroll(page, 400, 8);
-    await sleep(900);
+    await sleep(1200);
     await saveClip(ctx, page, 'quote');
   }
 

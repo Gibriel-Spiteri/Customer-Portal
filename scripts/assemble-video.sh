@@ -8,7 +8,7 @@ SEG=tmp/video/seg
 OUT=tmp/video/portal-feature-tour.mp4
 FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
 FONTB=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
-FONTD=tmp/fonts/PlayfairDisplay.ttf   # decorative title font
+FONTD=tmp/fonts/Anton.ttf   # bold condensed title font (Impact-like)
 LOGO=attached_assets/CKBPRO_LOGO_1783790758560-Du6WJwuG_1785944939787.png
 MUSIC=tmp/video/music.mp3
 W=1080; H=1920
@@ -19,7 +19,7 @@ TRIM=1.5    # seconds trimmed from clip start
 rm -rf "$SEG"; mkdir -p "$SEG"
 
 # semi-transparent watermark of the logo, prepared once
-ffmpeg -y -v error -i "$LOGO" -vf "scale=760:-1,format=rgba,colorchannelmixer=aa=0.10" "$SEG/wm.png"
+ffmpeg -y -v error -i "$LOGO" -vf "scale=220:-1,format=rgba,lutrgb=r=255:g=255:b=255,colorchannelmixer=aa=0.18" "$SEG/wm.png"
 
 # Intro: white card with the CKB PRO logo + subtitle
 ffmpeg -y -v error -f lavfi -i "color=c=white:s=${W}x${H}:d=3.5:r=30" -i "$LOGO" \
@@ -29,7 +29,7 @@ ffmpeg -y -v error -f lavfi -i "color=c=white:s=${W}x${H}:d=3.5:r=30" -i "$LOGO"
 # title_card <out> <dur> <line1> <line2 = benefit>
 title_card() {
   ffmpeg -y -v error -f lavfi -i "color=c=$NAVY:s=${W}x${H}:d=$2:r=30" -i "$SEG/wm.png" \
-    -filter_complex "[0:v][1:v]overlay=(W-w)/2:H-460,drawtext=fontfile=$FONTD:text='$3':fontcolor=white:fontsize=84:x=(w-text_w)/2:y=(h/2)-140,drawtext=fontfile=$FONT:text='$4':fontcolor=0xBBD0F0:fontsize=44:x=(w-text_w)/2:y=(h/2)+10,fade=t=in:st=0:d=0.4,fade=t=out:st=$(echo "$2-0.4"|bc):d=0.4" \
+    -filter_complex "[0:v][1:v]overlay=50:H-h-50,drawtext=fontfile=$FONTD:text='$3':fontcolor=white:fontsize=84:x=(w-text_w)/2:y=(h/2)-140,drawtext=fontfile=$FONT:text='$4':fontcolor=0xBBD0F0:fontsize=44:x=(w-text_w)/2:y=(h/2)+10,fade=t=in:st=0:d=0.4,fade=t=out:st=$(echo "$2-0.4"|bc):d=0.4" \
     -c:v libx264 -pix_fmt yuv420p -r 30 "$1"
 }
 
@@ -52,16 +52,18 @@ fade=t=in:st=0:d=0.35,fade=t=out:st=$(echo "$d-0.35"|bc)':d=0.35" \
 }
 
 title_card "$SEG/10-t.mp4" 2.5 "Estimates" "Access and track all of your open estimates"
-section estimates "Estimates" "Tap Estimates from the home screen or bottom menu" "Tap any estimate to open full details"
+section estimates "Estimates" "Tap Estimates on your home screen" "Tap any estimate to open full details"
 title_card "$SEG/20-t.mp4" 2.5 "Sales Orders" "Always know where your order stands"
 section orders "Sales Orders" "Tab through Active, Ready and Completed" "Tap an order to see full details"
 title_card "$SEG/30-t.mp4" 2.5 "Consumers Cash" "Track your volume rebate earnings"
 section cash "Consumers Cash" "See your balance and rebate level" "Scroll down to check your history"
-title_card "$SEG/40-t.mp4" 2.5 "Get a Project Quote" "We get you the presentation. You get the sale."
+title_card "$SEG/40-t.mp4" 2.5 "Get a Project Quote" "You get the sale. We do the work."
 section quote "Get a Project Quote" "Pick how you want to work with us" "Tell us about the project — we do the rest"
 title_card "$SEG/50-t.mp4" 2.5 "Express Bath" "In-stock product you can sell today"
 section bath "Express Bath" "Tap Express Bath in the menu" "Browse live inventory with prices"
-title_card "$SEG/90-outro.mp4" 3.5 "ckbproportal.com" "Log in and take it for a spin"
+ffmpeg -y -v error -f lavfi -i "color=c=$NAVY:s=${W}x${H}:d=3.5:r=30" -i "$SEG/wm.png" \
+  -filter_complex "[0:v][1:v]overlay=50:H-h-50,drawtext=fontfile=$FONTD:text='Log in and take it for a spin':fontcolor=white:fontsize=68:x=(w-text_w)/2:y=(h/2)-40,fade=t=in:st=0:d=0.4,fade=t=out:st=3.1:d=0.4" \
+  -c:v libx264 -pix_fmt yuv420p -r 30 "$SEG/90-outro.mp4"
 
 mv "$SEG/estimates.mp4" "$SEG/11-estimates.mp4"
 mv "$SEG/orders.mp4"    "$SEG/21-orders.mp4"
