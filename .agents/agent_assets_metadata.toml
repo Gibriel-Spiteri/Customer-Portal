@@ -5,8 +5,8 @@ generated = []
 id = "K00g37fsBwN6J6WpybeQp"
 uri = "file://tmp/video/portal-feature-tour.mp4"
 type = "video"
-title = "Consumers PRO — Portal Feature Tour (v2)"
-description = "Updated tour (~1m06s): CKB PRO logo intro, title card before each feature with its benefit, pointing-hand cursor tapping through the app, faster-paced captures, upbeat instrumental, Express Bath last."
+title = "Consumers PRO — Portal Feature Tour (v3)"
+description = "Updated tour (~1m14s): timed caption fades synced to on-screen actions, new benefit sub-text, decorative title font with logo watermark, cleaner hand cursor, in-order form fill, smoother quote transition, and more scrolling in Express Bath."
 
 [[outputs]]
 id = "7GCQW2IJ1SOPIhU2VaV5p"
