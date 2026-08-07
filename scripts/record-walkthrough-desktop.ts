@@ -9,8 +9,8 @@ import fs from 'fs';
 import path from 'path';
 
 const BASE = 'http://127.0.0.1:5000';
-const OUT = 'tmp/video/raw';
-const VIEWPORT = { width: 390, height: 844 }; // iPhone-ish
+const OUT = 'tmp/video/raw-desktop';
+const VIEWPORT = { width: 1440, height: 810 }; // desktop 16:9
 
 function token() {
   return jwt.sign({ id: 31, email: 'JRHCONTRACTING@YAHOO.COM', netsuiteCustomerId: '155425' }, process.env.JWT_SECRET!, { expiresIn: '2h' });
@@ -20,8 +20,6 @@ async function newContext(browser: any, name: string): Promise<{ ctx: BrowserCon
   const ctx = await browser.newContext({
     viewport: VIEWPORT,
     deviceScaleFactor: 2,
-    isMobile: true,
-    hasTouch: true,
     recordVideo: { dir: OUT, size: VIEWPORT },
   });
   await ctx.addInitScript((t: string) => window.localStorage.setItem('auth_token', t), token());
@@ -133,7 +131,7 @@ async function smoothScroll(page: Page, px: number, steps = 20) {
 const timings: Record<string, number> = {};
 
 async function run() {
-  fs.rmSync('tmp/video/raw', { recursive: true, force: true });
+  fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_BIN! });
 

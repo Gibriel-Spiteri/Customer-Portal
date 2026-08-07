@@ -193,7 +193,12 @@ export default function Login() {
 
           <div className="flex justify-center mt-6">
             <a
-              href="/portal-feature-tour.mp4"
+              href={
+                typeof window !== "undefined" &&
+                window.matchMedia("(min-width: 768px)").matches
+                  ? "/portal-feature-tour-desktop.mp4"
+                  : "/portal-feature-tour.mp4"
+              }
               target="_blank"
               rel="noopener noreferrer"
               data-testid="link-feature-tour"

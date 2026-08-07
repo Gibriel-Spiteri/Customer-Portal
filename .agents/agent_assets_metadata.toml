@@ -14,3 +14,10 @@ uri = "file://tmp/video/music.mp3"
 type = "audio"
 title = "portal tour bed"
 description = "Generated music: Upbeat, business-friendly corporate instrumental: bright acoustic guitar plucks, light piano, warm synth pads, claps and a driving but polished beat. Optimistic, energetic, modern ma…"
+
+[[outputs]]
+id = "amvbjYrrH8dLeL8LYIGF3"
+uri = "file://tmp/video/portal-feature-tour-desktop.mp4"
+type = "video"
+title = "Consumers PRO — Portal Feature Tour (Desktop)"
+description = "Landscape 16:9 version recorded from the desktop layouts — sidebar navigation, full tables, and the same title cards, captions, music, and flow as the mobile cut."
