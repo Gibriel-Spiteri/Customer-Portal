@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2, ArrowLeft, Play } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -189,6 +189,19 @@ export default function Login() {
                 Forgot Password?
               </Link>
             </div>
+          </div>
+
+          <div className="flex justify-center mt-6">
+            <a
+              href="/portal-feature-tour.mp4"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-feature-tour"
+              className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white rounded-full px-4 py-2 transition-colors"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Watch the feature tour
+            </a>
           </div>
         </div>
       </main>
