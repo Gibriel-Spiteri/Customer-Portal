@@ -82,43 +82,6 @@ export class NetSuiteEmailService {
   }
 
   /**
-   * Set a contact's role on a customer (e.g. -20 Alternate Contact) via the RESTlet.
-   * REST web services can't set the built-in contact roles, so this goes through SuiteScript.
-   * Returns { success, error } — the deployed RESTlet must support the set_contact_role type.
-   */
-  async setContactRole(customerId: string, contactId: string, roleId = '-20'): Promise<{ success: boolean; error?: string }> {
-    try {
-      const hasM2MConfig = process.env.NETSUITE_CONSUMER_KEY &&
-                           process.env.NETSUITE_CONSUMER_SECRET &&
-                           process.env.NETSUITE_CERTIFICATE_ID;
-      if (!hasM2MConfig) return { success: false, error: 'NetSuite M2M not configured' };
-
-      const { NetSuiteM2M } = await import('./netsuite-m2m');
-      const m2m = new NetSuiteM2M();
-      const accessToken = await m2m.getAccessToken();
-
-      const result: any = await nsLimit(async () => {
-        const response = await fetch(this.restletUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-            'Prefer': 'transient'
-          },
-          body: JSON.stringify({ type: 'set_contact_role', customerId, contactId, roleId })
-        });
-        return await response.json();
-      }, 'restlet');
-
-      return result.success ? { success: true } : { success: false, error: result.error || 'Unknown RESTlet error' };
-    } catch (error: any) {
-      console.error('NetSuite setContactRole error:', error);
-      return { success: false, error: error?.message || String(error) };
-    }
-  }
-
-  /**
    * Send password reset email
    */
   async sendPasswordResetEmail(email: string, resetUrl: string, customerId?: string): Promise<boolean> {

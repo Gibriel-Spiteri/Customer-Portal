@@ -2117,17 +2117,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: phoneResult.nationalFormat || phoneResult.e164,
       });
 
-      // Set the role to Alternate Contact (-20) — only possible via SuiteScript RESTlet
-      let roleWarning: string | undefined;
-      if (newContactId) {
-        const { netsuiteEmailService } = await import('./services/netsuite-email');
-        const roleResult = await netsuiteEmailService.setContactRole(req.user.netsuiteCustomerId, newContactId, '-20');
-        if (!roleResult.success) {
-          console.error('Could not set Alternate Contact role:', roleResult.error);
-          roleWarning = 'Contact was created, but the Alternate Contact role could not be set in NetSuite.';
-        }
-      }
-
       // Create the portal login for the new contact (createUser hashes the password).
       // If this fails, delete the NetSuite contact so we don't leave an orphan.
       try {
@@ -2149,7 +2138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await invalidateCustomer(req.user.netsuiteCustomerId).catch(() => {});
-      res.json({ message: roleWarning ? `Contact added. ${roleWarning}` : 'Contact added', roleWarning });
+      res.json({ message: 'Contact added' });
     } catch (error: any) {
       console.error('Add contact error:', error);
       res.status(500).json({ message: error?.message || 'Failed to add contact' });

@@ -202,12 +202,8 @@ function AddContactForm({ onDone }: { onDone: () => void }) {
       });
       return await res.json();
     },
-    onSuccess: (data: any) => {
-      if (data?.roleWarning) {
-        toast({ title: "Contact added with warning", description: data.roleWarning });
-      } else {
-        toast({ title: "Contact added", description: `${name.trim()} was added as an alternate contact.` });
-      }
+    onSuccess: () => {
+      toast({ title: "Contact added", description: `${name.trim()} was added as an alternate contact.` });
       queryClient.invalidateQueries({ queryKey: ["/api/customer-contacts"] });
       onDone();
     },
