@@ -259,13 +259,77 @@ This is an automated message, please do not reply to this email.`;
     }
 
     /**
+     * Sends an email-change verification code
+     * @param {Object} params - { email, code, customerId? }
+     */
+    function sendVerificationCodeEmail(params) {
+        try {
+            if (!params.email || !params.code) {
+                return { success: false, error: 'Missing email or code' };
+            }
+            const authorId = runtime.getCurrentScript().getParameter({name: 'custscript_email_author_id'}) || -5;
+            const subject = 'Your Verification Code - Customer Portal';
+            const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .code { font-size: 32px; letter-spacing: 8px; font-weight: bold; text-align: center; padding: 16px; background: #fff; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Verify Your Email Address</h1>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+            <p>Use the code below to confirm your new email address for the Customer Portal:</p>
+            <div class="code">${params.code}</div>
+            <p><strong>This code expires in 10 minutes.</strong></p>
+            <p>If you did not request this change, you can safely ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            email.send({
+                author: authorId,
+                recipients: params.email,
+                subject: subject,
+                body: htmlBody,
+                isInternalOnly: false
+            });
+
+            log.audit('Verification Code Email Sent', { recipient: params.email });
+            return { success: true, message: 'Verification email sent' };
+        } catch (e) {
+            log.error('Verification Email Error', e.toString());
+            return { success: false, error: e.toString() };
+        }
+    }
+
+    /**
      * POST handler for the RESTlet
      * @param {Object} requestBody
      * @returns {Object} Response
      */
     function doPost(requestBody) {
         try {
-            log.debug('Email Service Request', JSON.stringify(requestBody));
+            // Redact sensitive fields (verification codes) from logs
+            log.debug('Email Service Request', JSON.stringify(
+                requestBody && requestBody.code
+                    ? Object.assign({}, requestBody, { code: '******' })
+                    : requestBody
+            ));
 
             if (!requestBody || !requestBody.type) {
                 return {
@@ -279,6 +343,8 @@ This is an automated message, please do not reply to this email.`;
                     return sendPasswordResetEmail(requestBody);
                 case 'welcome':
                     return sendWelcomeEmail(requestBody);
+                case 'verification_code':
+                    return sendVerificationCodeEmail(requestBody);
                 default:
                     return {
                         success: false,

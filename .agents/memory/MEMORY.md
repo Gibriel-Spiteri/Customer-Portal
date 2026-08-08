@@ -2,3 +2,4 @@
 - [NetSuite task delivery](netsuite-task-delivery.md) — tasks need custevent_crm_recordtype + employee internal id; task sendEmail=true is the only way to email employees (RESTlet is fixed-type, no attachments).
 - [Walkthrough video tooling](walkthrough-video-tooling.md) — ~/.fonts gets wiped (hand cursor is embedded base64 PNG); quote submits must be intercepted with ctx.route; videos live in client/public.
 - [NetSuite concurrency cap](netsuite-concurrency-cap.md) — nsLimit semaphore is per-process (cap 2); autoscale multiplies it, so max machines must be 1 and new NetSuite calls must route through it.
+- [Twilio & contact updates](twilio-and-contact-updates.md) — Lookup creds via connectors API include_secrets (proxy can't reach lookups.twilio.com); customer.defaultaddress not in SuiteQL; email RESTlet must be redeployed for verification_code type.

@@ -334,6 +334,118 @@ export class NetSuiteM2M {
   }
 
   /**
+   * PATCH a record via the REST Record API. Throws with NetSuite's error text on failure.
+   */
+  async patchRecord(recordType: string, recordPath: string, body: any): Promise<void> {
+    // Token acquired OUTSIDE the limiter slot (non-reentrant — see getAccessToken).
+    const accessToken = await this.getAccessToken();
+    const url = `${this.apiBaseUrl}/record/v1/${recordType}/${recordPath}`;
+
+    await nsLimit(async () => {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('NetSuite M2M: Record PATCH failed:', response.status, errorText);
+        throw new Error(`NetSuite update failed (${response.status})`);
+      }
+    }, 'record');
+  }
+
+  /**
+   * GET a record sub-resource (e.g. a customer's addressBook sublist).
+   */
+  async getRecordSubresource(recordType: string, recordId: string, subresource: string): Promise<any | null> {
+    const accessToken = await this.getAccessToken();
+    const url = `${this.apiBaseUrl}/record/v1/${recordType}/${recordId}/${subresource}?expandSubResources=true`;
+
+    return await nsLimit(async () => {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('NetSuite M2M: Record subresource GET failed:', response.status, errorText);
+        return null;
+      }
+      return await response.json();
+    }, 'record');
+  }
+
+  /**
+   * Update contact fields on the customer/lead record.
+   * Only keys present in `fields` are written.
+   */
+  async updateCustomerContactInfo(customerId: string, fields: {
+    email?: string;
+    altphone?: string;
+    mobilePhone?: string;
+  }): Promise<void> {
+    const body: any = {};
+    if (fields.email !== undefined) body.email = fields.email;
+    if (fields.altphone !== undefined) body.altphone = fields.altphone;
+    if (fields.mobilePhone !== undefined) body.custentity_mobile_phone = fields.mobilePhone;
+    if (Object.keys(body).length === 0) return;
+    await this.patchRecord('customer', customerId, body);
+  }
+
+  /**
+   * Update the customer's default (shipping) address. Updates the existing
+   * default address book entry if one exists; otherwise adds a new one.
+   */
+  async updateDefaultAddress(customerId: string, address: {
+    addr1: string;
+    addr2?: string;
+    city: string;
+    state: string;
+    zip: string;
+  }): Promise<void> {
+    const addressBookAddress = {
+      addr1: address.addr1,
+      addr2: address.addr2 || '',
+      city: address.city,
+      state: address.state,
+      zip: address.zip,
+      country: { id: 'US' },
+    };
+
+    const book = await this.getRecordSubresource('customer', customerId, 'addressBook');
+    if (book === null) {
+      // Fail closed: a fetch error must not be treated as "no addresses" or we
+      // could create a duplicate default address on a transient NetSuite error.
+      throw new Error('Could not load the current address book — address not updated');
+    }
+    const items: any[] = book.items || [];
+    const target = items.find((i) => i.defaultShipping) || items.find((i) => i.defaultBilling) || items[0];
+
+    if (target) {
+      // Line id from the self link (…/addressBook/{lineId}) — authoritative
+      const self = (target.links || []).find((l: any) => l.rel === 'self')?.href || '';
+      let lineId: string | undefined = self.split('/addressBook/')[1]?.split('/')[0];
+      if (!lineId) lineId = target.internalId ?? target.id;
+      if (lineId === undefined) throw new Error('Could not locate the default address entry');
+      await this.patchRecord('customer', `${customerId}/addressBook/${lineId}`, { addressBookAddress });
+    } else {
+      await this.patchRecord('customer', customerId, {
+        addressBook: {
+          items: [{ defaultShipping: true, defaultBilling: true, addressBookAddress }],
+        },
+      });
+    }
+  }
+
+  /**
    * Search for a customer by entityid (customer number)
    */
   async searchCustomerByEntityId(entityId: string): Promise<any | null> {
@@ -930,10 +1042,25 @@ export class NetSuiteM2M {
     
     const balanceResult = await this.executeSuiteQL(balanceQuery, 1, 0).catch(() => ({ items: [{ balance: '0.00' }] }));
     const balance = balanceResult.items[0]?.balance || '0.00';
-    
+
+    // Default shipping address (customer.defaultaddress isn't exposed to SuiteQL)
+    const addressQuery = `
+      SELECT 
+        a.addrtext
+      FROM 
+        customerAddressbook cab
+        JOIN customerAddressbookEntityAddress a ON cab.addressbookaddress = a.nkey
+      WHERE 
+        cab.entity = ${customerId}
+        AND cab.defaultshipping = 'T'
+    `.trim();
+    const addressResult = await this.executeSuiteQL(addressQuery, 1, 0).catch(() => ({ items: [] as any[] }));
+    const defaultaddress = addressResult.items[0]?.addrtext || null;
+
     return {
       ...result.items[0],
-      balance
+      balance,
+      defaultaddress
     };
   }
 

@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { DataBadge } from "@/components/data-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +62,163 @@ interface Contact {
   lastSyncAt: string;
 }
 
+function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [email, setEmail] = useState(account.email || "");
+  const [emailCode, setEmailCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [mobilePhone, setMobilePhone] = useState(account.mobilePhone || "");
+  const [altPhone, setAltPhone] = useState(account.altPhone || "");
+
+  // Best-effort prefill of structured address from the NetSuite address blob
+  const addrLines = (account.defaultAddress || "").split("\n").map(l => l.trim()).filter(Boolean);
+  const cityLine = addrLines.find(l => /\b[A-Z]{2}\s+\d{5}/.test(l)) || "";
+  const cityMatch = cityLine.match(/^(.*?)[,\s]+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+  const nonCityLines = addrLines.filter(l => l !== cityLine && !/^united states/i.test(l));
+  // Drop a leading addressee line only when it has no street number and other lines remain
+  const streetLines = nonCityLines.length > 1 && !/\d/.test(nonCityLines[0]) ? nonCityLines.slice(1) : nonCityLines;
+  const initial = {
+    addr1: streetLines[0] || "",
+    addr2: streetLines[1] || "",
+    city: cityMatch?.[1] || "",
+    state: cityMatch?.[2] || "",
+    zip: cityMatch?.[3] || "",
+  };
+  const [addr1, setAddr1] = useState(initial.addr1);
+  const [addr2, setAddr2] = useState(initial.addr2);
+  const [city, setCity] = useState(initial.city);
+  const [state, setState] = useState(initial.state);
+  const [zip, setZip] = useState(initial.zip);
+
+  const emailChanged = email.trim().toLowerCase() !== (account.email || "").trim().toLowerCase();
+
+  const sendCode = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/account/email-verification", { email: email.trim() });
+    },
+    onSuccess: () => {
+      setCodeSent(true);
+      toast({ title: "Code sent", description: `We emailed a 6-digit code to ${email.trim()}.` });
+    },
+    onError: (e: any) => toast({ title: "Couldn't send code", description: e.message, variant: "destructive" }),
+  });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const body: any = {};
+      if (emailChanged) {
+        body.email = email.trim();
+        body.emailCode = emailCode.trim();
+      }
+      if (mobilePhone.trim() !== (account.mobilePhone || "").trim()) body.mobilePhone = mobilePhone.trim();
+      if (altPhone.trim() !== (account.altPhone || "").trim()) body.altPhone = altPhone.trim();
+      // Only send the address if the user actually changed it
+      const addressDirty =
+        addr1.trim() !== initial.addr1 ||
+        addr2.trim() !== initial.addr2 ||
+        city.trim() !== initial.city ||
+        state.trim().toUpperCase() !== initial.state ||
+        zip.trim() !== initial.zip;
+      if (addressDirty) {
+        body.address = { addr1: addr1.trim(), addr2: addr2.trim(), city: city.trim(), state: state.trim().toUpperCase(), zip: zip.trim() };
+      }
+      if (Object.keys(body).length === 0) throw new Error("No changes to save");
+      await apiRequest("POST", "/api/account/update", body);
+    },
+    onSuccess: () => {
+      toast({ title: "Saved", description: "Your contact information was updated." });
+      queryClient.invalidateQueries({ queryKey: ["/api/account"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      onDone();
+    },
+    onError: (e: any) => toast({ title: "Couldn't save", description: e.message, variant: "destructive" }),
+  });
+
+  const handleSave = () => {
+    if (emailChanged && !codeSent) {
+      toast({ title: "Verify your email", description: "Click “Send Code” and enter the code we email you before saving.", variant: "destructive" });
+      return;
+    }
+    if (emailChanged && emailCode.trim().length < 6) {
+      toast({ title: "Enter the code", description: "Enter the 6-digit code from the verification email.", variant: "destructive" });
+      return;
+    }
+    save.mutate();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="edit-mobile">Mobile Phone</Label>
+          <Input id="edit-mobile" data-testid="input-mobile-phone" value={mobilePhone} onChange={e => setMobilePhone(e.target.value)} placeholder="(555) 555-1234" />
+          <p className="text-xs text-gray-500">Must be a mobile number — we verify the line type.</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-alt">Alternate Phone</Label>
+          <Input id="edit-alt" data-testid="input-alt-phone" value={altPhone} onChange={e => setAltPhone(e.target.value)} placeholder="(555) 555-1234" />
+          <p className="text-xs text-gray-500">Must be a landline number — we verify the line type.</p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="edit-email">Email</Label>
+        <div className="flex gap-2">
+          <Input id="edit-email" data-testid="input-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setCodeSent(false); setEmailCode(""); }} className="flex-1" />
+          {emailChanged && (
+            <Button type="button" variant="outline" data-testid="button-send-code" disabled={sendCode.isPending} onClick={() => sendCode.mutate()}>
+              {sendCode.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (codeSent ? "Resend Code" : "Send Code")}
+            </Button>
+          )}
+        </div>
+        {emailChanged && codeSent && (
+          <div className="space-y-1 pt-1">
+            <Label htmlFor="edit-email-code">Verification Code</Label>
+            <Input id="edit-email-code" data-testid="input-email-code" inputMode="numeric" maxLength={6} value={emailCode} onChange={e => setEmailCode(e.target.value)} placeholder="6-digit code" className="w-40 tracking-widest" />
+          </div>
+        )}
+      </div>
+
+      <div className="pt-2 border-t space-y-4">
+        <Label className="text-sm font-medium text-gray-700">Mailing Address</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="edit-addr1">Street Address</Label>
+            <Input id="edit-addr1" data-testid="input-addr1" value={addr1} onChange={e => setAddr1(e.target.value)} />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="edit-addr2">Street Address 2 (optional)</Label>
+            <Input id="edit-addr2" data-testid="input-addr2" value={addr2} onChange={e => setAddr2(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-city">City</Label>
+            <Input id="edit-city" data-testid="input-city" value={city} onChange={e => setCity(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-state">State</Label>
+              <Input id="edit-state" data-testid="input-state" maxLength={2} value={state} onChange={e => setState(e.target.value.toUpperCase())} placeholder="NY" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-zip">ZIP</Label>
+              <Input id="edit-zip" data-testid="input-zip" value={zip} onChange={e => setZip(e.target.value)} placeholder="11701" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <Button data-testid="button-save-contact" onClick={handleSave} disabled={save.isPending}>
+          {save.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : "Save Changes"}
+        </Button>
+        <Button variant="outline" data-testid="button-cancel-contact" onClick={onDone} disabled={save.isPending}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -69,6 +230,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function AccountSettings() {
   const { user, token, isLoading: authLoading } = useAuth();
+  const [editingContact, setEditingContact] = useState(false);
 
   const { data: account, isLoading: accountLoading, error: accountError } = useQuery<Account>({
     queryKey: ['/api/account'],
@@ -173,9 +335,18 @@ export default function AccountSettings() {
                           lastSync={account.lastSyncAt}
                         />
                       )}
+                      {account && !editingContact && (
+                        <Button size="sm" variant="outline" className="ml-auto" data-testid="button-edit-contact" onClick={() => setEditingContact(true)}>
+                          Edit
+                        </Button>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {editingContact && account ? (
+                      <ContactInfoEditor account={account} onDone={() => setEditingContact(false)} />
+                    ) : (
+                    <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {account?.phone && (
                         <div className="space-y-2">
@@ -232,6 +403,8 @@ export default function AccountSettings() {
                     
                     {!account?.phone && !account?.altPhone && !account?.mobilePhone && !account?.email && !account?.defaultAddress && (
                       <p className="text-gray-500">No contact information available</p>
+                    )}
+                    </>
                     )}
                   </CardContent>
                 </Card>

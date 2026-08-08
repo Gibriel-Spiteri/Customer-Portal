@@ -1758,6 +1758,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ---- Account contact-info updates (email verification + phone validation + NetSuite write-back) ----
+
+  // Pending email-change verification codes, keyed by user id (in-memory, 10 min TTL)
+  const emailVerifications = new Map<number, { email: string; codeHash: string; expires: number; attempts: number }>();
+  // Send throttling: per-user cooldown + hourly cap (single-machine deployment)
+  const emailSendLog = new Map<number, number[]>();
+
+  // Step 1: send a verification code to the new email address
+  app.post('/api/account/email-verification', authenticateToken, async (req: any, res) => {
+    try {
+      const schema = z.object({ email: z.string().email('Please enter a valid email address') });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid email' });
+      }
+      const email = parsed.data.email.trim();
+
+      // Throttle: 60s cooldown between sends, max 5 sends per hour per user
+      const now = Date.now();
+      const recent = (emailSendLog.get(req.user.id) || []).filter(t => now - t < 60 * 60 * 1000);
+      if (recent.length >= 5) {
+        return res.status(429).json({ message: 'Too many verification emails. Please try again in an hour.' });
+      }
+      if (recent.length > 0 && now - recent[recent.length - 1] < 60 * 1000) {
+        return res.status(429).json({ message: 'Please wait a minute before requesting another code.' });
+      }
+      recent.push(now);
+      emailSendLog.set(req.user.id, recent);
+
+      const code = crypto.randomInt(100000, 1000000).toString();
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+      emailVerifications.set(req.user.id, {
+        email: email.toLowerCase(),
+        codeHash,
+        expires: Date.now() + 10 * 60 * 1000,
+        attempts: 0,
+      });
+
+      const { netsuiteEmailService } = await import('./services/netsuite-email');
+      const sent = await netsuiteEmailService.sendEmail({
+        type: 'verification_code',
+        email,
+        code,
+      } as any);
+
+      if (!sent) {
+        emailVerifications.delete(req.user.id);
+        return res.status(502).json({ message: 'Could not send the verification email. Please try again later.' });
+      }
+      res.json({ message: 'Verification code sent' });
+    } catch (error) {
+      console.error('Email verification send error:', error);
+      res.status(500).json({ message: 'Failed to send verification code' });
+    }
+  });
+
+  // Step 2: update contact info (validates, then writes back to the NetSuite customer/lead record)
+  app.post('/api/account/update', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      if (!req.user.netsuiteCustomerId) {
+        return res.status(400).json({ message: 'No NetSuite customer linked to this account' });
+      }
+
+      const schema = z.object({
+        email: z.string().email().optional(),
+        emailCode: z.string().optional(),
+        mobilePhone: z.string().optional(),
+        altPhone: z.string().optional(),
+        address: z.object({
+          addr1: z.string().min(1, 'Street address is required'),
+          addr2: z.string().optional(),
+          city: z.string().min(1, 'City is required'),
+          state: z.string().min(2, 'State is required'),
+          zip: z.string().min(5, 'ZIP code is required'),
+        }).optional(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid request' });
+      }
+      const { email, emailCode, mobilePhone, altPhone, address } = parsed.data;
+
+      if (email === undefined && mobilePhone === undefined && altPhone === undefined && !address) {
+        return res.status(400).json({ message: 'Nothing to update' });
+      }
+
+      // --- Email: require a valid verification code ---
+      if (email !== undefined) {
+        const pending = emailVerifications.get(req.user.id);
+        if (!pending || pending.email !== email.trim().toLowerCase()) {
+          return res.status(400).json({ message: 'Please request a verification code for this email first' });
+        }
+        if (Date.now() > pending.expires) {
+          emailVerifications.delete(req.user.id);
+          return res.status(400).json({ message: 'Verification code expired. Please request a new one.' });
+        }
+        pending.attempts++;
+        if (pending.attempts > 5) {
+          emailVerifications.delete(req.user.id);
+          return res.status(429).json({ message: 'Too many attempts. Please request a new code.' });
+        }
+        const givenHash = crypto.createHash('sha256').update((emailCode || '').trim()).digest('hex');
+        if (givenHash !== pending.codeHash) {
+          return res.status(400).json({ message: 'That verification code is incorrect' });
+        }
+      }
+
+      // --- Phones: validate line type via Twilio Lookup ---
+      const { lookupPhone } = await import('./services/twilio-lookup');
+      let mobileFormatted: string | undefined;
+      let altFormatted: string | undefined;
+
+      if (mobilePhone !== undefined && mobilePhone.trim() !== '') {
+        const result = await lookupPhone(mobilePhone);
+        if (!result.valid || !result.e164) {
+          return res.status(400).json({ message: 'The mobile phone number is not a valid US phone number' });
+        }
+        if (result.lineType !== 'mobile') {
+          return res.status(400).json({ message: `The mobile phone number appears to be a ${result.lineType === 'landline' ? 'landline' : result.lineType || 'non-mobile'} number. Please enter a mobile number.` });
+        }
+        mobileFormatted = result.nationalFormat || result.e164;
+      }
+
+      if (altPhone !== undefined && altPhone.trim() !== '') {
+        const result = await lookupPhone(altPhone);
+        if (!result.valid || !result.e164) {
+          return res.status(400).json({ message: 'The alternate phone number is not a valid US phone number' });
+        }
+        if (result.lineType !== 'landline') {
+          return res.status(400).json({ message: `The alternate phone number appears to be a ${result.lineType === 'mobile' ? 'mobile' : result.lineType || 'non-landline'} number. Please enter a landline number.` });
+        }
+        altFormatted = result.nationalFormat || result.e164;
+      }
+
+      // --- Write back to NetSuite ---
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+
+      await m2m.updateCustomerContactInfo(req.user.netsuiteCustomerId, {
+        ...(email !== undefined ? { email: email.trim() } : {}),
+        ...(mobileFormatted !== undefined ? { mobilePhone: mobileFormatted } : {}),
+        ...(altFormatted !== undefined ? { altphone: altFormatted } : {}),
+      });
+
+      if (address) {
+        await m2m.updateDefaultAddress(req.user.netsuiteCustomerId, address);
+      }
+
+      // Keep the local user record's email in sync
+      if (email !== undefined) {
+        emailVerifications.delete(req.user.id);
+        await storage.updateUser(req.user.id, { email: email.trim() } as any).catch((e) =>
+          console.error('Local email sync failed:', e));
+      }
+
+      // Invalidate cached NetSuite data for this customer so the UI refreshes
+      await invalidateCustomer(req.user.netsuiteCustomerId).catch(() => {});
+
+      res.json({ message: 'Contact information updated' });
+    } catch (error: any) {
+      console.error('Account update error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to update contact information' });
+    }
+  });
+
   // Cabinet Build Details - Fetch from NetSuite using SuiteQL
   app.get('/api/cabinet-build/:buildId', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {

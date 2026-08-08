@@ -2,11 +2,12 @@ import fetch from 'node-fetch';
 import { nsLimit } from './ns-limit';
 
 interface NetSuiteEmailParams {
-  type: 'password_reset' | 'welcome';
+  type: 'password_reset' | 'welcome' | 'verification_code';
   email: string;
   customerId?: string;
   resetUrl?: string;
   loginUrl?: string;
+  code?: string;
 }
 
 export class NetSuiteEmailService {
