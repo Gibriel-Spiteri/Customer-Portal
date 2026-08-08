@@ -318,6 +318,52 @@ This is an automated message, please do not reply to this email.`;
     }
 
     /**
+     * Set the role on a customer's contact (contacts sublist).
+     * REST web services cannot set the built-in roles (-10 Primary, -20 Alternate),
+     * so the portal calls this instead after creating a contact.
+     * @param {Object} params
+     * @param {string} params.customerId - NetSuite customer internal id
+     * @param {string} params.contactId - Contact internal id
+     * @param {string} [params.roleId] - Role internal id (defaults to -20 Alternate Contact)
+     */
+    function setContactRole(params) {
+        try {
+            if (!params.customerId || !params.contactId) {
+                return { success: false, error: 'customerId and contactId are required' };
+            }
+            const roleId = params.roleId || '-20';
+
+            const customer = record.load({
+                type: record.Type.CUSTOMER,
+                id: params.customerId,
+                isDynamic: false
+            });
+
+            const lineCount = customer.getLineCount({ sublistId: 'contactroles' });
+            let updated = false;
+            for (let i = 0; i < lineCount; i++) {
+                const lineContact = customer.getSublistValue({ sublistId: 'contactroles', fieldId: 'contact', line: i });
+                if (String(lineContact) === String(params.contactId)) {
+                    customer.setSublistValue({ sublistId: 'contactroles', fieldId: 'role', line: i, value: roleId });
+                    updated = true;
+                    break;
+                }
+            }
+
+            if (!updated) {
+                return { success: false, error: 'Contact ' + params.contactId + ' not found on customer ' + params.customerId };
+            }
+
+            customer.save();
+            log.debug('Contact role set', 'Contact ' + params.contactId + ' on customer ' + params.customerId + ' -> role ' + roleId);
+            return { success: true };
+        } catch (e) {
+            log.error('Set Contact Role Error', e.toString());
+            return { success: false, error: e.toString() };
+        }
+    }
+
+    /**
      * POST handler for the RESTlet
      * @param {Object} requestBody
      * @returns {Object} Response
@@ -345,6 +391,8 @@ This is an automated message, please do not reply to this email.`;
                     return sendWelcomeEmail(requestBody);
                 case 'verification_code':
                     return sendVerificationCodeEmail(requestBody);
+                case 'set_contact_role':
+                    return setContactRole(requestBody);
                 default:
                     return {
                         success: false,

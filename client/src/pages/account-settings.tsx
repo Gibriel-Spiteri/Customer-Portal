@@ -26,7 +26,9 @@ import {
   Phone,
   MapPin,
   Users,
-  Smartphone
+  Smartphone,
+  Plus,
+  Minus
 } from "lucide-react";
 
 interface Account {
@@ -184,6 +186,114 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
   );
 }
 
+function AddContactForm({ onDone }: { onDone: () => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [verifyPassword, setVerifyPassword] = useState("");
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/customer-contacts", {
+        name: name.trim(), phone: phone.trim(), email: email.trim(), password, verifyPassword,
+      });
+      return await res.json();
+    },
+    onSuccess: (data: any) => {
+      if (data?.roleWarning) {
+        toast({ title: "Contact added with warning", description: data.roleWarning });
+      } else {
+        toast({ title: "Contact added", description: `${name.trim()} was added as an alternate contact.` });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/customer-contacts"] });
+      onDone();
+    },
+    onError: (e: any) => toast({ title: "Couldn't add contact", description: e.message, variant: "destructive" }),
+  });
+
+  const handleAdd = () => {
+    if (!name.trim() || !phone.trim() || !email.trim() || !password) {
+      toast({ title: "Missing information", description: "Please fill in all fields.", variant: "destructive" });
+      return;
+    }
+    if (password !== verifyPassword) {
+      toast({ title: "Passwords don't match", description: "Please re-enter the password.", variant: "destructive" });
+      return;
+    }
+    add.mutate();
+  };
+
+  return (
+    <div className="mb-6 p-4 border rounded-lg bg-gray-50 space-y-4">
+      <p className="font-medium text-gray-900">Add Alternate Contact</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-contact-name">Name</Label>
+          <Input id="new-contact-name" data-testid="input-new-contact-name" value={name} onChange={e => setName(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="new-contact-phone">Phone</Label>
+          <Input id="new-contact-phone" data-testid="input-new-contact-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 555-1234" />
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="new-contact-email">Email</Label>
+          <Input id="new-contact-email" data-testid="input-new-contact-email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="new-contact-password">Password</Label>
+          <Input id="new-contact-password" data-testid="input-new-contact-password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="new-contact-verify">Verify Password</Label>
+          <Input id="new-contact-verify" data-testid="input-new-contact-verify" type="password" value={verifyPassword} onChange={e => setVerifyPassword(e.target.value)} />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button data-testid="button-save-new-contact" onClick={handleAdd} disabled={add.isPending}>
+          {add.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          Add Contact
+        </Button>
+        <Button variant="outline" data-testid="button-cancel-new-contact" onClick={onDone} disabled={add.isPending}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
+function RemoveContactButton({ contact }: { contact: Contact }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/customer-contacts/${contact.id}`);
+    },
+    onSuccess: () => {
+      toast({ title: "Contact removed", description: `${contact.fullName} was removed from the account.` });
+      queryClient.invalidateQueries({ queryKey: ["/api/customer-contacts"] });
+    },
+    onError: (e: any) => toast({ title: "Couldn't remove contact", description: e.message, variant: "destructive" }),
+  });
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+      data-testid={`button-remove-contact-${contact.id}`}
+      title={`Remove ${contact.fullName}`}
+      disabled={remove.isPending}
+      onClick={() => {
+        if (window.confirm(`Remove ${contact.fullName} from this account?`)) remove.mutate();
+      }}
+    >
+      {remove.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Minus className="h-3.5 w-3.5" />}
+    </Button>
+  );
+}
+
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -196,6 +306,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export default function AccountSettings() {
   const { user, token, isLoading: authLoading } = useAuth();
   const [editingContact, setEditingContact] = useState(false);
+  const [addingContact, setAddingContact] = useState(false);
 
   const { data: account, isLoading: accountLoading, error: accountError } = useQuery<Account>({
     queryKey: ['/api/account'],
@@ -381,9 +492,22 @@ export default function AccountSettings() {
                       <Users className="h-5 w-5" />
                       <span>Authorized Users</span>
                       <DataBadge freshness="live" />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="ml-auto h-8 w-8"
+                        data-testid="button-add-contact"
+                        title="Add a contact"
+                        onClick={() => setAddingContact(v => !v)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {addingContact && (
+                      <AddContactForm onDone={() => setAddingContact(false)} />
+                    )}
                     {contactsLoading ? (
                       <div className="animate-pulse">
                         <div className="h-10 bg-gray-100 rounded mb-2" />
@@ -398,6 +522,7 @@ export default function AccountSettings() {
                             <tr className="border-b text-left">
                               <th className="pb-2 pr-4 font-medium text-sm text-gray-700">Name</th>
                               <th className="pb-2 pl-4 font-medium text-sm text-gray-700">Role</th>
+                              <th className="pb-2 pl-4 w-10"></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -413,6 +538,11 @@ export default function AccountSettings() {
                                     </span>
                                   ) : (
                                     <span className="text-sm text-gray-600">{contact.role || '—'}</span>
+                                  )}
+                                </td>
+                                <td className="py-3 pl-4 text-right">
+                                  {!contact.isPrimary && (
+                                    <RemoveContactButton contact={contact} />
                                   )}
                                 </td>
                               </tr>

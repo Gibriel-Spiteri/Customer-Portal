@@ -7,6 +7,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByNetSuiteCustomerId(customerId: string): Promise<User | undefined>;
+  getUsersByNetSuiteCustomerId(customerId: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   verifyPassword(email: string, password: string): Promise<User | undefined>;
@@ -33,6 +34,10 @@ export class DatabaseStorage implements IStorage {
   async getUserByNetSuiteCustomerId(customerId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.netsuiteCustomerId, customerId));
     return user || undefined;
+  }
+
+  async getUsersByNetSuiteCustomerId(customerId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.netsuiteCustomerId, customerId));
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

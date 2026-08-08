@@ -63,6 +63,10 @@ const authenticateToken = async (req: any, res: any, next: any) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
+    if (!user.isActive) {
+      return res.status(401).json({ message: 'Account is no longer active' });
+    }
+
     req.user = {
       id: user.id,
       username: user.username,
@@ -540,7 +544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let user = await storage.getUserByEmail(email);
       
-      if (!user) {
+      if (!user || !user.isActive) {
         return res.status(401).json({ 
           message: 'Invalid email or password. Please use your NetSuite Customer Center credentials.' 
         });
@@ -2047,6 +2051,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error fetching contacts from NetSuite:', error);
       res.status(500).json({ message: 'Failed to fetch contacts from NetSuite' });
+    }
+  });
+
+  // Add an alternate contact: creates a NetSuite contact (role: Alternate Contact) + a portal login
+  app.post('/api/customer-contacts', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      if (!req.user.netsuiteCustomerId) {
+        return res.status(400).json({ message: 'No NetSuite customer linked to this account' });
+      }
+
+      const schema = z.object({
+        name: z.string().min(1, 'Name is required'),
+        phone: z.string().min(7, 'Phone is required'),
+        email: z.string().email('Please enter a valid email address'),
+        password: z.string().min(8, 'Password must be at least 8 characters'),
+        verifyPassword: z.string(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid request' });
+      }
+      const { name, phone, email, password, verifyPassword } = parsed.data;
+
+      if (password !== verifyPassword) {
+        return res.status(400).json({ message: 'Passwords do not match' });
+      }
+
+      // Password must differ from every existing portal login on this account
+      // (including the primary contact's), regardless of who is making the request.
+      const accountUsers = await storage.getUsersByNetSuiteCustomerId(req.user.netsuiteCustomerId);
+      for (const u of accountUsers) {
+        if (u.password && await bcrypt.compare(password, u.password)) {
+          return res.status(400).json({ message: 'Password cannot be the same as another contact\'s password on this account' });
+        }
+      }
+      const primaryUser = accountUsers.find(u => u.id === req.user.id) || await storage.getUser(req.user.id);
+
+      // Email must not already have a portal login
+      const existing = await storage.getUserByEmail(email.trim());
+      if (existing) {
+        return res.status(400).json({ message: 'An account with this email already exists' });
+      }
+
+      // Validate the phone number is real
+      const { lookupPhone } = await import('./services/twilio-lookup');
+      const phoneResult = await lookupPhone(phone);
+      if (!phoneResult.valid || !phoneResult.e164) {
+        return res.status(400).json({ message: 'The phone number is not a valid US phone number' });
+      }
+
+      const trimmed = name.trim().replace(/\s+/g, ' ');
+      const lastSpace = trimmed.lastIndexOf(' ');
+      const firstName = lastSpace > 0 ? trimmed.slice(0, lastSpace) : trimmed;
+      const lastName = lastSpace > 0 ? trimmed.slice(lastSpace + 1) : '';
+
+      // Create the NetSuite contact
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const newContactId = await m2m.createRecord('contact', {
+        firstName,
+        ...(lastName ? { lastName } : {}),
+        company: { id: req.user.netsuiteCustomerId },
+        email: email.trim(),
+        phone: phoneResult.nationalFormat || phoneResult.e164,
+      });
+
+      // Set the role to Alternate Contact (-20) — only possible via SuiteScript RESTlet
+      let roleWarning: string | undefined;
+      if (newContactId) {
+        const { netsuiteEmailService } = await import('./services/netsuite-email');
+        const roleResult = await netsuiteEmailService.setContactRole(req.user.netsuiteCustomerId, newContactId, '-20');
+        if (!roleResult.success) {
+          console.error('Could not set Alternate Contact role:', roleResult.error);
+          roleWarning = 'Contact was created, but the Alternate Contact role could not be set in NetSuite.';
+        }
+      }
+
+      // Create the portal login for the new contact (createUser hashes the password).
+      // If this fails, delete the NetSuite contact so we don't leave an orphan.
+      try {
+        await storage.createUser({
+          email: email.trim(),
+          password,
+          netsuiteCustomerId: req.user.netsuiteCustomerId,
+          firstName,
+          lastName: lastName || null,
+          companyName: primaryUser?.companyName || null,
+        } as any);
+      } catch (userErr) {
+        console.error('Portal user creation failed, rolling back NetSuite contact:', userErr);
+        if (newContactId) {
+          await m2m.deleteRecord('contact', newContactId).catch(e =>
+            console.error('Rollback of NetSuite contact failed:', e));
+        }
+        throw new Error('Could not create the portal login for this contact. Please try again.');
+      }
+
+      await invalidateCustomer(req.user.netsuiteCustomerId).catch(() => {});
+      res.json({ message: roleWarning ? `Contact added. ${roleWarning}` : 'Contact added', roleWarning });
+    } catch (error: any) {
+      console.error('Add contact error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to add contact' });
+    }
+  });
+
+  // Remove an alternate contact (NetSuite contact + portal login). Primary contacts cannot be removed.
+  app.delete('/api/customer-contacts/:id', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      if (!req.user.netsuiteCustomerId) {
+        return res.status(400).json({ message: 'No NetSuite customer linked to this account' });
+      }
+      const contactId = String(req.params.id || '').trim();
+      if (!/^\d+$/.test(contactId)) {
+        return res.status(400).json({ message: 'Invalid contact id' });
+      }
+
+      // Verify the contact belongs to this customer and is an alternate contact
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const check = await m2m.executeSuiteQL(
+        `SELECT contact.id, contact.email, contact.contactrole FROM contact WHERE contact.id = ${contactId} AND contact.company = ${req.user.netsuiteCustomerId}`,
+        1, 0
+      );
+      const found = check.items?.[0];
+      if (!found) {
+        return res.status(404).json({ message: 'Contact not found on this account' });
+      }
+      if (String(found.contactrole) === '-10') {
+        return res.status(400).json({ message: 'The primary contact cannot be removed' });
+      }
+
+      await m2m.deleteRecord('contact', contactId);
+
+      // Deactivate the matching portal login, if any
+      if (found.email) {
+        const portalUser = await storage.getUserByEmail(found.email);
+        if (portalUser && portalUser.netsuiteCustomerId === req.user.netsuiteCustomerId && portalUser.id !== req.user.id) {
+          await storage.updateUser(portalUser.id, { isActive: false } as any).catch((e) =>
+            console.error('Could not deactivate portal login:', e));
+        }
+      }
+
+      await invalidateCustomer(req.user.netsuiteCustomerId).catch(() => {});
+      res.json({ message: 'Contact removed' });
+    } catch (error: any) {
+      console.error('Remove contact error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to remove contact' });
     }
   });
 

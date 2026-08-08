@@ -362,6 +362,52 @@ export class NetSuiteM2M {
   /**
    * GET a record sub-resource (e.g. a customer's addressBook sublist).
    */
+  /** Create a record via the REST record API. Returns the new record's internal id. Throws on failure. */
+  async createRecord(recordType: string, body: any): Promise<string> {
+    const accessToken = await this.getAccessToken();
+    const url = `${this.apiBaseUrl}/record/v1/${recordType}`;
+
+    return await nsLimit(async () => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('NetSuite M2M: Record POST failed:', response.status, errorText);
+        throw new Error(`NetSuite create failed (${response.status})`);
+      }
+
+      // New record id comes back in the Location header (…/record/v1/<type>/<id>)
+      const location = response.headers.get('location') || '';
+      return location.split('/').pop() || '';
+    }, 'record');
+  }
+
+  /** Delete a record via the REST record API. Throws on failure. */
+  async deleteRecord(recordType: string, recordId: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const url = `${this.apiBaseUrl}/record/v1/${recordType}/${recordId}`;
+
+    await nsLimit(async () => {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('NetSuite M2M: Record DELETE failed:', response.status, errorText);
+        throw new Error(`NetSuite delete failed (${response.status})`);
+      }
+    }, 'record');
+  }
+
   async getRecordSubresource(recordType: string, recordId: string, subresource: string): Promise<any | null> {
     const accessToken = await this.getAccessToken();
     const url = `${this.apiBaseUrl}/record/v1/${recordType}/${recordId}/${subresource}?expandSubResources=true`;
