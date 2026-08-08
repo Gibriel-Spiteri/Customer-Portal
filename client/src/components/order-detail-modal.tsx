@@ -64,6 +64,7 @@ export interface Order {
   orderNumber: string;
   status: string;
   orderDate: string;
+  targetReceiptDate?: string | null;
   shipDate: string | null;
   deliveryDate: string | null;
   totalAmount: string;
@@ -273,7 +274,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
 
             <Separator />
             <div className="relative">
-              <div className="grid grid-cols-3 gap-4">
+              <div className={`grid gap-4 ${order.targetReceiptDate ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'} ${!loadingOrderDetails && mapNetSuiteStatus(order.status) !== 'fully billed' && parseFloat(order.balanceDue || '0') > 0 ? 'md:pr-32' : ''}`}>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-1">Order Date</h4>
                   <p className="text-base flex items-center">
@@ -281,6 +282,15 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                     {formatDate(order.orderDate)}
                   </p>
                 </div>
+                {order.targetReceiptDate && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Target Receipt Date</h4>
+                    <p className="text-base flex items-center" data-testid="text-target-receipt-date">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      {formatDate(order.targetReceiptDate)}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h4>
                   <p className="text-lg">{formatCurrency(order.totalAmount, order.currency)}</p>
@@ -292,7 +302,7 @@ export function OrderDetailModal({ order, onClose, loadingOrderDetails = false }
                 </div>
                 )}
               </div>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <div className="mt-3 md:mt-0 md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2">
                 {!loadingOrderDetails && mapNetSuiteStatus(order.status) !== 'fully billed' && parseFloat(order.balanceDue || '0') > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

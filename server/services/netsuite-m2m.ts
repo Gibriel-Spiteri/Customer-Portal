@@ -539,7 +539,7 @@ export class NetSuiteM2M {
    */
   async getCustomerOrders(customerId: string, limit: number = 1000): Promise<any[]> {
     return cached({
-      key: `orders:list:${customerId}:${limit}`,
+      key: `orders:list:v2:${customerId}:${limit}`,
       customerId,
       entityType: 'orders',
       ttl: TTL.VOLATILE,
@@ -553,6 +553,7 @@ export class NetSuiteM2M {
         transaction.total,
         transaction.memo,
         transaction.custbody_tagfor AS tagFor,
+        transaction.custbody_target_receipt_date,
         transaction.shipdate,
         transaction.shipmethod,
         BUILTIN.DF(transaction.entity) AS customerName,
@@ -613,7 +614,7 @@ export class NetSuiteM2M {
    */
   async getOrderDetails(orderId: string): Promise<any> {
     return cached({
-      key: `order:detail:${orderId}`,
+      key: `order:detail:v2:${orderId}`,
       customerId: (d: any) => String(d?.customerid ?? 'unknown'),
       entityType: 'order_detail',
       // Closed (H) / fully billed (G) orders are immutable -> long TTL; open orders short.
@@ -630,6 +631,7 @@ export class NetSuiteM2M {
         transaction.taxtotal AS tax,
         transaction.memo,
         transaction.custbody_tagfor AS tagFor,
+        transaction.custbody_target_receipt_date,
         BUILTIN.DF(transaction.entity) AS customerName,
         transaction.entity AS customerId,
         transaction.shipdate,

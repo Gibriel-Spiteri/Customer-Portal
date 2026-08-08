@@ -332,7 +332,10 @@ export default function Orders() {
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Order #</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">CRD End User</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Job ID</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Date</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Order Date</th>
+                              {activeView === 'active' && (
+                                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[130px]">Target Receipt Date</th>
+                              )}
                               <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Amount</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[130px]">Status</th>
                             </tr>
@@ -348,6 +351,9 @@ export default function Orders() {
                                 <td className="px-4 py-4 text-sm text-gray-600 max-w-[180px]">{order.tagFor ? toTitleCase(order.tagFor) : '-'}</td>
                                 <td className="px-4 py-4 text-sm text-gray-600 truncate max-w-[200px]">{order.memo ? toTitleCase(order.memo) : '-'}</td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.orderDate)}</td>
+                                {activeView === 'active' && (
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.targetReceiptDate ?? null)}</td>
+                                )}
                                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(order.totalAmount, order.currency)}</td>
                                 <td className="px-4 py-4 whitespace-nowrap">
                                   <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
