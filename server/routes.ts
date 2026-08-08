@@ -1825,6 +1825,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (address) {
+        // Validate that the ZIP exists and matches the city/state
+        const { lookupZip } = await import('./services/zip-validate');
+        const zipInfo = await lookupZip(address.zip);
+        if (zipInfo && !zipInfo.exists) {
+          return res.status(400).json({ message: `${address.zip.trim().slice(0, 5)} is not a valid US ZIP code` });
+        }
+        if (zipInfo && zipInfo.exists) {
+          if (zipInfo.state && zipInfo.state.toUpperCase() !== address.state.trim().toUpperCase()) {
+            return res.status(400).json({ message: `ZIP code ${address.zip.trim().slice(0, 5)} is in ${zipInfo.state}, not ${address.state.trim().toUpperCase()}. Please check the ZIP or state.` });
+          }
+          const cityGiven = address.city.trim().toLowerCase();
+          const cityOk = (zipInfo.placeNames || []).some((p) => p.toLowerCase() === cityGiven);
+          if (!cityOk) {
+            return res.status(400).json({ message: `ZIP code ${address.zip.trim().slice(0, 5)} belongs to ${zipInfo.city}, ${zipInfo.state} — not ${address.city.trim()}. Please check the ZIP or city.` });
+          }
+        }
+        // zipInfo === null means the validation service was unreachable — allow the save rather than blocking the user
         await m2m.updateDefaultAddress(req.user.netsuiteCustomerId, address);
       }
 
