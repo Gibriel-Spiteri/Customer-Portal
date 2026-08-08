@@ -67,8 +67,6 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
   const queryClient = useQueryClient();
 
   const [email, setEmail] = useState(account.email || "");
-  const [emailCode, setEmailCode] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
   const [mobilePhone, setMobilePhone] = useState(account.mobilePhone || "");
   const [altPhone, setAltPhone] = useState(account.altPhone || "");
 
@@ -94,23 +92,11 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
 
   const emailChanged = email.trim().toLowerCase() !== (account.email || "").trim().toLowerCase();
 
-  const sendCode = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", "/api/account/email-verification", { email: email.trim() });
-    },
-    onSuccess: () => {
-      setCodeSent(true);
-      toast({ title: "Code sent", description: `We emailed a 6-digit code to ${email.trim()}.` });
-    },
-    onError: (e: any) => toast({ title: "Couldn't send code", description: e.message, variant: "destructive" }),
-  });
-
   const save = useMutation({
     mutationFn: async () => {
       const body: any = {};
       if (emailChanged) {
         body.email = email.trim();
-        body.emailCode = emailCode.trim();
       }
       if (mobilePhone.trim() !== (account.mobilePhone || "").trim()) body.mobilePhone = mobilePhone.trim();
       if (altPhone.trim() !== (account.altPhone || "").trim()) body.altPhone = altPhone.trim();
@@ -137,14 +123,6 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
   });
 
   const handleSave = () => {
-    if (emailChanged && !codeSent) {
-      toast({ title: "Verify your email", description: "Click “Send Code” and enter the code we email you before saving.", variant: "destructive" });
-      return;
-    }
-    if (emailChanged && emailCode.trim().length < 6) {
-      toast({ title: "Enter the code", description: "Enter the 6-digit code from the verification email.", variant: "destructive" });
-      return;
-    }
     save.mutate();
   };
 
@@ -165,20 +143,7 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
 
       <div className="space-y-2">
         <Label htmlFor="edit-email">Email</Label>
-        <div className="flex gap-2">
-          <Input id="edit-email" data-testid="input-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setCodeSent(false); setEmailCode(""); }} className="flex-1" />
-          {emailChanged && (
-            <Button type="button" variant="outline" data-testid="button-send-code" disabled={sendCode.isPending} onClick={() => sendCode.mutate()}>
-              {sendCode.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (codeSent ? "Resend Code" : "Send Code")}
-            </Button>
-          )}
-        </div>
-        {emailChanged && codeSent && (
-          <div className="space-y-1 pt-1">
-            <Label htmlFor="edit-email-code">Verification Code</Label>
-            <Input id="edit-email-code" data-testid="input-email-code" inputMode="numeric" maxLength={6} value={emailCode} onChange={e => setEmailCode(e.target.value)} placeholder="6-digit code" className="w-40 tracking-widest" />
-          </div>
-        )}
+        <Input id="edit-email" data-testid="input-email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
       </div>
 
       <div className="pt-2 border-t space-y-4">

@@ -1758,63 +1758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ---- Account contact-info updates (email verification + phone validation + NetSuite write-back) ----
-
-  // Pending email-change verification codes, keyed by user id (in-memory, 10 min TTL)
-  const emailVerifications = new Map<number, { email: string; codeHash: string; expires: number; attempts: number }>();
-  // Send throttling: per-user cooldown + hourly cap (single-machine deployment)
-  const emailSendLog = new Map<number, number[]>();
-
-  // Step 1: send a verification code to the new email address
-  app.post('/api/account/email-verification', authenticateToken, async (req: any, res) => {
-    try {
-      const schema = z.object({ email: z.string().email('Please enter a valid email address') });
-      const parsed = schema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid email' });
-      }
-      const email = parsed.data.email.trim();
-
-      // Throttle: 60s cooldown between sends, max 5 sends per hour per user
-      const now = Date.now();
-      const recent = (emailSendLog.get(req.user.id) || []).filter(t => now - t < 60 * 60 * 1000);
-      if (recent.length >= 5) {
-        return res.status(429).json({ message: 'Too many verification emails. Please try again in an hour.' });
-      }
-      if (recent.length > 0 && now - recent[recent.length - 1] < 60 * 1000) {
-        return res.status(429).json({ message: 'Please wait a minute before requesting another code.' });
-      }
-      recent.push(now);
-      emailSendLog.set(req.user.id, recent);
-
-      const code = crypto.randomInt(100000, 1000000).toString();
-      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
-      emailVerifications.set(req.user.id, {
-        email: email.toLowerCase(),
-        codeHash,
-        expires: Date.now() + 10 * 60 * 1000,
-        attempts: 0,
-      });
-
-      const { netsuiteEmailService } = await import('./services/netsuite-email');
-      const sent = await netsuiteEmailService.sendEmail({
-        type: 'verification_code',
-        email,
-        code,
-      } as any);
-
-      if (!sent) {
-        emailVerifications.delete(req.user.id);
-        return res.status(502).json({ message: 'Could not send the verification email. Please try again later.' });
-      }
-      res.json({ message: 'Verification code sent' });
-    } catch (error) {
-      console.error('Email verification send error:', error);
-      res.status(500).json({ message: 'Failed to send verification code' });
-    }
-  });
-
-  // Step 2: update contact info (validates, then writes back to the NetSuite customer/lead record)
+  // ---- Account contact-info updates (phone validation + NetSuite write-back) ----
   app.post('/api/account/update', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
       if (!req.user.netsuiteCustomerId) {
@@ -1822,8 +1766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const schema = z.object({
-        email: z.string().email().optional(),
-        emailCode: z.string().optional(),
+        email: z.string().email('Please enter a valid email address').optional(),
         mobilePhone: z.string().optional(),
         altPhone: z.string().optional(),
         address: z.object({
@@ -1838,31 +1781,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!parsed.success) {
         return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid request' });
       }
-      const { email, emailCode, mobilePhone, altPhone, address } = parsed.data;
+      const { email, mobilePhone, altPhone, address } = parsed.data;
 
       if (email === undefined && mobilePhone === undefined && altPhone === undefined && !address) {
         return res.status(400).json({ message: 'Nothing to update' });
-      }
-
-      // --- Email: require a valid verification code ---
-      if (email !== undefined) {
-        const pending = emailVerifications.get(req.user.id);
-        if (!pending || pending.email !== email.trim().toLowerCase()) {
-          return res.status(400).json({ message: 'Please request a verification code for this email first' });
-        }
-        if (Date.now() > pending.expires) {
-          emailVerifications.delete(req.user.id);
-          return res.status(400).json({ message: 'Verification code expired. Please request a new one.' });
-        }
-        pending.attempts++;
-        if (pending.attempts > 5) {
-          emailVerifications.delete(req.user.id);
-          return res.status(429).json({ message: 'Too many attempts. Please request a new code.' });
-        }
-        const givenHash = crypto.createHash('sha256').update((emailCode || '').trim()).digest('hex');
-        if (givenHash !== pending.codeHash) {
-          return res.status(400).json({ message: 'That verification code is incorrect' });
-        }
       }
 
       // --- Phones: validate line type via Twilio Lookup ---
@@ -1908,7 +1830,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Keep the local user record's email in sync
       if (email !== undefined) {
-        emailVerifications.delete(req.user.id);
         await storage.updateUser(req.user.id, { email: email.trim() } as any).catch((e) =>
           console.error('Local email sync failed:', e));
       }
