@@ -2082,7 +2082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // (including the primary contact's), regardless of who is making the request.
       const accountUsers = await storage.getUsersByNetSuiteCustomerId(req.user.netsuiteCustomerId);
       for (const u of accountUsers) {
-        if (u.password && await bcrypt.compare(password, u.password)) {
+        if (u.isActive && u.password && await bcrypt.compare(password, u.password)) {
           return res.status(400).json({ message: 'Password cannot be the same as another contact\'s password on this account' });
         }
       }
@@ -2216,7 +2216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Must differ from every OTHER contact's password on this account
       const accountUsers = await storage.getUsersByNetSuiteCustomerId(req.user.netsuiteCustomerId);
       for (const u of accountUsers) {
-        if (u.id !== req.user.id && u.password && await bcrypt.compare(password, u.password)) {
+        if (u.id !== req.user.id && u.isActive && u.password && await bcrypt.compare(password, u.password)) {
           return res.status(400).json({ message: 'Password cannot be the same as another contact\'s password on this account' });
         }
       }
@@ -2229,6 +2229,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password2: password,
         custentity_legpw: password,
       });
+
+      // Also update the Password / Verify Password fields on the PRIMARY CONTACT record
+      // (these are what NetSuite checks during estimate entry)
+      const primaryQ = await m2m.executeSuiteQL(
+        `SELECT contact.id FROM contact WHERE contact.company = ${req.user.netsuiteCustomerId} AND contact.contactrole = '-10'`,
+        1, 0
+      );
+      const primaryContactId = primaryQ.items?.[0]?.id;
+      if (primaryContactId) {
+        await m2m.patchRecord('contact', String(primaryContactId), {
+          custentity_crd_pin: password,
+          custentity_crd_pin_confirm: password,
+        });
+      } else {
+        console.warn('Change password: no primary contact (-10) found for customer', req.user.netsuiteCustomerId);
+      }
 
       // Update the portal login password
       await storage.updatePassword(req.user.id, password);
