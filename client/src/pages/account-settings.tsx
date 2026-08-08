@@ -450,40 +450,18 @@ export default function AccountSettings() {
                     )}
                     
                     <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">First Name</Label>
-                          <Input
-                            id="firstName"
-                            value={form.getValues("firstName")}
-                            readOnly
-                            className="bg-gray-50 cursor-default"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Last Name</Label>
-                          <Input
-                            id="lastName"
-                            value={form.getValues("lastName")}
-                            readOnly
-                            className="bg-gray-50 cursor-default"
-                          />
-                        </div>
-                      </div>
-
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="email"
-                            type="email"
-                            className="pl-10 bg-gray-50 cursor-default"
-                            value={form.getValues("email")}
-                            readOnly
-                          />
-                        </div>
+                        <Label htmlFor="profileName">Name</Label>
+                        <Input
+                          id="profileName"
+                          data-testid="input-profile-name"
+                          value={
+                            (contacts?.find(c => c.isPrimary) || contacts?.[0])?.fullName ||
+                            `${form.getValues("firstName")} ${form.getValues("lastName")}`.trim()
+                          }
+                          readOnly
+                          className="bg-gray-50 cursor-default"
+                        />
                       </div>
 
                       <div className="space-y-2">
