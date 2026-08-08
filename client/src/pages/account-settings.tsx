@@ -196,6 +196,74 @@ function formatPhoneInput(value: string): string {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+function ChangePasswordForm() {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [verifyPassword, setVerifyPassword] = useState("");
+
+  const change = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/account/change-password", { password, verifyPassword });
+    },
+    onSuccess: () => {
+      toast({ title: "Password updated", description: "Your password was updated in NetSuite and for portal sign-in." });
+      setPassword("");
+      setVerifyPassword("");
+      setOpen(false);
+    },
+    onError: (e: any) => toast({ title: "Couldn't change password", description: e.message, variant: "destructive" }),
+  });
+
+  const handleSave = () => {
+    if (password.length < 4) {
+      toast({ title: "Password too short", description: "Password must be at least 4 characters.", variant: "destructive" });
+      return;
+    }
+    if (password !== verifyPassword) {
+      toast({ title: "Passwords don't match", description: "Please re-enter the password.", variant: "destructive" });
+      return;
+    }
+    change.mutate();
+  };
+
+  if (!open) {
+    return (
+      <div className="mt-6 pt-4 border-t">
+        <Button variant="outline" data-testid="button-change-password" onClick={() => setOpen(true)}>
+          <Shield className="h-4 w-4 mr-2" />
+          Change Password
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 pt-4 border-t">
+      <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
+        <p className="font-medium text-gray-900">Change Password</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="change-password">New Password</Label>
+            <Input id="change-password" data-testid="input-change-password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="change-password-verify">Verify Password</Label>
+            <Input id="change-password-verify" data-testid="input-change-password-verify" type="password" value={verifyPassword} onChange={e => setVerifyPassword(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button data-testid="button-save-password" onClick={handleSave} disabled={change.isPending}>
+            {change.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Update Password
+          </Button>
+          <Button variant="outline" data-testid="button-cancel-password" onClick={() => { setOpen(false); setPassword(""); setVerifyPassword(""); }} disabled={change.isPending}>Cancel</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AddContactForm({ onDone }: { onDone: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -587,6 +655,7 @@ export default function AccountSettings() {
                     ) : (
                       <p className="text-gray-500">No contacts found for this customer</p>
                     )}
+                    <ChangePasswordForm />
                   </CardContent>
                 </Card>
 

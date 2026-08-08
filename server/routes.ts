@@ -2190,6 +2190,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Change the primary contact's password: updates the NetSuite customer's
+  // Password/Verify Password (Customer Center access) fields, the Dealer Website
+  // Password field on the customer record, and the portal login password.
+  app.post('/api/account/change-password', authenticateToken, validateCustomerAccess, async (req: any, res) => {
+    try {
+      if (!req.user.netsuiteCustomerId) {
+        return res.status(400).json({ message: 'No NetSuite customer linked to this account' });
+      }
+
+      const schema = z.object({
+        password: z.string().min(4, 'Password must be at least 4 characters'),
+        verifyPassword: z.string(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid request' });
+      }
+      const { password, verifyPassword } = parsed.data;
+
+      if (password !== verifyPassword) {
+        return res.status(400).json({ message: 'Passwords do not match' });
+      }
+
+      // Must differ from every OTHER contact's password on this account
+      const accountUsers = await storage.getUsersByNetSuiteCustomerId(req.user.netsuiteCustomerId);
+      for (const u of accountUsers) {
+        if (u.id !== req.user.id && u.password && await bcrypt.compare(password, u.password)) {
+          return res.status(400).json({ message: 'Password cannot be the same as another contact\'s password on this account' });
+        }
+      }
+
+      // Update NetSuite: access password/verify + Dealer Website Password (System Information tab)
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      await m2m.patchRecord('customer', req.user.netsuiteCustomerId, {
+        password,
+        password2: password,
+        custentity_legpw: password,
+      });
+
+      // Update the portal login password
+      await storage.updatePassword(req.user.id, password);
+
+      await invalidateCustomer(req.user.netsuiteCustomerId).catch(() => {});
+      res.json({ message: 'Password updated' });
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to change password' });
+    }
+  });
+
   // Support tickets
   // Estimates - Fetch from NetSuite using SuiteQL
   app.get('/api/estimates', authenticateToken, validateCustomerAccess, async (req: any, res) => {
