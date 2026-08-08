@@ -2094,12 +2094,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'An account with this email already exists' });
       }
 
-      // Validate the phone number is real
-      const { lookupPhone } = await import('./services/twilio-lookup');
-      const phoneResult = await lookupPhone(phone);
-      if (!phoneResult.valid || !phoneResult.e164) {
-        return res.status(400).json({ message: 'The phone number is not a valid US phone number' });
+      // Validate phone format only (10-digit US number) — no carrier lookup needed here
+      const phoneDigits = phone.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+      if (phoneDigits.length !== 10) {
+        return res.status(400).json({ message: 'Please enter a 10-digit US phone number' });
       }
+      const formattedPhone = `(${phoneDigits.slice(0, 3)}) ${phoneDigits.slice(3, 6)}-${phoneDigits.slice(6)}`;
 
       const trimmed = name.trim().replace(/\s+/g, ' ');
       const lastSpace = trimmed.lastIndexOf(' ');
@@ -2114,7 +2114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(lastName ? { lastName } : {}),
         company: { id: req.user.netsuiteCustomerId },
         email: email.trim(),
-        phone: phoneResult.nationalFormat || phoneResult.e164,
+        phone: formattedPhone,
       });
 
       // Create the portal login for the new contact (createUser hashes the password).

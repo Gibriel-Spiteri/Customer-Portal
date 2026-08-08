@@ -186,6 +186,16 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
   );
 }
 
+// Format a US phone number as the user types: once 7+ digits are in, shape it like (555) 555-1234
+function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (digits.length < 7) return value;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 function AddContactForm({ onDone }: { onDone: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -215,6 +225,14 @@ function AddContactForm({ onDone }: { onDone: () => void }) {
       toast({ title: "Missing information", description: "Please fill in all fields.", variant: "destructive" });
       return;
     }
+    if (!EMAIL_REGEX.test(email.trim())) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+    if (phone.replace(/\D/g, "").length !== 10) {
+      toast({ title: "Invalid phone number", description: "Please enter a 10-digit US phone number.", variant: "destructive" });
+      return;
+    }
     if (password !== verifyPassword) {
       toast({ title: "Passwords don't match", description: "Please re-enter the password.", variant: "destructive" });
       return;
@@ -232,7 +250,7 @@ function AddContactForm({ onDone }: { onDone: () => void }) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-contact-phone">Phone</Label>
-          <Input id="new-contact-phone" data-testid="input-new-contact-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 555-1234" />
+          <Input id="new-contact-phone" data-testid="input-new-contact-phone" value={phone} onChange={e => setPhone(formatPhoneInput(e.target.value))} placeholder="(555) 555-1234" inputMode="tel" />
         </div>
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="new-contact-email">Email</Label>
