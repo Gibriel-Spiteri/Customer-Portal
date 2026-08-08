@@ -442,7 +442,7 @@ export default function AccountSettings() {
                         <div className="flex items-center space-x-2">
                           <Shield className="h-5 w-5 text-blue-600" />
                           <div>
-                            <p className="text-sm font-medium text-blue-900">NetSuite Customer Number</p>
+                            <p className="text-sm font-medium text-blue-900">Customer Number</p>
                             <p className="text-lg font-mono font-semibold text-blue-700" data-testid="text-customer-number">#{account.customerNumber}</p>
                           </div>
                         </div>
@@ -450,6 +450,20 @@ export default function AccountSettings() {
                     ) : (
                       <p className="text-gray-500">No customer number available</p>
                     )}
+
+                    <div className="mt-6 space-y-2">
+                      <Label htmlFor="companyName">Company Name</Label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="companyName"
+                          data-testid="input-company-name"
+                          className="pl-10 bg-gray-50 cursor-default"
+                          value={form.getValues("companyName")}
+                          readOnly
+                        />
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
