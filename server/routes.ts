@@ -2094,6 +2094,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'An account with this email already exists' });
       }
 
+      // Must also differ from the account's Dealer Website Password in NetSuite
+      // (covers the primary's password even when it was set directly in NetSuite)
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      try {
+        const dealerQ = await m2m.executeSuiteQL(
+          `SELECT custentity_legpw FROM customer WHERE id = ${req.user.netsuiteCustomerId}`, 1, 0
+        );
+        const dealerPw = dealerQ.items?.[0]?.custentity_legpw;
+        if (dealerPw && password === String(dealerPw)) {
+          return res.status(400).json({ message: 'Password cannot be the same as another contact\'s password on this account' });
+        }
+      } catch (e) {
+        console.error('Could not check Dealer Website Password:', e);
+      }
+
       // Validate phone format only (10-digit US number) — no carrier lookup needed here
       const phoneDigits = phone.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
       if (phoneDigits.length !== 10) {
@@ -2107,8 +2123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lastName = lastSpace > 0 ? trimmed.slice(lastSpace + 1) : '';
 
       // Create the NetSuite contact
-      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
-      const m2m = new NetSuiteM2M();
       const newContactId = await m2m.createRecord('contact', {
         firstName,
         ...(lastName ? { lastName } : {}),
