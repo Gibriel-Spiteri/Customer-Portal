@@ -178,7 +178,7 @@ export default function Estimates() {
                           <thead>
                             <tr className="border-b border-gray-200">
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Estimate ID</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">CRD End User</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">End User</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Job ID</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
                               <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>

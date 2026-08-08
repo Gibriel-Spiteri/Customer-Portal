@@ -330,7 +330,7 @@ export default function Orders() {
                           <thead>
                             <tr className="border-b border-gray-200">
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Order #</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">CRD End User</th>
+                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">End User</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Job ID</th>
                               <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Order Date</th>
                               {activeView === 'active' && (
