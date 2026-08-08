@@ -962,10 +962,11 @@ export class NetSuiteM2M {
    */
   async getCustomerContacts(customerId: string): Promise<any[]> {
     return cached({
-      key: `contacts:${customerId}`,
+      key: `contacts:v2:${customerId}`,
       customerId,
       entityType: 'contacts',
-      ttl: TTL.PROFILE,
+      // Volatile so newly added contacts show up within a minute or two
+      ttl: TTL.VOLATILE,
       loader: async () => {
     const query = `
       SELECT 

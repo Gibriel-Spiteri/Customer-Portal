@@ -2013,9 +2013,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        contact.entityid || 
                        `Contact ${contact.id}`;
         
-        // Check if contact is primary (role -10)
-        const isPrimary = contact.contactrole === -10 || contact.contactrole === '-10';
-        const roleDisplay = isPrimary ? 'Primary Contact' : (contact.role || '');
+        // Check if contact is primary (role -10); -20 is NetSuite's built-in Alternate Contact
+        const roleCode = String(contact.contactrole ?? '');
+        const isPrimary = roleCode === '-10';
+        const roleDisplay = isPrimary
+          ? 'Primary Contact'
+          : roleCode === '-20'
+            ? 'Alternate Contact'
+            : (contact.role && !/^-?\d+$/.test(String(contact.role)) ? contact.role : '');
         
         // Address is not available for contact records in NetSuite
         const address = '';
