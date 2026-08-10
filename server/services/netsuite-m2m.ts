@@ -441,7 +441,7 @@ export class NetSuiteM2M {
     const body: any = {};
     if (fields.email !== undefined) body.email = fields.email;
     if (fields.altphone !== undefined) body.altphone = fields.altphone;
-    if (fields.mobilePhone !== undefined) body.custentity_mobile_phone = fields.mobilePhone;
+    if (fields.mobilePhone !== undefined) body.phone = fields.mobilePhone;
     if (Object.keys(body).length === 0) return;
     await this.patchRecord('customer', customerId, body);
   }

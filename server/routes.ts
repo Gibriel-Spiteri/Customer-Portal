@@ -1746,7 +1746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: accountData.email,
         phone: accountData.phone,
         altPhone: accountData.altphone,
-        mobilePhone: accountData.mobilephone || accountData.mobilePhone,
+        mobilePhone: accountData.phone,
         defaultAddress: accountData.defaultaddress || accountData.defaultAddress,
         unbilledOrders: accountData.unbilledorders || accountData.unbilledOrders || '0.00',
         depositBalance: accountData.depositbalance || accountData.depositBalance || '0.00',

@@ -526,32 +526,22 @@ export default function AccountSettings() {
                         </div>
                       )}
 
-                      {account?.phone && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-gray-500">Primary Phone</Label>
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <p className="text-gray-900">{account.phone}</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {account?.altPhone && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-gray-500">Alternate Phone</Label>
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <p className="text-gray-900">{account.altPhone}</p>
-                          </div>
-                        </div>
-                      )}
-                      
                       {account?.mobilePhone && (
                         <div className="space-y-2">
                           <Label className="text-sm font-medium text-gray-500">Mobile Phone</Label>
                           <div className="flex items-center space-x-2">
                             <Smartphone className="h-4 w-4 text-gray-400" />
                             <p className="text-gray-900">{account.mobilePhone}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {account?.altPhone && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-500">Alternate Phone</Label>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <p className="text-gray-900">{account.altPhone}</p>
                           </div>
                         </div>
                       )}
