@@ -2691,20 +2691,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // NetSuite's task-notification email collapses plain newlines but
         // renders HTML — use <br> line breaks and <b> labels (verified live).
         const lines = [
-          `<b>QUICK QUOTE REQUEST from the customer portal</b>`,
+          `<b>QUICK QUOTE request from the customer portal</b>`,
           ``,
-          `<b>Customer:</b> ${esc(customerName)}`,
+          `<b>Customer Name:</b> ${esc(customerName)}`,
           `<b>Customer #:</b> ${user.netsuiteCustomerId}`,
-          `<b>Email:</b> ${esc(user.email)}`,
-          `<b>Store:</b> ${data.storeName}`,
           ``,
-          `<b>Project Type:</b> ${data.projectType}`,
+          `<b>Project Type:</b> ${data.projectType || '—'}`,
           `<b>Budget:</b> ${data.budget || '—'}`,
           `<b>Time Frame:</b> ${data.timeFrame || '—'}`,
           `<b>Brand Preference:</b> ${data.brandPreference || '—'}`,
-          ``,
-          `<b>Comments:</b> ${esc(data.comments) || '—'}`,
         ];
+        if (data.comments) {
+          lines.push(``, `<b>Comments:</b> ${esc(data.comments)}`);
+        }
         if (savedFiles.length > 0) {
           lines.push('', '<b>Attached files:</b>');
           for (const sf of savedFiles) {
