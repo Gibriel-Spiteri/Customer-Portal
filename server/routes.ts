@@ -2864,18 +2864,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customerName = user.companyName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
       // NetSuite's task-notification email collapses plain newlines but
       // renders HTML — use <br> line breaks and <b> labels (verified live).
+      // Preferred date as MM/DD/YYYY
+      const fmtDate = (d: string) => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || '').trim());
+        return m ? `${m[2]}/${m[3]}/${m[1]}` : (d || '—');
+      };
       const lines = [
         `<b>CLIENT CONCIERGE appointment request from the customer portal</b>`,
         ``,
-        `<b>Trade Customer:</b> ${esc(customerName)}`,
+        `<b>Customer Name:</b> ${esc(customerName)}`,
         `<b>Customer #:</b> ${user.netsuiteCustomerId}`,
-        `<b>Email:</b> ${esc(user.email)}`,
-        `<b>Store:</b> ${data.storeName}`,
         ``,
         `<b>Client Name:</b> ${esc(data.clientName)}`,
         `<b>Client Email:</b> ${esc(data.clientEmail) || '—'}`,
         `<b>Client Phone:</b> ${esc(data.clientPhone) || '—'}`,
-        `<b>Preferred Date:</b> ${data.preferredDate}`,
+        `<b>Preferred Date:</b> ${fmtDate(data.preferredDate)}`,
         `<b>Preferred Time:</b> ${data.preferredTime || '—'}`,
         ``,
         `<b>Project Type:</b> ${data.projectType || '—'}`,
@@ -2883,10 +2886,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `<b>Time Frame:</b> ${data.timeFrame || '—'}`,
         `<b>Brand Preference:</b> ${data.brandPreference || '—'}`,
         ``,
-        `<b>IMPORTANT: Show the client retail pricing only. Send estimates to the trade customer (${user.email}), not the client.</b>`,
-        ``,
-        `<b>Project Details:</b> ${esc(data.projectDetails) || '—'}`,
+        `<b>IMPORTANT: Show the client retail pricing only. Send branded estimates to the PRO customer (${user.email}), not their client.</b>`,
       ];
+      if (data.projectDetails) {
+        lines.push(``, `<b>Project Details:</b> ${esc(data.projectDetails)}`);
+      }
       if (savedFiles.length > 0) {
         const baseUrl = process.env.APP_URL
           || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
