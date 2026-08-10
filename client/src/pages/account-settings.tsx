@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { DataBadge } from "@/components/data-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
@@ -487,12 +486,6 @@ export default function AccountSettings() {
                     <CardTitle className="flex items-center space-x-2">
                       <Phone className="h-5 w-5" />
                       <span>Contact Information</span>
-                      {account && (
-                        <DataBadge 
-                          freshness={account.dataFreshness}
-                          lastSync={account.lastSyncAt}
-                        />
-                      )}
                       {account && !editingContact && (
                         <Button size="sm" variant="outline" className="ml-auto" data-testid="button-edit-contact" onClick={() => setEditingContact(true)}>
                           Edit
@@ -583,7 +576,6 @@ export default function AccountSettings() {
                     <CardTitle className="flex items-center space-x-2">
                       <Users className="h-5 w-5" />
                       <span>Authorized Users</span>
-                      <DataBadge freshness="live" />
                       <Button
                         variant="outline"
                         size="icon"
