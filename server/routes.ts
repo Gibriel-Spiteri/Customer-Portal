@@ -2585,8 +2585,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await createQuickQuoteTask({
           salesRepId: id,
           customerInternalId: params.customerInternalId,
-          title: `Copy: ${params.title}`,
-          message: `[Copy for your records — assigned salesperson has the original task]<br><br>${params.message}`,
+          title: params.title,
+          message: params.message,
         });
       } catch (err) {
         console.error(`Copy task to employee ${id} failed:`, err);
