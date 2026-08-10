@@ -361,8 +361,8 @@ function RemoveContactButton({ contact }: { contact: Contact }) {
   return (
     <Button
       variant="outline"
-      size="icon"
-      className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+      size="sm"
+      className="h-7 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
       data-testid={`button-remove-contact-${contact.id}`}
       title={`Remove ${contact.fullName}`}
       disabled={remove.isPending}
@@ -370,7 +370,8 @@ function RemoveContactButton({ contact }: { contact: Contact }) {
         if (window.confirm(`Remove ${contact.fullName} from this account?`)) remove.mutate();
       }}
     >
-      {remove.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Minus className="h-3.5 w-3.5" />}
+      {remove.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Minus className="h-3.5 w-3.5 mr-1" />}
+      Remove
     </Button>
   );
 }
@@ -578,13 +579,14 @@ export default function AccountSettings() {
                       <span>Authorized Users</span>
                       <Button
                         variant="outline"
-                        size="icon"
-                        className="ml-auto h-8 w-8"
+                        size="sm"
+                        className="ml-auto h-8 text-green-700 border-green-300 hover:bg-green-50 hover:text-green-800"
                         data-testid="button-add-contact"
                         title="Add a contact"
                         onClick={() => setAddingContact(v => !v)}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add
                       </Button>
                     </CardTitle>
                   </CardHeader>
