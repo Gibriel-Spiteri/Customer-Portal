@@ -132,12 +132,12 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="edit-mobile">Mobile Phone</Label>
-          <Input id="edit-mobile" data-testid="input-mobile-phone" value={mobilePhone} onChange={e => setMobilePhone(e.target.value)} placeholder="(555) 555-1234" />
+          <Input id="edit-mobile" data-testid="input-mobile-phone" value={mobilePhone} onChange={e => setMobilePhone(formatPhoneInput(e.target.value))} placeholder="(555) 555-1234" />
           <p className="text-xs text-gray-500">Must be a mobile number — we verify the line type.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="edit-alt">Alternate Phone</Label>
-          <Input id="edit-alt" data-testid="input-alt-phone" value={altPhone} onChange={e => setAltPhone(e.target.value)} placeholder="(555) 555-1234" />
+          <Input id="edit-alt" data-testid="input-alt-phone" value={altPhone} onChange={e => setAltPhone(formatPhoneInput(e.target.value))} placeholder="(555) 555-1234" />
           <p className="text-xs text-gray-500">Must be a landline number — we verify the line type.</p>
         </div>
       </div>
@@ -185,13 +185,7 @@ function ContactInfoEditor({ account, onDone }: { account: Account; onDone: () =
   );
 }
 
-// Format a US phone number as the user types: once 7+ digits are in, shape it like (555) 555-1234
-function formatPhoneInput(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
-  if (digits.length < 7) return value;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
+import { formatPhoneInput } from "@/lib/phone";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 

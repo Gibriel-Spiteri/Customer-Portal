@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPhoneInput } from "@/lib/phone";
 import {
   FilePicker,
   BUDGET_OPTIONS,
@@ -299,6 +300,10 @@ export default function ClientConcierge() {
                     placeholder="(555) 555-5555"
                     data-testid="input-client-phone"
                     {...form.register("clientPhone")}
+                    onChange={(e) => {
+                      const formatted = formatPhoneInput(e.target.value);
+                      form.setValue("clientPhone", formatted, { shouldValidate: form.formState.isSubmitted });
+                    }}
                   />
                   {form.formState.errors.clientPhone && (
                     <p className="text-sm text-red-600">
