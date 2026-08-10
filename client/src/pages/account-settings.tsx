@@ -560,7 +560,7 @@ export default function AccountSettings() {
                     {account?.defaultAddress && (
                       <div className="mt-6 pt-6 border-t">
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium text-gray-500">Default Address</Label>
+                          <Label className="text-sm font-medium text-gray-500">Address</Label>
                           <div className="flex items-start space-x-2">
                             <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                             <p className="text-gray-900 whitespace-pre-line">{account.defaultAddress}</p>
