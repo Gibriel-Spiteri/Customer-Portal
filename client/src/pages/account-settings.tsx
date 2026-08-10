@@ -370,7 +370,7 @@ function RemoveContactButton({ contact }: { contact: Contact }) {
         if (window.confirm(`Remove ${contact.fullName} from this account?`)) remove.mutate();
       }}
     >
-      {remove.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Minus className="h-3.5 w-3.5 mr-1" />}
+      {remove.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
       Remove
     </Button>
   );
@@ -585,7 +585,6 @@ export default function AccountSettings() {
                         title="Add a contact"
                         onClick={() => setAddingContact(v => !v)}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
                         Add
                       </Button>
                     </CardTitle>
