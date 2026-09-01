@@ -331,7 +331,7 @@ export default function Support() {
                               variant="outline"
                               role="combobox"
                               aria-expanded={salesOrderSearchOpen}
-                              className="w-full h-auto min-h-10 justify-between text-left font-normal"
+                              className="w-full h-auto min-h-10 min-w-0 overflow-hidden justify-between text-left font-normal"
                               disabled={loadingSalesOrders}
                               data-testid="select-support-sales-order"
                             >
@@ -343,8 +343,8 @@ export default function Support() {
                                   </span>
                                 </span>
                               ) : (
-                                <span className="text-muted-foreground">
-                                  {loadingSalesOrders ? "Loading sales orders..." : "Search by order number, end user, or job ID"}
+                                <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                                  {loadingSalesOrders ? "Loading sales orders..." : "Search sales orders"}
                                 </span>
                               )}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
