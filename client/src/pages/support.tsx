@@ -119,6 +119,19 @@ export default function Support() {
     (order) => order.id === form.watch("salesOrderId")
   );
 
+  const normalizedSalesOrderSearch = salesOrderSearch.trim().toLowerCase();
+  const filteredSalesOrders = normalizedSalesOrderSearch
+    ? salesOrders.filter((order) => {
+        const searchable = [
+          order.orderNumber,
+          order.orderNumber.replace(/^SO/i, ""),
+          order.tagFor || "",
+          order.memo || "",
+        ].join(" ").toLowerCase();
+        return searchable.includes(normalizedSalesOrderSearch);
+      })
+    : [];
+
   const createTicketMutation = useMutation({
     mutationFn: async (data: TicketFormData) => {
       const response = await fetch('/api/support/tickets', {
@@ -351,7 +364,7 @@ export default function Support() {
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                            <Command>
+                            <Command shouldFilter={false}>
                               <CommandInput
                                 placeholder="Enter order number, end user, or job ID..."
                                 value={salesOrderSearch}
@@ -360,8 +373,10 @@ export default function Support() {
                               <CommandList key={salesOrderSearch}>
                                 {salesOrderSearch.trim() ? (
                                   <>
-                                    <CommandEmpty>No matching sales orders found.</CommandEmpty>
-                                    {salesOrders.map((order) => (
+                                    {filteredSalesOrders.length === 0 && (
+                                      <CommandEmpty>No matching sales orders found.</CommandEmpty>
+                                    )}
+                                    {filteredSalesOrders.map((order) => (
                                       <CommandItem
                                         key={order.id}
                                         value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""} ${order.memo || ""}`}
