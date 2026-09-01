@@ -43,8 +43,7 @@ export default function ProjectQuote() {
             </Link>
             <ul className="space-y-2 text-sm text-muted-foreground text-left">
               <li className="flex gap-2"><span aria-hidden="true">•</span><span>Request a showroom appointment for your client.</span></li>
-              <li className="flex gap-2"><span aria-hidden="true">•</span><span>We'll guide their design and product selections.</span></li>
-              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Your client sees retail pricing only.</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>We'll guide their design and product selections while showing retail pricing only.</span></li>
               <li className="flex gap-2"><span aria-hidden="true">•</span><span>We'll email your profit-protected estimates.</span></li>
             </ul>
           </CardContent>
