@@ -33,6 +33,7 @@ export class NetSuiteM2M {
   private privateKey: string;
   private tokenUrl: string;
   private apiBaseUrl: string;
+  private restletBaseUrl: string;
   // Token cache is STATIC (process-wide) so it survives across the per-request
   // `new NetSuiteM2M()` instances created in routes.ts (28 sites) and in
   // netsuite-email.ts. All instances share one env-derived OAuth2 config, so one
@@ -86,7 +87,11 @@ export class NetSuiteM2M {
     const accountIdForUrl = this.accountId.replace('_', '-').toLowerCase();
     this.tokenUrl = `https://${accountIdForUrl}.suitetalk.api.netsuite.com/services/rest/auth/oauth2/v1/token`;
     this.apiBaseUrl = `https://${accountIdForUrl}.suitetalk.api.netsuite.com/services/rest`;
-    
+    // RESTlets are served from a DIFFERENT host than SuiteTalk REST/SuiteQL.
+    // The M2M assertion must carry the `restlets` scope (it does — see the
+    // scope array in fetchAccessToken) or calls to this host 401.
+    this.restletBaseUrl = `https://${accountIdForUrl}.restlets.api.netsuite.com/app/site/hosting/restlet.nl`;
+
     console.log('NetSuite M2M: Using account ID:', this.accountId);
     console.log('NetSuite M2M: Token URL:', this.tokenUrl);
     
@@ -1193,6 +1198,78 @@ export class NetSuiteM2M {
     return result.items;
       },
     });
+  }
+
+  /**
+   * File a CUSTOMER SERVICE JPR (support case) for a customer.
+   *
+   * Goes through the `customscript_portalsvccase` RESTlet rather than
+   * createRecord('supportCase', …), and that is not a style preference — the
+   * REST record API cannot create this record at all.
+   *
+   * The .JRP/OPR case form (customform 85) marks BOTH `custevent_jprtype` and
+   * `custevent_oprtype` mandatory, and BOTH are labelled "Department" in the UI,
+   * which is why the failure reads as one missing field. The form's client
+   * script hides whichever one does not apply, and that is what lets staff save
+   * a JPR with the OPR one blank; client scripts do not run for SuiteTalk, so a
+   * REST create on form 85 always fails with "Please enter value(s) for:
+   * Department" no matter what the integration role can see. (The `department`
+   * field this route used to send does not exist on supportcase at all — it is
+   * an employee/transaction field, so NetSuite discarded it.) The RESTlet saves
+   * server-side with ignoreMandatoryFields, so the record lands shaped exactly
+   * like the service team's own cases.
+   *
+   * The case is filed under the info@ service employee ("Case Created By",
+   * which sources from employees on that form) with the real customer on
+   * `custevent_svcsjpr_customer` — the same field getCustomerCases() reads back,
+   * so a new case appears in the customer's list immediately.
+   */
+  async createServiceCase(params: {
+    customerId: string;
+    subjectId: string;
+    detail: string;
+    phone?: string;
+    email?: string;
+    salesOrderId?: string;
+    tagFor?: string;
+    memo?: string;
+    locationId?: string;
+  }): Promise<{ caseId: number; caseNumber: string }> {
+    // Token acquired OUTSIDE the limiter slot (non-reentrant — see ns-limit).
+    const accessToken = await this.getAccessToken();
+    const url = `${this.restletBaseUrl}?script=customscript_portalsvccase&deploy=customdeploy_portalsvccase`;
+
+    const result = await nsLimit(async () => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+
+      const text = await response.text();
+      if (!response.ok) {
+        console.error('NetSuite M2M: Service case RESTlet failed:', response.status, text);
+        throw new Error(`Service case RESTlet failed (${response.status})`);
+      }
+      return text ? JSON.parse(text) : {};
+    }, 'restlet');
+
+    // The RESTlet reports its own validation failures in the body with HTTP 200,
+    // so a 200 alone is not success.
+    if (!result || result.ok !== true) {
+      const code = result?.code || 'UNKNOWN';
+      const message = result?.error || 'NetSuite rejected the service case.';
+      console.error('NetSuite M2M: Service case rejected:', code, message);
+      const err = new Error(message) as Error & { nsCode?: string };
+      err.nsCode = code;
+      throw err;
+    }
+
+    console.log(`NetSuite M2M: Created service case ${result.caseNumber} (id ${result.caseId})`);
+    return { caseId: result.caseId, caseNumber: result.caseNumber };
   }
 
   /**
