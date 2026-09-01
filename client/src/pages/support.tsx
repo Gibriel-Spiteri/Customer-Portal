@@ -93,6 +93,7 @@ export default function Support() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [salesOrderSearchOpen, setSalesOrderSearchOpen] = useState(false);
+  const [salesOrderSearch, setSalesOrderSearch] = useState("");
   const itemsPerPage = 10;
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
@@ -316,7 +317,13 @@ export default function Support() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="sales-order">Sales Order (optional)</Label>
-                        <Popover open={salesOrderSearchOpen} onOpenChange={setSalesOrderSearchOpen}>
+                        <Popover
+                          open={salesOrderSearchOpen}
+                          onOpenChange={(open) => {
+                            setSalesOrderSearchOpen(open);
+                            if (!open) setSalesOrderSearch("");
+                          }}
+                        >
                           <PopoverTrigger asChild>
                             <Button
                               id="sales-order"
@@ -345,35 +352,38 @@ export default function Support() {
                           </PopoverTrigger>
                           <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                             <Command>
-                              <CommandInput placeholder="Enter order number or end user..." />
+                              <CommandInput
+                                placeholder="Enter order number or end user..."
+                                value={salesOrderSearch}
+                                onValueChange={setSalesOrderSearch}
+                              />
                               <CommandList>
-                                <CommandEmpty>No matching sales orders found.</CommandEmpty>
-                                <CommandItem
-                                  value="no sales order"
-                                  onSelect={() => {
-                                    form.setValue("salesOrderId", "");
-                                    setSalesOrderSearchOpen(false);
-                                  }}
-                                >
-                                  No sales order
-                                </CommandItem>
-                                {salesOrders.map((order) => (
-                                  <CommandItem
-                                    key={order.id}
-                                    value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""}`}
-                                    onSelect={() => {
-                                      form.setValue("salesOrderId", order.id);
-                                      setSalesOrderSearchOpen(false);
-                                    }}
-                                  >
-                                    <div className="py-1">
-                                      <div className="font-medium">Order #{order.orderNumber}</div>
-                                      <div className="text-xs text-muted-foreground">
-                                        End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
-                                      </div>
-                                    </div>
-                                  </CommandItem>
-                                ))}
+                                {salesOrderSearch.trim() ? (
+                                  <>
+                                    <CommandEmpty>No matching sales orders found.</CommandEmpty>
+                                    {salesOrders.map((order) => (
+                                      <CommandItem
+                                        key={order.id}
+                                        value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""}`}
+                                        onSelect={() => {
+                                          form.setValue("salesOrderId", order.id);
+                                          setSalesOrderSearchOpen(false);
+                                        }}
+                                      >
+                                        <div className="py-1">
+                                          <div className="font-medium">Order #{order.orderNumber}</div>
+                                          <div className="text-xs text-muted-foreground">
+                                            End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
+                                          </div>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </>
+                                ) : (
+                                  <div className="py-6 text-center text-sm text-muted-foreground">
+                                    Start typing to search sales orders.
+                                  </div>
+                                )}
                               </CommandList>
                             </Command>
                           </PopoverContent>
