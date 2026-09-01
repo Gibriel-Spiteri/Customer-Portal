@@ -337,7 +337,6 @@ export default function Orders() {
                                 <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[130px]">Target Receipt Date</th>
                               )}
                               <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[110px]">Amount</th>
-                              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-[130px]">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
@@ -355,11 +354,6 @@ export default function Orders() {
                                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(order.targetReceiptDate ?? null)}</td>
                                 )}
                                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(order.totalAmount, order.currency)}</td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
-                                    <span className="capitalize text-xs">{order.status}</span>
-                                  </Badge>
-                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -383,14 +377,11 @@ export default function Orders() {
                             </div>
                             <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.totalAmount, order.currency)}</p>
                           </div>
-                          <div className="flex items-center justify-between">
+                          <div>
                             <div className="text-sm text-gray-700 space-y-1">
                               {order.tagFor && <p className="font-medium"><span className="text-gray-400 text-xs">End User:</span> {toTitleCase(order.tagFor)}</p>}
                               {order.memo && <p className="font-medium"><span className="text-gray-400 text-xs">Job ID:</span> {toTitleCase(order.memo)}</p>}
                             </div>
-                            <Badge className={`${getStatusColor(order.status)} px-2 py-0.5`}>
-                              <span className="capitalize text-xs">{order.status}</span>
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
