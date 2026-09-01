@@ -18,34 +18,35 @@ export default function ProjectQuote() {
         </div>
 
         <Card>
-          <CardContent className="pt-6 space-y-3 text-center">
+          <CardContent className="pt-6 space-y-4">
             <Link href="/quick-quote/request">
               <Button size="lg" className="w-full" data-testid="button-quick-quote">
                 <Zap className="mr-2 h-5 w-5" />
                 Quick Quote
               </Button>
             </Link>
-            <p className="text-sm text-muted-foreground">
-              Send measurements, project details, and wish list. We'll email a
-              customer presentation, including retail pricing for your client
-              and PRO pricing to protect your profit.
-            </p>
+            <ul className="space-y-2 text-sm text-muted-foreground text-left">
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Send measurements, project details, and your wish list.</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Receive a customer presentation by email.</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Includes retail pricing for your client and PRO pricing to protect your profit.</span></li>
+            </ul>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6 space-y-3 text-center">
+          <CardContent className="pt-6 space-y-4">
             <Link href="/client-concierge">
               <Button size="lg" className="w-full" data-testid="button-client-concierge">
                 <CalendarCheck className="mr-2 h-5 w-5" />
                 Client Concierge
               </Button>
             </Link>
-            <p className="text-sm text-muted-foreground">
-              Request a showroom appointment for your client. We'll guide
-              their design and product selections, show only retail pricing,
-              and email your profit-protected estimates.
-            </p>
+            <ul className="space-y-2 text-sm text-muted-foreground text-left">
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Request a showroom appointment for your client.</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>We'll guide their design and product selections.</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Your client sees retail pricing only.</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>We'll email your profit-protected estimates.</span></li>
+            </ul>
           </CardContent>
         </Card>
       </div>
