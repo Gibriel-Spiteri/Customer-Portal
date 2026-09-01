@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { formatPhoneInput } from "@/lib/phone";
 import {
   FilePicker,
@@ -174,9 +175,9 @@ export default function ClientConcierge() {
               {submitted.savedOnly ? "Request saved" : "Request sent!"}
             </h2>
             <p className="text-gray-600 mb-6">{submitted.message}</p>
-            <Button onClick={() => setSubmitted(null)} variant="outline">
-              Send another request
-            </Button>
+            <Link href="/dashboard">
+              <Button variant="outline">Return to Dashboard</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (

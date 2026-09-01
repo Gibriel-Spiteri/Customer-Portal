@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { FilePicker, BUDGET_OPTIONS, BRAND_OPTIONS, MAX_FILE_MB, MAX_FILES_PER_KIND } from "@/components/quote-form-shared";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
@@ -143,9 +144,9 @@ export default function QuickQuote() {
               Request sent!
             </h2>
             <p className="text-gray-600 mb-6">{submitted}</p>
-            <Button onClick={() => setSubmitted(null)} variant="outline">
-              Send another request
-            </Button>
+            <Link href="/dashboard">
+              <Button variant="outline">Return to Dashboard</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
