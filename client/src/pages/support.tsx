@@ -344,7 +344,7 @@ export default function Support() {
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">
-                                  {loadingSalesOrders ? "Loading sales orders..." : "Search by order number or end user"}
+                                  {loadingSalesOrders ? "Loading sales orders..." : "Search by order number, end user, or job ID"}
                                 </span>
                               )}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -353,7 +353,7 @@ export default function Support() {
                           <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                             <Command>
                               <CommandInput
-                                placeholder="Enter order number or end user..."
+                                placeholder="Enter order number, end user, or job ID..."
                                 value={salesOrderSearch}
                                 onValueChange={setSalesOrderSearch}
                               />
@@ -364,7 +364,7 @@ export default function Support() {
                                     {salesOrders.map((order) => (
                                       <CommandItem
                                         key={order.id}
-                                        value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""}`}
+                                        value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""} ${order.memo || ""}`}
                                         onSelect={() => {
                                           form.setValue("salesOrderId", order.id);
                                           setSalesOrderSearchOpen(false);
