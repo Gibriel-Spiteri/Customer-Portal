@@ -32,6 +32,10 @@ import {
   INFO_MAILBOX_EMPLOYEE_ID,
 } from "./services/quick-quote";
 
+// NetSuite's .JRP/OPR support-case form labels `company` as "Case Created By"
+// and requires the AFTER SALE SERVICE department for portal-created cases.
+const SUPPORT_CASE_DEPARTMENT_ID = '29';
+
 // Fail fast if the signing secret is missing — a hardcoded fallback would let
 // anyone who reads the source forge session tokens (including admin sessions).
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -70,6 +74,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
     req.user = {
       id: user.id,
       username: user.username,
+      email: user.email,
       netsuiteCustomerId: decoded.netsuiteCustomerId,
       isNetSuiteUser: decoded.isNetSuiteUser,
       ssoUser: decoded.ssoUser || false,
@@ -2555,6 +2560,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const caseBody: any = {
         title: subject,
         email: req.user.email,
+        company: { id: INFO_MAILBOX_EMPLOYEE_ID },
+        department: { id: SUPPORT_CASE_DEPARTMENT_ID },
         incomingMessage: description,
         custevent_xprdetail: description,
         custevent_svcsjpr_customer: { id: customerId },

@@ -4,3 +4,4 @@
 - [NetSuite concurrency cap](netsuite-concurrency-cap.md) — nsLimit semaphore is per-process (cap 2); autoscale multiplies it, so max machines must be 1 and new NetSuite calls must route through it.
 - [NetSuite contact roles](netsuite-contact-role.md) — built-in roles (-10/-20) not settable via REST; user chose role-less alternates (don't re-add); never pre-hash before storage.createUser.
 - [Twilio & contact updates](twilio-and-contact-updates.md) — Lookup creds via connectors API include_secrets (proxy can't reach lookups.twilio.com); customer.defaultaddress not in SuiteQL; email RESTlet must be redeployed for verification_code type.
+- [NetSuite support cases](netsuite-support-cases.md) — portal cases use default routing; .JRP/OPR requires a role-exposed AFTER SALE SERVICE Department and an employee as Case Created By.
