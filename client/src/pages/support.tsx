@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
+import type { Order } from "@/components/order-detail-modal";
 
 interface SupportTicket {
   id: string;
@@ -71,6 +72,7 @@ interface CaseMessage {
 }
 
 const ticketSchema = z.object({
+  salesOrderId: z.string().optional(),
   subject: z.string().min(5, "Subject must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
 });
@@ -95,9 +97,19 @@ export default function Support() {
     enabled: !!token,
   });
 
+  const { data: salesOrders = [], isLoading: loadingSalesOrders } = useQuery<Order[]>({
+    queryKey: ['/api/orders'],
+    enabled: !!token && showNewTicketForm,
+  });
+
+  const recentSalesOrders = [...salesOrders]
+    .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
+    .slice(0, 20);
+
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
+      salesOrderId: "",
       subject: "",
       description: "",
     },
@@ -299,6 +311,35 @@ export default function Support() {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="sales-order">Sales Order (optional)</Label>
+                        <Select
+                          value={form.watch("salesOrderId") || "none"}
+                          onValueChange={(value) => form.setValue("salesOrderId", value === "none" ? "" : value)}
+                          disabled={loadingSalesOrders}
+                        >
+                          <SelectTrigger id="sales-order" data-testid="select-support-sales-order">
+                            <SelectValue placeholder={loadingSalesOrders ? "Loading recent sales orders..." : "Choose a recent sales order"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No sales order</SelectItem>
+                            {recentSalesOrders.map((order) => (
+                              <SelectItem key={order.id} value={order.id}>
+                                <div className="py-1">
+                                  <div className="font-medium">Order #{order.orderNumber}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Showing the 20 most recent sales orders.
+                        </p>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="subject">Subject</Label>
                         <Input
