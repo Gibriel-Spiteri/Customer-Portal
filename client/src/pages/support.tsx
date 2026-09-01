@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -90,6 +92,7 @@ export default function Support() {
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [salesOrderSearchOpen, setSalesOrderSearchOpen] = useState(false);
   const itemsPerPage = 10;
 
   const { data: tickets, isLoading, error } = useQuery<SupportTicket[]>({
@@ -102,10 +105,6 @@ export default function Support() {
     enabled: !!token && showNewTicketForm,
   });
 
-  const recentSalesOrders = [...salesOrders]
-    .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
-    .slice(0, 20);
-
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
@@ -114,6 +113,10 @@ export default function Support() {
       description: "",
     },
   });
+
+  const selectedSalesOrder = salesOrders.find(
+    (order) => order.id === form.watch("salesOrderId")
+  );
 
   const createTicketMutation = useMutation({
     mutationFn: async (data: TicketFormData) => {
@@ -313,30 +316,70 @@ export default function Support() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="sales-order">Sales Order (optional)</Label>
-                        <Select
-                          value={form.watch("salesOrderId") || "none"}
-                          onValueChange={(value) => form.setValue("salesOrderId", value === "none" ? "" : value)}
-                          disabled={loadingSalesOrders}
-                        >
-                          <SelectTrigger id="sales-order" data-testid="select-support-sales-order">
-                            <SelectValue placeholder={loadingSalesOrders ? "Loading recent sales orders..." : "Choose a recent sales order"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No sales order</SelectItem>
-                            {recentSalesOrders.map((order) => (
-                              <SelectItem key={order.id} value={order.id}>
-                                <div className="py-1">
-                                  <div className="font-medium">Order #{order.orderNumber}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={salesOrderSearchOpen} onOpenChange={setSalesOrderSearchOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="sales-order"
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={salesOrderSearchOpen}
+                              className="w-full h-auto min-h-10 justify-between text-left font-normal"
+                              disabled={loadingSalesOrders}
+                              data-testid="select-support-sales-order"
+                            >
+                              {selectedSalesOrder ? (
+                                <span>
+                                  <span className="font-medium">Order #{selectedSalesOrder.orderNumber}</span>
+                                  <span className="block text-xs text-muted-foreground">
+                                    End User: {selectedSalesOrder.tagFor || "—"} · Job ID: {selectedSalesOrder.memo || "—"}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  {loadingSalesOrders ? "Loading sales orders..." : "Search by order number or end user"}
+                                </span>
+                              )}
+                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Enter order number or end user..." />
+                              <CommandList>
+                                <CommandEmpty>No matching sales orders found.</CommandEmpty>
+                                <CommandItem
+                                  value="no sales order"
+                                  onSelect={() => {
+                                    form.setValue("salesOrderId", "");
+                                    setSalesOrderSearchOpen(false);
+                                  }}
+                                >
+                                  No sales order
+                                </CommandItem>
+                                {salesOrders.map((order) => (
+                                  <CommandItem
+                                    key={order.id}
+                                    value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""}`}
+                                    onSelect={() => {
+                                      form.setValue("salesOrderId", order.id);
+                                      setSalesOrderSearchOpen(false);
+                                    }}
+                                  >
+                                    <div className="py-1">
+                                      <div className="font-medium">Order #{order.orderNumber}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <p className="text-xs text-muted-foreground">
-                          Showing the 20 most recent sales orders.
+                          You can enter the number without “SO”.
                         </p>
                       </div>
 
