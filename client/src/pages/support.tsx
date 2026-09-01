@@ -357,7 +357,7 @@ export default function Support() {
                                 value={salesOrderSearch}
                                 onValueChange={setSalesOrderSearch}
                               />
-                              <CommandList>
+                              <CommandList key={salesOrderSearch}>
                                 {salesOrderSearch.trim() ? (
                                   <>
                                     <CommandEmpty>No matching sales orders found.</CommandEmpty>
