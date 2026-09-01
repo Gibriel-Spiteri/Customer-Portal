@@ -350,10 +350,10 @@ export default function Support() {
                             >
                               {selectedSalesOrder ? (
                                 <span className="min-w-0 flex-1 overflow-hidden">
-                                  <span className="block truncate font-medium">Order #{selectedSalesOrder.orderNumber}</span>
-                                  <span className="block truncate text-xs text-muted-foreground">
+                                  <span className="block truncate font-medium">
                                     End User: {selectedSalesOrder.tagFor || "—"} · Job ID: {selectedSalesOrder.memo || "—"}
                                   </span>
+                                  <span className="block truncate text-xs text-muted-foreground">Order #{selectedSalesOrder.orderNumber}</span>
                                 </span>
                               ) : (
                                 <span className="min-w-0 flex-1 truncate text-muted-foreground">
@@ -387,10 +387,10 @@ export default function Support() {
                                         }}
                                       >
                                         <div className="min-w-0 max-w-full py-1">
-                                          <div className="truncate font-medium">Order #{order.orderNumber}</div>
-                                          <div className="break-words text-xs text-muted-foreground">
+                                          <div className="break-words font-medium">
                                             End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
                                           </div>
+                                          <div className="truncate text-xs text-muted-foreground">Order #{order.orderNumber}</div>
                                         </div>
                                       </CommandItem>
                                     ))}
