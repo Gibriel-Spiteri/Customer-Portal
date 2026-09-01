@@ -2511,16 +2511,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      // For now, we'll return a message that ticket creation should be done in NetSuite
-      // In a real implementation, this would create a case in NetSuite via API
-      res.status(201).json({ 
-        message: 'Please contact our support team directly to create a new support case.',
-        email: 'support@consumersmail.com',
-        phone: '1-800-SUPPORT'
+      const parsed = z.object({
+        salesOrderId: z.string().regex(/^\d+$/).optional().or(z.literal('')),
+        subject: z.string().trim().min(5).max(255),
+        description: z.string().trim().min(20).max(10000),
+      }).safeParse(req.body);
+
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: parsed.error.errors[0]?.message || 'Invalid support ticket',
+        });
+      }
+      if (!req.user.netsuiteCustomerId) {
+        return res.status(400).json({ message: 'No NetSuite customer linked to this account' });
+      }
+
+      const { NetSuiteM2M } = await import('./services/netsuite-m2m');
+      const m2m = new NetSuiteM2M();
+      const customerId = String(req.user.netsuiteCustomerId);
+      const { subject, description, salesOrderId } = parsed.data;
+
+      let relatedOrder: any = null;
+      if (salesOrderId) {
+        // Never trust a browser-supplied transaction id: verify that the
+        // selected sales order belongs to the authenticated customer.
+        const orderResult = await m2m.executeSuiteQL(`
+          SELECT
+            transaction.id,
+            transaction.tranid,
+            transaction.custbody_tagfor AS enduser,
+            transaction.memo
+          FROM transaction
+          WHERE transaction.id = ${salesOrderId}
+            AND transaction.entity = ${customerId}
+            AND transaction.type = 'SalesOrd'
+        `.trim(), 1, 0);
+        relatedOrder = orderResult.items?.[0];
+        if (!relatedOrder) {
+          return res.status(400).json({ message: 'The selected sales order was not found on this account' });
+        }
+      }
+
+      const caseBody: any = {
+        title: subject,
+        email: req.user.email,
+        incomingMessage: description,
+        custevent_xprdetail: description,
+        custevent_svcsjpr_customer: { id: customerId },
+        custevent_jprtype: { id: '1' },
+      };
+
+      if (relatedOrder) {
+        caseBody.custevent_related_salesorder = { id: String(relatedOrder.id) };
+        caseBody.custevent_svrcjpr_tag_for = relatedOrder.enduser || '';
+        caseBody.custevent_svrcjpr_memo = relatedOrder.memo || '';
+      }
+
+      // Intentionally omit `assigned`: NetSuite's default Customer Service
+      // routing determines the appropriate owner.
+      const caseId = await m2m.createRecord('supportCase', caseBody);
+      await invalidateCustomer(customerId).catch(() => {});
+
+      res.status(201).json({
+        id: caseId,
+        message: 'Your support ticket was created successfully.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create support ticket error:', error);
-      res.status(500).json({ message: 'Failed to create support ticket' });
+      res.status(500).json({ message: error?.message || 'Failed to create support ticket in NetSuite' });
     }
   });
 
