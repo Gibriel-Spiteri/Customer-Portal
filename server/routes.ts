@@ -10,6 +10,7 @@ import {
   requestPasswordResetSchema, 
   resetPasswordSchema
 } from "@shared/schema";
+import { createServiceTicketSchema, serviceCaseSubjectLabel } from "@shared/service-case";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -32,9 +33,14 @@ import {
   INFO_MAILBOX_EMPLOYEE_ID,
 } from "./services/quick-quote";
 
-// NetSuite's .JRP/OPR support-case form labels `company` as "Case Created By"
-// and requires the AFTER SALE SERVICE department for portal-created cases.
-const SUPPORT_CASE_DEPARTMENT_ID = '29';
+// DEPRECATED — this was a misdiagnosis and is no longer sent. supportcase has
+// no `department` field at all (not in the REST schema, not in SuiteQL), so
+// NetSuite silently discarded it. The "Department" the .JRP/OPR form demands is
+// custevent_jprtype / custevent_oprtype — two different custom fields that
+// share that label — and neither is a NetSuite department. Case creation now
+// goes through NetSuiteM2M.createServiceCase(); see that method for the full
+// explanation.
+// const SUPPORT_CASE_DEPARTMENT_ID = '29'; // AFTER SALE SERVICE (not a case field)
 
 // Fail fast if the signing secret is missing — a hardcoded fallback would let
 // anyone who reads the source forge session tokens (including admin sessions).
@@ -2516,11 +2522,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/support/tickets', authenticateToken, validateCustomerAccess, async (req: any, res) => {
     try {
-      const parsed = z.object({
-        salesOrderId: z.string().regex(/^\d+$/).optional().or(z.literal('')),
-        subject: z.string().trim().min(5).max(255),
-        description: z.string().trim().min(20).max(10000),
-      }).safeParse(req.body);
+      // Issue type is a fixed list, not free text: NetSuite files these as
+      // CUSTOMER SERVICE JPRs and derives the case Subject from its own subject
+      // list, so the portal may only submit ids from that list.
+      const parsed = createServiceTicketSchema.safeParse(req.body);
 
       if (!parsed.success) {
         return res.status(400).json({
@@ -2534,7 +2539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NetSuiteM2M } = await import('./services/netsuite-m2m');
       const m2m = new NetSuiteM2M();
       const customerId = String(req.user.netsuiteCustomerId);
-      const { subject, description, salesOrderId } = parsed.data;
+      const { subjectId, description, salesOrderId } = parsed.data;
 
       let relatedOrder: any = null;
       if (salesOrderId) {
@@ -2557,35 +2562,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const caseBody: any = {
-        title: subject,
+      // The case is built entirely inside the RESTlet — form, both "Department"
+      // fields, "Case Created By" and the CUSTOMER SERVICE queue are its
+      // concern, not the portal's. See createServiceCase() for why this cannot
+      // go through the REST record API.
+      const { caseId, caseNumber } = await m2m.createServiceCase({
+        customerId,
+        subjectId,
+        detail: description,
         email: req.user.email,
-        company: { id: INFO_MAILBOX_EMPLOYEE_ID },
-        department: { id: SUPPORT_CASE_DEPARTMENT_ID },
-        incomingMessage: description,
-        custevent_xprdetail: description,
-        custevent_svcsjpr_customer: { id: customerId },
-        custevent_jprtype: { id: '1' },
-      };
+        salesOrderId: relatedOrder ? String(relatedOrder.id) : undefined,
+        tagFor: relatedOrder?.enduser || undefined,
+        memo: relatedOrder?.memo || undefined,
+      });
 
-      if (relatedOrder) {
-        caseBody.custevent_related_salesorder = { id: String(relatedOrder.id) };
-        caseBody.custevent_svrcjpr_tag_for = relatedOrder.enduser || '';
-        caseBody.custevent_svrcjpr_memo = relatedOrder.memo || '';
-      }
-
-      // Intentionally omit `assigned`: NetSuite's default Customer Service
-      // routing determines the appropriate owner.
-      const caseId = await m2m.createRecord('supportCase', caseBody);
       await invalidateCustomer(customerId).catch(() => {});
 
       res.status(201).json({
-        id: caseId,
-        message: 'Your support ticket was created successfully.',
+        id: String(caseId),
+        caseNumber,
+        subject: serviceCaseSubjectLabel(subjectId),
+        message: `Service case #${caseNumber} was created successfully.`,
       });
     } catch (error: any) {
       console.error('Create support ticket error:', error);
-      res.status(500).json({ message: error?.message || 'Failed to create support ticket in NetSuite' });
+      // UNKNOWN_CUSTOMER means the linked NetSuite customer is gone or inactive
+      // — a problem with this account, not a portal outage.
+      if (error?.nsCode === 'UNKNOWN_CUSTOMER') {
+        return res.status(409).json({ message: 'Your customer record could not be found in our system. Please contact support.' });
+      }
+      res.status(500).json({ message: 'Failed to create support ticket in NetSuite' });
     }
   });
 

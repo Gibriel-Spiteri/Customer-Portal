@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { SERVICE_CASE_SUBJECTS, createServiceTicketSchema } from "@shared/service-case";
 import { 
   HelpCircle, 
   Phone, 
@@ -73,11 +74,11 @@ interface CaseMessage {
   type: 'system' | 'user';
 }
 
-const ticketSchema = z.object({
-  salesOrderId: z.string().optional(),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-});
+// Issue type is NOT free text: NetSuite files these as CUSTOMER SERVICE JPRs
+// and derives the case Subject from its own fixed subject list, so the portal
+// offers exactly those options. Schema and labels are shared with the server
+// route so the two can never drift.
+const ticketSchema = createServiceTicketSchema;
 
 type TicketFormData = z.infer<typeof ticketSchema>;
 
@@ -110,7 +111,7 @@ export default function Support() {
     resolver: zodResolver(ticketSchema),
     defaultValues: {
       salesOrderId: "",
-      subject: "",
+      subjectId: undefined,
       description: "",
     },
   });
@@ -150,9 +151,11 @@ export default function Support() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (created: { caseNumber?: string }) => {
       toast({
-        title: "Support Ticket Created",
+        title: created?.caseNumber
+          ? `Service Case #${created.caseNumber} Created`
+          : "Support Ticket Created",
         description: "Your support ticket has been submitted successfully. We'll get back to you soon.",
       });
       form.reset();
@@ -410,15 +413,29 @@ export default function Support() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="subject">Subject</Label>
-                        <Input
-                          id="subject"
-                          placeholder="Brief description of your issue"
-                          {...form.register("subject")}
-                        />
-                        {form.formState.errors.subject && (
+                        <Label htmlFor="subjectId">Issue Type</Label>
+                        <Select
+                          value={form.watch("subjectId") ?? ""}
+                          onValueChange={(value) =>
+                            form.setValue("subjectId", value as TicketFormData["subjectId"], {
+                              shouldValidate: true,
+                            })
+                          }
+                        >
+                          <SelectTrigger id="subjectId">
+                            <SelectValue placeholder="Select the type of issue" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SERVICE_CASE_SUBJECTS.map((subject) => (
+                              <SelectItem key={subject.id} value={subject.id}>
+                                {subject.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.subjectId && (
                           <p className="text-sm text-red-600">
-                            {form.formState.errors.subject.message}
+                            {form.formState.errors.subjectId.message}
                           </p>
                         )}
                       </div>
