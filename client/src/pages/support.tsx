@@ -336,9 +336,9 @@ export default function Support() {
                               data-testid="select-support-sales-order"
                             >
                               {selectedSalesOrder ? (
-                                <span>
-                                  <span className="font-medium">Order #{selectedSalesOrder.orderNumber}</span>
-                                  <span className="block text-xs text-muted-foreground">
+                                <span className="min-w-0 flex-1 overflow-hidden">
+                                  <span className="block truncate font-medium">Order #{selectedSalesOrder.orderNumber}</span>
+                                  <span className="block truncate text-xs text-muted-foreground">
                                     End User: {selectedSalesOrder.tagFor || "—"} · Job ID: {selectedSalesOrder.memo || "—"}
                                   </span>
                                 </span>
@@ -365,14 +365,15 @@ export default function Support() {
                                       <CommandItem
                                         key={order.id}
                                         value={`${order.orderNumber.replace(/^SO/i, "")} ${order.orderNumber} ${order.tagFor || ""} ${order.memo || ""}`}
+                                        className="min-w-0 overflow-hidden"
                                         onSelect={() => {
                                           form.setValue("salesOrderId", order.id);
                                           setSalesOrderSearchOpen(false);
                                         }}
                                       >
-                                        <div className="py-1">
-                                          <div className="font-medium">Order #{order.orderNumber}</div>
-                                          <div className="text-xs text-muted-foreground">
+                                        <div className="min-w-0 max-w-full py-1">
+                                          <div className="truncate font-medium">Order #{order.orderNumber}</div>
+                                          <div className="break-words text-xs text-muted-foreground">
                                             End User: {order.tagFor || "—"} · Job ID: {order.memo || "—"}
                                           </div>
                                         </div>
